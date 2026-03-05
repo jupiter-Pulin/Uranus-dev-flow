@@ -185,7 +185,7 @@ bash scripts/run-skill.sh load-pr-review load-pr-review.js \
 
 **Safety rules** (see `references/writeback-guardrails.md`):
 - Must use `replyTargetId` (first comment's `databaseId`)
-- Body transmitted via `jq` + `--input -` (no shell interpolation)
+- Body transmitted via `jq` + temp file + `--input <tmpFile>` (no shell interpolation)
 - Missing `replyTargetId` → degrade to plan-only, warn user
 - Each thread processed independently; failure does not abort others
 

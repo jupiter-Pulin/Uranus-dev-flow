@@ -21,13 +21,17 @@ Reply target must be the **first comment's `databaseId`** in the thread (the `re
 
 ## Body Transmission (Shell Injection Prevention)
 
-Always use `jq` + `--input -` to construct and pass JSON body:
+Always use `jq` to construct JSON body, then pass via temp file + `--input`:
 
-```bash
-jq -n --arg body "$REPLY" '{body:$body}' | \
-  gh api --method POST \
-    repos/{owner}/{repo}/pulls/{pr}/comments/{replyTargetId}/replies \
-    --input -
+```javascript
+// 1. Build JSON safely via jq (no shell interpolation)
+const jqR = await runCapture('jq', ['-n', '--arg', 'body', reply, '{body:$body}']);
+// 2. Write to temp file (avoids stdin pipe issues)
+fs.writeFileSync(tmpFile, jqR.stdout, 'utf8');
+// 3. POST via gh api --input <tmpFile>
+await runCapture('gh', ['api', '--method', 'POST', endpoint, '--input', tmpFile]);
+// 4. Clean up temp file
+fs.unlinkSync(tmpFile);
 ```
 
 **Prohibited patterns:**
@@ -53,10 +57,10 @@ gh api graphql -f query='
 ## Writeback Plan Format
 
 ```markdown
-| # | Thread | File | Action | Reply Preview |
-|---|--------|------|--------|---------------|
-| 1 | PRRT_a | src/foo.ts:42 | Reply + Resolve | "Fixed in abc123" |
-| 2 | PRRT_b | src/bar.ts:15 | Reply only | "By design because..." |
+| # | Thread | File | replyTargetId | Status |
+|---|--------|------|---------------|--------|
+| 1 | PRRT_a | src/foo.ts:42 | 12345678 | Ready |
+| 2 | PRRT_b | src/bar.ts:15 | N/A | Missing replyTargetId |
 ```
 
 ## Error Handling

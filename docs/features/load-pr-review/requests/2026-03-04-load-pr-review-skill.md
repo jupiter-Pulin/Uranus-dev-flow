@@ -1,7 +1,7 @@
 # Load PR Review Skill
 
 > **Created**: 2026-03-04
-> **Status**: In Progress
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Source**: Best Practices Audit + Codex Brainstorm Nash Equilibrium (2026-03-04)
@@ -13,11 +13,11 @@
 ## Requirements
 
 - 建立新 skill `/load-pr-review`，將 GitHub PR review 建議載入 Claude Code session
-- 使用 GraphQL `reviewThreads` 取得完整 thread 結構（含 `isResolved`、`isOutdated`）
+- 使用 GraphQL `reviewThreads` 取得 thread 結構（含 `isResolved`、`isOutdated`；上限 `first:100` threads、`first:20` comments/thread）
 - 三層互動模式：`summary`（預設）→ `plan`（分類策略）→ `fix`（guided 修復）
 - Smart defaults：無參數自動偵測當前分支 PR、支援 PR# / URL 輸入
-- Token budget 機制：預設載入 30 條 unresolved comments，防止 context 爆量
-- 回寫功能（gated）：reply comment + resolve thread，dry-run first + AskUserQuestion 確認
+- Token budget 機制：預設載入 30 條 unresolved threads（`reviewThreads first:100`、`comments first:20`），防止 context 爆量
+- 回寫功能（workflow-gated）：reply comment + resolve thread，SKILL.md 要求 dry-run → plan → AskUserQuestion 確認後才執行 `--execute`
 - REST fallback：GraphQL 失敗時降級，顯示 degraded banner
 - fix 模式整合 auto-loop（依變更類型：code → `/codex-review-fast` → `/precommit`；doc → `/codex-review-doc`）
 
@@ -43,28 +43,28 @@
 
 ## Acceptance Criteria
 
-- [ ] PR auto-detect：無參數偵測當前分支 PR，支援 PR# / URL
-- [ ] GraphQL fetch：正確取得 `reviewThreads` 含 `isResolved`、`isOutdated`
-- [ ] REST fallback：GraphQL 失敗時降級 + degraded banner
-- [ ] Token budget：預設 30 條，超出截斷 + metadata 顯示
-- [ ] summary mode：顯示 unresolved threads table
-- [ ] plan mode：依類型分類（code_change/doc_update/question/disagree/nit）
-- [ ] fix mode：逐條修復 + auto-loop handoff
-- [ ] writeback dry-run：輸出 reply + resolve 計劃
-- [ ] writeback execute：AskUserQuestion gate + 逐條執行
-- [ ] `/skill-health-check` 全維度通過
-- [ ] `/codex-review-doc` 通過
-- [ ] Unit test coverage: happy path + error + edge cases
-- [ ] Context check: `!` PR context renders without permission prompt
+- [x] PR auto-detect：無參數偵測當前分支 PR，支援 PR# / URL
+- [x] GraphQL fetch：正確取得 `reviewThreads` 含 `isResolved`、`isOutdated`
+- [x] REST fallback：GraphQL 失敗時降級 + degraded banner
+- [x] Token budget：預設 30 threads，超出截斷 + metadata 顯示
+- [x] summary mode：顯示 unresolved threads table
+- [x] plan mode：依類型分類（code_change/doc_update/question/disagree/nit）
+- [x] fix mode：逐條修復 + auto-loop handoff
+- [x] writeback plan：輸出 thread readiness table（id/file/replyTargetId/status）
+- [x] writeback execute：SKILL.md workflow gate（plan → AskUserQuestion）+ 逐條執行
+- [x] `/skill-health-check` 全維度通過（initial feat `6034ec2` 驗證）
+- [x] `/codex-review-doc` 通過（tech spec review `fd24c01`）
+- [x] Unit test coverage: happy path + error + edge cases（40 tests, 0 fail — `node --test test/scripts/load-pr-review.test.js`）
+- [x] Context check: `!` PR context renders without permission prompt（Go template `31f7090`）
 
 ## Progress
 
 | Phase | Status | Note |
 | ----- | ------ | ---- |
 | Analysis | Done | Best Practices Audit completed |
-| Development | In Progress | Context check hotfix (jq→Go template) |
-| Testing | In Progress | 18 new tests for error paths + edge cases |
-| Acceptance | - | |
+| Development | Done | Feat `6034ec2` + 3 hotfixes (`5adbbaf` `1ffa763` `31f7090`) + Go template context check |
+| Testing | Done | 40 tests pass (`73a85c5`): 22 core + 18 error/edge cases |
+| Acceptance | Done | All 13 AC checked |
 
 ## References
 

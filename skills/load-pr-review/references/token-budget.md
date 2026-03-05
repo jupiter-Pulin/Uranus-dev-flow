@@ -4,12 +4,12 @@
 
 | Parameter | Default | `--all` | Hard Cap |
 |-----------|---------|---------|----------|
-| Max loaded comments | 30 | 200 | 200 |
+| Max loaded threads | 30 | 200 | 200 |
 | Per-comment body | 2000 chars | 2000 chars | 2000 chars |
 
 ## Truncation Priority
 
-When total comments exceed budget, select in this order:
+When total threads exceed budget, select in this order:
 
 1. **Unresolved** before resolved
 2. **Not outdated** before outdated
