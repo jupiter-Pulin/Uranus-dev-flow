@@ -4,7 +4,7 @@
 
 | Change Type | Must Run | Can Skip |
 |-------------|----------|----------|
-| code files | `/codex-review-fast` -> `/precommit` | - |
+| code files | `/codex-review-fast` -> `/precommit-fast` | - |
 | `.md` docs | `/codex-review-doc` | `/codex-review-fast` |
 | Comments only | - | All |
 
@@ -23,7 +23,7 @@ After editing code or docs, you **MUST** run the review command **in the same re
 
 | After editing... | Immediately run | Then on pass |
 |------------------|----------------|--------------|
-| code files | `/codex-review-fast` | `/precommit` |
+| code files | `/codex-review-fast` | `/precommit-fast` |
 | `.md` docs | `/codex-review-doc` | (done) |
 | Review found issues | Fix all → re-run same review | — |
 
@@ -96,6 +96,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/claude-health` | Claude Code config health check | Onboarding |
 | `/pr-review` | PR self-review checklist | Before PR |
 | `/smart-commit` | Smart batch commit (identity/signing diagnostics + group + message + commands) | Git |
+| `/git-profile` | Git identity and GPG signing profile manager | Git |
 | `/push-ci` | Push (with approval) + CI monitor | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
 | `/git-worktree` | Manage git worktrees | Git |
