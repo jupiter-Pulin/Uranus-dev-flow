@@ -1,7 +1,7 @@
 # Precommit Test Tiering
 
 > **Created**: 2026-03-06
-> **Status**: In Development
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -51,7 +51,7 @@ Auto-loop 每次 fix iteration 執行完整測試套件（369 tests, ~8 min）�
 - [x] Runner 測試驗證 tier preference chain — 5 個新測試
 - [x] 所有現有 precommit-runner 測試繼續通過 — 10/10 pass
 - [x] Pass `/codex-review-fast` — ✅ Ready (threadId: 019cc1e6-7094-74b3-b3de-6a1d6d172ad9)
-- [x] Pass `/precommit` — ✅ PASS (fast mode, lint 0 errors + 39 tests pass)
+- [x] Pass `/precommit-fast` — ✅ PASS (lint 0 errors + 39 tests pass)
 
 ## Progress
 
@@ -65,5 +65,7 @@ Auto-loop 每次 fix iteration 執行完整測試套件（369 tests, ~8 min）�
 ## References
 
 - Tech Spec: [2-tech-spec.md](../2-tech-spec.md)
+- Implementation commit: `2f830c7` feat: Adds precommit test tiering with fast/full preference chains
 - Best Practices Debate threadId: `019cc1c7-ff0a-74e3-af38-a9e1e3160018`
+- Codex Review threadId: `019cc1e6-7094-74b3-b3de-6a1d6d172ad9`
 - Nash Equilibrium: 7-item fix set（auto-loop + runner + commands + package.json + CLAUDE.md + tests）

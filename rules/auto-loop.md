@@ -35,7 +35,7 @@
 ```
 "Fixed 3 issues, running /codex-review-fast..."
 [Execute]
-"Passed, running /precommit..."
+"Passed, running /precommit-fast..."
 [Execute]
 "All passed ✅"
 ```
