@@ -1,7 +1,7 @@
 # Git Profile Manager Skill
 
 > **Created**: 2026-03-05
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -37,16 +37,16 @@
 
 ## Acceptance Criteria
 
-- [ ] `/git-profile` (doctor) 顯示完整 identity + signing + worktree 診斷
-- [ ] Auto-discovery 從 GPG secret keys + git config 推導候選 profiles
-- [ ] `/git-profile list` 顯示 registry profiles + 當前 match
-- [ ] `/git-profile use <profile>` 切換 local config（AskUserQuestion + plan-hash）
-- [ ] `/git-profile remove` 移除 profile（referential integrity check）
-- [ ] `/git-profile verify` 檢查 GPG key 有效期 + email match
-- [ ] Registry 持久化於 `~/.config/sd0x-dev-flow/git-profiles.json`（atomic write + 0600）
-- [ ] Shared diagnostic script 可被 `/smart-commit` 呼叫（degradation: infra failure → warn-only）
-- [ ] Tests 覆蓋 doctor / list / use / remove / verify / registry（happy + error + edge cases）
-- [ ] Pass `/codex-review-fast`
+- [x] `/git-profile` (doctor) 顯示完整 identity + signing + worktree 診斷
+- [x] Auto-discovery 從 GPG secret keys + git config 推導候選 profiles
+- [x] `/git-profile list` 顯示 registry profiles + 當前 match
+- [x] `/git-profile use <profile>` 切換 local config（AskUserQuestion + plan-hash）
+- [x] `/git-profile remove` 移除 profile（referential integrity check）
+- [x] `/git-profile verify` 檢查 GPG key 有效期 + email match
+- [x] Registry 持久化於 `~/.config/sd0x-dev-flow/git-profiles.json`（atomic write + 0600）
+- [x] Shared diagnostic script 可被 `/smart-commit` 呼叫（degradation: infra failure → warn-only）
+- [x] Tests 覆蓋 doctor / list / use / remove / verify / registry（happy + error + edge cases）
+- [x] Pass `/codex-review-fast`
 
 ## Progress
 
@@ -54,13 +54,16 @@
 |-------|--------|------|
 | Best Practices | Done | Brainstorm `019cbe4d` |
 | Tech Spec | Done | Reviewed + Mergeable (`019cbe5a`) |
-| Development | - | |
-| Testing | - | |
-| Review | - | |
-| Acceptance | - | |
+| Development | Done | commit `42c693a`, 975-line script, 8 subcommands |
+| Testing | Done | 28 tests pass, 374/374 full suite |
+| Review | Done | `/codex-review-fast` executed (`019cc28e`) |
+| Acceptance | Done | 10/10 AC checked |
 
 ## References
 
 - [Tech Spec](../2-tech-spec.md)
 - Best Practices Audit: Codex Brainstorm `019cbe4d-1698-75c1-9d16-55866a79be8c`
 - Doc Review: `019cbe5a-0b5e-7b51-924e-fb432dbb386f`
+- Implementation commit: `42c693a`
+- CLAUDE.md update: `a4a0be5`
+- Code Review: Codex `019cc28e` (P2 design notes for future iteration)
