@@ -62,7 +62,7 @@ When review returns Ready with P2/Nit findings, auto-loop triggers a quality swe
 | Step | Description |
 |------|-------------|
 | Parse | Extract P2/Nit findings from Codex output (tag-based `[P2]`/`[Nit]` or section-based `#### P2`/`#### Nit`) |
-| Identity | Key = `file:line + issue description` |
+| Identity | Key = `file + canonicalized issue text` (line number approximate, may shift after fix) |
 | Dedupe | Same key across reviews counts as 1 item |
 | False-positive | Same key persists after fix → mark `possible-false-positive` |
 

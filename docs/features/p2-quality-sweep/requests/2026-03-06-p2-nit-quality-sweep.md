@@ -1,9 +1,9 @@
 # P2/Nit Quality Sweep
 
 > **Created**: 2026-03-06
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
-> **Tech Spec**: (pending)
+> **Tech Spec**: N/A (rule-only change)
 
 ## Background
 
@@ -33,7 +33,7 @@ Auto-loop 在 Gate `Ready` (No P0/P1) 後直接進入 `/precommit-fast`，P2/Nit
 | Step | Description |
 |------|-------------|
 | 1. Parse | 從 Codex review output 解析 `[P2]` / `[Nit]` 標記的 findings |
-| 2. Identity | 每個 finding 以 `file:line + issue description` 為 key |
+| 2. Identity | 每個 finding 以 `file + canonicalized issue text` 為 key（line number 為 approximate，fix 後可能偏移） |
 | 3. Dedupe | 同一 key 在多次 review 中出現只算 1 項 |
 | 4. False-positive | 若 fix attempt 後 Codex 仍報告相同 key → 標記為 possible false-positive |
 
@@ -51,7 +51,7 @@ Auto-loop 在 Gate `Ready` (No P0/P1) 後直接進入 `/precommit-fast`，P2/Nit
 [NIT_DEFERRED] file:line | issue | reason: possible-false-positive | timestamp
 ```
 
-Log 不記錄程式碼片段（redaction），僅記錄 issue metadata。
+Log 不記錄程式碼片段（redaction），僅記錄 issue metadata。Issue text 中若含 secret-like tokens（API key、password 等）須先 sanitize。
 
 ## Scope
 
@@ -68,27 +68,28 @@ Log 不記錄程式碼片段（redaction），僅記錄 issue metadata。
 | `rules/fix-all-issues.md` | Modify | Exceptions 表新增 Nit exemption |
 | `skills/codex-code-review/references/review-common.md` | Modify | 新增 P2/Nit Post-Ready Sweep section + re-review template 擴充驗證 P2/Nit |
 | `skills/codex-code-review/SKILL.md` | Modify | Review Loop 說明同步（Blocked → fix P0/P1 → Ready → P2 sweep） |
+| `skills/codex-code-review/review_rubric.md` | Modify | Merge Gate 定義對齊 review-common.md（Ready = No P0/P1） |
 
 ## Acceptance Criteria
 
-- [ ] `auto-loop.md` 包含 P2/Nit Quality Sweep 步驟（Gate Ready → fix P2/Nit → verify → precommit）
-- [ ] `fix-all-issues.md` Exceptions 表包含 Nit exemption（AI attempted fix, Nit persists）
-- [ ] `review-common.md` 包含 P2/Nit Post-Ready Sweep 文件
-- [ ] Auto-loop 流程：Gate Ready + P2 exists → batch fix → 1 Codex `--continue` → precommit
-- [ ] Auto-loop 流程：Gate Ready + no P2/Nit → precommit（現有行為不變）
-- [ ] Unresolved P2 → `Need Human`（不靜默跳過）
-- [ ] Unresolved Nit → continue with log（顯式豁免）
-- [ ] Pass `/codex-review-doc`
+- [x] `auto-loop.md` 包含 P2/Nit Quality Sweep 步驟（Gate Ready → fix P2/Nit → verify → precommit）
+- [x] `fix-all-issues.md` Exceptions 表包含 Nit exemption（AI attempted fix, Nit persists）
+- [x] `review-common.md` 包含 P2/Nit Post-Ready Sweep 文件
+- [x] Auto-loop 流程：Gate Ready + P2 exists → batch fix → 1 Codex `--continue` → precommit
+- [x] Auto-loop 流程：Gate Ready + no P2/Nit → precommit（現有行為不變）
+- [x] Unresolved P2 → `Need Human`（不靜默跳過）
+- [x] Unresolved Nit → continue with log（顯式豁免）
+- [x] Pass `/codex-review-doc`
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Best Practices | Done | `/best-practices` audit + Codex brainstorm `019cc35c` |
-| Tech Spec | - | |
-| Development | - | |
-| Review | - | |
-| Acceptance | - | |
+| Tech Spec | - | Rule-only change, no tech spec needed |
+| Development | Done | `2f1da9e` 修改 5 檔 + request doc |
+| Review | Done | 4 次 `/codex-review-doc` 全數通過 + P2/Nit sweep 驗證 |
+| Acceptance | Done | 8/8 AC checked |
 
 ## References
 
