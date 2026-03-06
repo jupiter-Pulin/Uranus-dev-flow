@@ -2,8 +2,8 @@
 /**
  * precommit-runner.js
  * Engineering-grade precommit runner (package-manager agnostic):
- * - full: lint:fix && build && test:unit
- * - fast: lint:fix && test:unit
+ * - full: lint:fix && build && test (tiered: test:ci > test > test:fast > test:unit)
+ * - fast: lint:fix && test (tiered: test:fast > test:unit > test)
  * Auto-detects yarn/pnpm/npm from lockfile.
  *
  * Outputs:
@@ -177,16 +177,21 @@ async function main() {
       }
     }
 
-    // test:unit
-    if (hasScript(pkg, 'test:unit')) {
-      const [cmd, testArgs] = pmCommand(pm, 'test:unit');
-      steps.push({ name: 'test_unit', cmd, args: testArgs, stdoutFilter: testStdoutFilter });
-    } else if (hasScript(pkg, 'test')) {
-      const [cmd, testArgs] = pmCommand(pm, 'test');
-      steps.push({ name: 'test_unit', cmd, args: testArgs, stdoutFilter: testStdoutFilter });
-      process.stdout.write(`> fallback: using "test" instead of "test:unit"\n`);
+    // test selection by mode (tiered preference chain)
+    const testPreference = args.mode === 'fast'
+      ? ['test:fast', 'test:unit', 'test']
+      : ['test:ci', 'test', 'test:fast', 'test:unit'];
+    const selectedTest = testPreference.find(s => hasScript(pkg, s));
+
+    if (selectedTest) {
+      const [cmd, testArgs] = pmCommand(pm, selectedTest);
+      // name stays 'test_unit' (canonical phase name) regardless of selected script
+      steps.push({ name: 'test_unit', cmd, args: testArgs, env: { CI: '1' }, stdoutFilter: testStdoutFilter });
+      if (selectedTest !== 'test:unit') {
+        process.stdout.write(`> test: using "${selectedTest}" (${args.mode} mode)\n`);
+      }
     } else {
-      process.stdout.write(`> skip test_unit (no "test:unit" or "test" script in package.json)\n`);
+      process.stdout.write(`> skip test_unit (no test script in package.json)\n`);
     }
 
     for (const s of steps) {

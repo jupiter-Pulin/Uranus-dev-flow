@@ -15,7 +15,7 @@
 | Change Type | Event              | Execute Immediately  |
 | ----------- | ------------------ | -------------------- |
 | code files  | Fix P0/P1/P2       | `/codex-review-fast` |
-| code files  | review Pass        | `/precommit`         |
+| code files  | review Pass        | `/precommit-fast`    |
 | code files  | precommit Pass     | Doc Sync (see Note)  |
 | code files  | precommit failure  | Fix -> re-run        |
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |

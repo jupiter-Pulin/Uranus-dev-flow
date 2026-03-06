@@ -1,5 +1,5 @@
 ---
-description: Quick pre-commit checks — lint:fix -> test:unit
+description: Quick pre-commit checks — lint:fix -> test
 argument-hint: [--skip-lint]
 allowed-tools: Bash(node:*), Bash(pnpm:*), Bash(yarn:*), Bash(npm:*), Bash(npx:*), Bash(python*:*), Bash(pytest:*), Bash(ruff:*), Bash(mypy:*), Bash(cargo:*), Bash(go:*), Bash(golangci-lint:*), Bash(./gradlew:*), Bash(mvn:*), Bash(bundle:*), Bash(rubocop:*), Bash(rspec:*), Bash(git:*), Read, Grep, Glob
 intent:
@@ -12,8 +12,8 @@ intent:
       skip-if-missing: true
       safety: read-write
     - name: test-unit
-      goal: Run unit test suite
-      preferred: ["test:unit"]
+      goal: Run fast test suite
+      preferred: ["test:fast", "test:unit"]
       alternatives: ["test"]
       skip-if-missing: true
       safety: read-only
@@ -22,7 +22,7 @@ intent:
 
 ## Task
 
-Run quick pre-commit checks: **lint:fix -> test:unit** (no build step)
+Run quick pre-commit checks: **lint:fix -> test** (no build step)
 
 ### Step 1: Check for runner script
 
@@ -41,7 +41,7 @@ If the runner was not found in Step 1, detect the project ecosystem to run steps
 
 | Manifest | Ecosystem | Lint-fix | Test |
 |----------|-----------|----------|------|
-| `package.json` | Node.js | `{pm} lint:fix` | `{pm} test:unit` or `{pm} test` |
+| `package.json` | Node.js | `{pm} lint:fix` | `{pm} test:fast` / `test:unit` / `test` |
 | `pyproject.toml` | Python | `ruff check --fix .` | `pytest tests/unit/` |
 | `Cargo.toml` | Rust | `cargo clippy --fix` | `cargo test` |
 | `go.mod` | Go | `golangci-lint run --fix` | `go test ./...` |
@@ -57,7 +57,7 @@ Read `package.json` (or equivalent manifest) to check which scripts/tools exist,
 | Step | package.json script | If missing |
 |------|-------|------------|
 | lint:fix | `lint:fix` | Skip with note (not all projects have it) |
-| test:unit | `test:unit`, fallback to `test` | Skip with note |
+| test | `test:fast`, fallback to `test:unit`, then `test` | Skip with note |
 
 After lint:fix completes, run `git diff --name-only` to capture auto-fixed files.
 
@@ -66,7 +66,7 @@ After lint:fix completes, run `git diff --name-only` to capture auto-fixed files
 | Scenario | Behavior |
 |----------|----------|
 | No `lint:fix` script | Skip, log "no lint:fix script — skipped" |
-| No `test:unit` or `test` script | Skip, log "no test script — skipped" |
+| No test script in preference chain | Skip, log "no test script — skipped" |
 | No `package.json` | Report error, cannot run checks |
 
 ## Output
@@ -79,7 +79,7 @@ After lint:fix completes, run `git diff --name-only` to capture auto-fixed files
 | Step      | Status | Notes |
 | --------- | ------ | ----- |
 | lint:fix  | ✅/❌/⏭️ | skipped if no script |
-| test:unit | ✅/❌/⏭️ | skipped if no script |
+| test      | ✅/❌/⏭️ | skipped if no script |
 
 ## Changed Files (after lint:fix)
 

@@ -111,7 +111,7 @@ test('fallback to test script when test:unit missing', () => {
   writeScript(dir, 'pass.sh', 0);
 
   const { stdout, summary } = runPrecommit(dir, 'fast');
-  assert.match(stdout, /fallback: using "test" instead of "test:unit"/);
+  assert.match(stdout, /test: using "test" \(fast mode\)/);
   assert.equal(summary.overallPass, true);
   assert.deepEqual(summary.steps.map(step => step.name), ['test_unit']);
 });
@@ -158,4 +158,97 @@ test('fast mode skips build step', () => {
     summary.steps.map(step => step.name),
     ['lint_fix', 'test_unit']
   );
+});
+
+// --- Test tiering preference chain tests ---
+
+test('fast mode prefers test:fast over test:unit', () => {
+  const pkg = {
+    name: 'temp',
+    version: '1.0.0',
+    scripts: {
+      'test:fast': './pass.sh',
+      'test:unit': './fail.sh',
+      test: './fail.sh',
+    },
+  };
+  const dir = createTempRepo(pkg);
+  writeScript(dir, 'pass.sh', 0);
+  writeScript(dir, 'fail.sh', 1);
+
+  const { stdout, summary } = runPrecommit(dir, 'fast');
+  assert.equal(summary.overallPass, true, 'should run test:fast (pass) not test:unit (fail)');
+  assert.match(stdout, /test: using "test:fast" \(fast mode\)/);
+});
+
+test('fast mode falls back to test:unit when no test:fast', () => {
+  const pkg = {
+    name: 'temp',
+    version: '1.0.0',
+    scripts: {
+      'test:unit': './pass.sh',
+      test: './fail.sh',
+    },
+  };
+  const dir = createTempRepo(pkg);
+  writeScript(dir, 'pass.sh', 0);
+  writeScript(dir, 'fail.sh', 1);
+
+  const { summary } = runPrecommit(dir, 'fast');
+  assert.equal(summary.overallPass, true, 'should run test:unit (pass) not test (fail)');
+});
+
+test('full mode prefers test:ci over test', () => {
+  const pkg = {
+    name: 'temp',
+    version: '1.0.0',
+    scripts: {
+      'test:ci': './pass.sh',
+      test: './fail.sh',
+      'test:unit': './fail.sh',
+    },
+  };
+  const dir = createTempRepo(pkg);
+  writeScript(dir, 'pass.sh', 0);
+  writeScript(dir, 'fail.sh', 1);
+
+  const { stdout, summary } = runPrecommit(dir, 'full');
+  assert.equal(summary.overallPass, true, 'should run test:ci (pass) not test (fail)');
+  assert.match(stdout, /test: using "test:ci" \(full mode\)/);
+});
+
+test('full mode falls back to test when no test:ci', () => {
+  const pkg = {
+    name: 'temp',
+    version: '1.0.0',
+    scripts: {
+      test: './pass.sh',
+      'test:unit': './fail.sh',
+    },
+  };
+  const dir = createTempRepo(pkg);
+  writeScript(dir, 'pass.sh', 0);
+  writeScript(dir, 'fail.sh', 1);
+
+  const { stdout, summary } = runPrecommit(dir, 'full');
+  assert.equal(summary.overallPass, true, 'should run test (pass) not test:unit (fail)');
+  assert.match(stdout, /test: using "test" \(full mode\)/);
+});
+
+test('full mode falls back to test:fast when no test:ci or test', () => {
+  const pkg = {
+    name: 'temp',
+    version: '1.0.0',
+    scripts: {
+      'test:fast': './pass.sh',
+      'test:unit': './fail.sh',
+    },
+  };
+  const dir = createTempRepo(pkg);
+  writeScript(dir, 'pass.sh', 0);
+  writeScript(dir, 'fail.sh', 1);
+
+  const { stdout, summary } = runPrecommit(dir, 'full');
+  assert.equal(summary.overallPass, true, 'should run test:fast (pass) not test:unit (fail)');
+  assert.match(stdout, /test: using "test:fast" \(full mode\)/);
 });
