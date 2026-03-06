@@ -18,7 +18,7 @@
 
 ## Merge Gate
 
-- **Ready**: No P0/P1, safe to merge
+- **Ready**: No P0/P1; P2/Nit sweep policy applies before precommit
 - **Blocked**: Has P0/P1, needs fix
 
 ## Codex Independent Research (Required)
@@ -34,9 +34,9 @@ Codex **must** perform its own research, not rely only on provided diff/context:
 
 ### Project Research
 
-- Search called functions: `grep -r "functionName" src/ -l | head -10`
+- Search called functions: `grep -r "functionName" . -l --include="*.ts" --include="*.js" --include="*.md" | head -10`
 - Read related files: `cat <file-path> | head -100`
-- Understand class definitions: `grep -A 20 "class ClassName" src/`
+- Understand class definitions: `grep -rA 20 "class ClassName" . --include="*.ts" --include="*.js"`
 
 ## Review Loop
 
@@ -48,6 +48,23 @@ When review result is Blocked:
 2. Fix P0/P1 issues
 3. Re-review using `--continue <threadId>`
 4. Repeat until Ready
+
+## P2/Nit Post-Ready Sweep
+
+When review returns Ready with P2/Nit findings, auto-loop triggers a quality sweep:
+
+1. **Batch-fix** all P2/Nit items (1 attempt)
+2. **Re-review** using `--continue <threadId>` with P2/Nit verification
+3. **Evaluate**: unresolved P2 → ⚠️ Need Human; unresolved Nit → exempt with `[NIT_DEFERRED]` log; all resolved → `/precommit-fast`
+
+### P2/Nit Judgment
+
+| Step | Description |
+|------|-------------|
+| Parse | Extract P2/Nit findings from Codex output (tag-based `[P2]`/`[Nit]` or section-based `#### P2`/`#### Nit`) |
+| Identity | Key = `file:line + issue description` |
+| Dedupe | Same key across reviews counts as 1 item |
+| False-positive | Same key persists after fix → mark `possible-false-positive` |
 
 ### Re-review Prompt Template
 
@@ -66,7 +83,8 @@ ${GIT_DIFF}
 Please verify:
 1. Have previous P0/P1 issues been correctly fixed?
 2. Did fixes introduce new issues?
-3. Update Merge Gate status`,
+3. Update Merge Gate status
+4. For P2/Nit items from previous review: are they resolved? List any remaining P2/Nit with status.`,
 });
 ```
 
@@ -78,5 +96,7 @@ Please verify:
 
 ## Gate Sentinels (for Hook parsing)
 
-- `## Gate: ✅` / `✅ Ready` — Passed
-- `## Gate: ⛔` / `⛔ Blocked` — Failed
+- `✅ Ready` — Passed (code review)
+- `⛔ Blocked` — Failed (code review)
+
+> Note: Use explicit `✅ Ready` / `⛔ Blocked` tokens. Bare `## Gate:` prefix is optional label only.

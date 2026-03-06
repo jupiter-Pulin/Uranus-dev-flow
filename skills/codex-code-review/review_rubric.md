@@ -13,5 +13,5 @@
 
 | Gate      | Condition                              |
 | --------- | -------------------------------------- |
-| Ready     | No P0, P1 fixed or has mitigation      |
-| Blocked   | Has P0, or checks failing              |
+| Ready     | No P0/P1; P2/Nit sweep policy applies before precommit |
+| Blocked   | Has P0/P1, needs fix                   |

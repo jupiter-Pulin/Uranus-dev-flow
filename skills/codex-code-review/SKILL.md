@@ -39,6 +39,8 @@ Collect changes → [Pre-checks if Full] → Codex review → Findings + Gate �
 | Full    | Same as Fast |
 | Branch  | `git diff ${BASE_BRANCH}..HEAD --no-color \| head -3000` + commit history + changed files |
 
+If diff is truncated, Codex independently reads changed files via `git diff --name-only` + `cat` (per research instructions).
+
 ### Step 2: Pre-checks (Full variant only)
 
 ```bash
@@ -46,7 +48,7 @@ Collect changes → [Pre-checks if Full] → Codex review → Findings + Gate �
 {BUILD_COMMAND}
 ```
 
-Record results as `LOCAL_CHECKS`.
+These placeholders are resolved from the host project's `CLAUDE.md` or `package.json` scripts. Record results as `LOCAL_CHECKS`.
 
 ### Step 3: Codex Review
 
@@ -86,8 +88,9 @@ See @references/review-common.md for:
 **⚠️ @CLAUDE.md auto-loop: fix → re-review → ... → ✅ PASS ⚠️**
 
 Blocked → fix P0/P1 → `/codex-review-fast --continue <threadId>` → repeat until Ready.
+Ready + P2/Nit → batch fix → 1 Codex `--continue` verify → evaluate (see `rules/auto-loop.md` P2/Nit Quality Sweep).
 
-Max 3 rounds. Still failing → report blocker.
+3 rounds on same issue → report blocker, request intervention.
 
 ## Verification
 
@@ -95,6 +98,7 @@ Max 3 rounds. Still failing → report blocker.
 - [ ] Gate is clear (✅ Ready / ⛔ Blocked)
 - [ ] Issues include: file:line, description, fix suggestion
 - [ ] Codex performed independent project research
+- [ ] Branch variant: dimension rating table included
 
 ## References
 

@@ -57,6 +57,11 @@ When fixing, must answer:
 | User explicitly asks to skip | User says "don't worry about this"                |
 | Beyond current scope       | Requires architecture-level changes; report and log |
 | Third-party library issue  | Cannot modify; document workaround                  |
+| Nit persists after AI fix  | AI attempted fix, Codex still reports same Nit (possible false-positive); logged via `[NIT_DEFERRED]` |
+
+## Precedence
+
+When auto-loop's P2/Nit Quality Sweep results in unresolved P2 after batch-fix + re-review, follow `auto-loop.md` `⚠️ Need Human` exit condition. Zero tolerance applies to the fix attempt; the stop decision belongs to auto-loop.
 
 ## Relationship to Other Rules
 

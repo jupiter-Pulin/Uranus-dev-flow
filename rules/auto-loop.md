@@ -15,11 +15,45 @@
 | Change Type | Event              | Execute Immediately  |
 | ----------- | ------------------ | -------------------- |
 | code files  | Fix P0/P1/P2       | `/codex-review-fast` |
-| code files  | review Pass        | `/precommit-fast`    |
+| code files  | review Ready + P2/Nit | P2/Nit Quality Sweep |
+| code files  | review Ready (no P2/Nit) | `/precommit-fast` |
 | code files  | precommit Pass     | Doc Sync (see Note)  |
 | code files  | precommit failure  | Fix -> re-run        |
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |
 | `.md`       | review failure     | Fix -> re-run        |
+
+## P2/Nit Quality Sweep
+
+**Gate ✅ Ready + P2/Nit exists → batch fix → verify → precommit**
+
+When Codex review returns `✅ Ready` but findings include P2 or Nit items:
+
+| Step | Action | Detail |
+|------|--------|--------|
+| 1 | Batch-fix | Fix all P2/Nit in one pass (1 attempt) |
+| 2 | Verify | 1 batched Codex `--continue` re-review |
+| 3 | Evaluate | Check resolution status |
+| 4 | Continue | Proceed to `/precommit-fast` or stop |
+
+### Resolution Evaluation
+
+| Priority | Condition | Action |
+|----------|-----------|--------|
+| 1 | Unresolved P2 | ⚠️ Need Human — stop, report reason |
+| 2 | Unresolved Nit only | Continue — Nit exemption with log |
+| 3 | All resolved | `/precommit-fast` |
+
+### Nit Exemption Log
+
+When unresolved Nit items are exempted, output structured log:
+
+```
+[NIT_DEFERRED] file:line | issue | reason: possible-false-positive | timestamp
+```
+
+### No P2/Nit Path
+
+Gate ✅ Ready + no P2/Nit → directly `/precommit-fast` (unchanged behavior).
 
 ## Exit Conditions (Only)
 
@@ -98,7 +132,7 @@ Claude: [Edit tool complete]
 | Layer       | Mechanism                          | Trigger              |
 | ----------- | ---------------------------------- | -------------------- |
 | PostToolUse | Track file changes + review result | Edit/Bash execution  |
-| Stop Hook   | Block stopping before review done  | When attempting stop  |
+| Stop Hook   | Warn before stopping if review pending (strict mode: block) | When attempting stop  |
 
 ### State File Schema
 
@@ -137,11 +171,15 @@ Claude: [Edit tool complete]
 
 Review commands must output standard markers. Hook-parsed sentinels are consumed by `stop-guard.sh`; behavior-layer sentinels are consumed by Claude's auto-loop logic only.
 
-| Sentinel | Meaning | Parsed by |
-|----------|---------|-----------|
-| `## Gate: ✅` / `✅ All Pass` | Passed | Hook |
-| `## Gate: ⛔` / `⛔ Block` | Failed | Hook |
-| `## Gate: ⚠️` / `⚠️ Need Human` | Needs human intervention | Behavior-layer only |
+| Sentinel | Context | Meaning | Parsed by |
+|----------|---------|---------|-----------|
+| `✅ Ready` | Code review | No P0/P1 | Hook + behavior |
+| `⛔ Blocked` | Code review | Has P0/P1 | Hook + behavior |
+| `✅ Mergeable` | Doc review | No 🔴 items | Hook + behavior |
+| `⛔ Needs revision` | Doc review | Has 🔴 items | Hook + behavior |
+| `✅ All Pass` | Precommit | All checks passed | Hook |
+| `⛔ FAIL` / `❌ FAIL` | Precommit | Check failed | Hook |
+| `⚠️ Need Human` | Any | Needs human intervention | Behavior-layer only |
 
 ### Doc Sync Note
 
