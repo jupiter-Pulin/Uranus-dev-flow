@@ -1,9 +1,9 @@
 # Uncommitted Code Risk Assessment Skill
 
 > **Created**: 2026-02-12
-> **Status**: In Development
+> **Status**: Completed
 > **Priority**: P2
-> **Tech Spec**: (pending — run `/tech-spec` to generate)
+> **Tech Spec**: N/A — requirements doc serves as spec
 
 ## Background
 
@@ -52,7 +52,7 @@
 ### Output
 
 - JSON + Markdown 雙輸出（`--json` / `--markdown`）
-- Risk Gate sentinel: `## Risk Gate: ✅ PASS` / `⚠️ REVIEW` / `⛔ BLOCK`
+- Gate sentinel: `## Gate: ✅` (PASS) / `## Gate: ⚠️` (REVIEW) / `## Gate: ⛔` (BLOCK)
 - Exit codes: `0` = low/medium, `1` = high, `2` = critical
 
 ### Routing Boundary
@@ -99,10 +99,10 @@
 - [x] Risk levels 正確對應 exit codes（0/1/2）
 - [x] Blast radius 使用 grep-based 近似，輸出 confidence 等級
 - [x] 語言偵測支援 JS/TS/Python/Go 基本 import pattern
-- [x] Risk Gate sentinel 格式正確
+- [x] Gate sentinel (`## Gate: ✅/⚠️/⛔`) 格式正確
 - [x] `/pr-review` 整合：自動呼叫 fast mode，High+ 時觸發 deep
 - [x] SKILL.md 明確定義與 `/codex-security` 的 routing boundary
-- [ ] SKILL.md 通過 `/skill-health-check`
+- [x] SKILL.md 通過 `/skill-health-check`
 - [x] 測試覆蓋 happy path + edge cases（空 diff、大規模重構、migration 檔案）
 - [x] Pass `/codex-review-fast`
 - [x] Pass `/precommit`
@@ -113,8 +113,8 @@
 |-------|--------|------|
 | Analysis | Done | Codex Brainstorm 完成，Nash Equilibrium 達成 |
 | Development | Done | 7 files created/modified, 4 rounds Codex review (11 issues fixed) |
-| Testing | Done | 22 tests pass, 216/216 full suite pass, `/precommit` pass |
-| Acceptance | In Progress | 12/13 AC checked, pending `/skill-health-check` |
+| Testing | Done | 23 tests pass, 374/374 full suite pass, `/precommit` pass |
+| Acceptance | Done | 13/13 AC checked |
 
 ## References
 

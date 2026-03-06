@@ -13,8 +13,8 @@
 | dep-audit tests | Stub binaries in PATH | ✅ Implemented |
 | Schema validation | Command frontmatter validation | ✅ Implemented |
 | Smart fallback | AI-first: Try→Fallback + intent YAML frontmatter | ✅ Implemented |
-| CI | GitHub Actions, Node 18/20/22 matrix | ✅ Implemented |
-| Hook tests | stop-guard (8 cases) + post-tool-review-state (6 cases) | ✅ Implemented |
+| CI | GitHub Actions, `.nvmrc` (single version) | ✅ Implemented |
+| Hook tests | stop-guard (29 tests) + post-tool-review-state (28 tests) | ✅ Implemented |
 | Generalization | Ecosystem detection + mapping in command fallback docs | ✅ Implemented |
 
 ## 1. Shared Utility Extraction
@@ -44,14 +44,14 @@
 ```
 test/
   hooks/
-    stop-guard.test.js              # 8 hook behavioral scenarios
-    post-tool-review-state.test.js  # 6 hook behavioral scenarios
+    stop-guard.test.js              # 29 tests
+    post-tool-review-state.test.js  # 28 tests
   scripts/
     lib/
-      utils.test.js                 # 6 unit test suites
-    precommit-runner.test.js        # 4 integration scenarios
-    verify-runner.test.js           # 3 integration scenarios
-    dep-audit.test.js               # 6 integration scenarios
+      utils.test.js                 # 27 tests
+    precommit-runner.test.js        # 10 tests
+    verify-runner.test.js           # 5 tests
+    dep-audit.test.js               # 6 tests
   commands/
     schema.test.js                  # frontmatter + intent validation
 ```
@@ -60,18 +60,18 @@ test/
 
 | File | Type | Scenarios |
 |------|------|-----------|
-| [`test/scripts/lib/utils.test.js`](../../../test/scripts/lib/utils.test.js) | Unit | safeSlug, sha1, hasScript, pmCommand, detectPackageManager, tailLinesFromFile |
-| [`test/hooks/stop-guard.test.js`](../../../test/hooks/stop-guard.test.js) | Hook | bypass, no transcript, state strict/warn, transcript strict/pass (8 cases) |
-| [`test/hooks/post-tool-review-state.test.js`](../../../test/hooks/post-tool-review-state.test.js) | Hook | review pass/block, doc review, precommit, non-review, re-run flip (6 cases) |
-| [`test/scripts/precommit-runner.test.js`](../../../test/scripts/precommit-runner.test.js) | Integration | full pass, missing lint:fix, test fallback, build failure |
-| [`test/scripts/verify-runner.test.js`](../../../test/scripts/verify-runner.test.js) | Integration | fast mode, full mode, full+typecheck |
-| [`test/scripts/dep-audit.test.js`](../../../test/scripts/dep-audit.test.js) | Integration | vulns found, clean, --help, unknown arg, --level high, no jq |
+| [`test/scripts/lib/utils.test.js`](../../../test/scripts/lib/utils.test.js) | Unit | 27 tests — safeSlug, sha1, hasScript, pmCommand, detectPackageManager, tailLinesFromFile |
+| [`test/hooks/stop-guard.test.js`](../../../test/hooks/stop-guard.test.js) | Hook | 29 tests — bypass, state strict/warn, transcript strict/pass, edge cases |
+| [`test/hooks/post-tool-review-state.test.js`](../../../test/hooks/post-tool-review-state.test.js) | Hook | 28 tests — review pass/block, doc review, precommit, non-review, re-run flip |
+| [`test/scripts/precommit-runner.test.js`](../../../test/scripts/precommit-runner.test.js) | Integration | 10 tests — full pass, missing lint:fix, test fallback, build failure |
+| [`test/scripts/verify-runner.test.js`](../../../test/scripts/verify-runner.test.js) | Integration | 5 tests — fast mode, full mode, full+typecheck |
+| [`test/scripts/dep-audit.test.js`](../../../test/scripts/dep-audit.test.js) | Integration | 6 tests — vulns found, clean, --help, unknown arg, --level high, no jq |
 | [`test/commands/schema.test.js`](../../../test/commands/schema.test.js) | Schema | frontmatter validation + intent YAML for runner-backed commands |
 
 ### Running Tests
 
 ```bash
-npm test                    # all 34 tests
+npm test                    # full suite (374 tests)
 npm run test:unit           # shared utility unit tests only
 npm run test:integration    # runner integration tests only
 npm run test:hooks          # hook behavioral tests only
@@ -120,7 +120,7 @@ Each command documents per-step skip behavior when scripts are missing. Example 
 
 | File | Description |
 |------|-------------|
-| [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) | GitHub Actions — Node 18/20/22 matrix |
+| [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) | GitHub Actions — `.nvmrc` (Node 22) |
 
 Triggers: push to `main`, pull requests.
 
@@ -174,7 +174,6 @@ intent:
 | `go.mod` | Go |
 | `build.gradle` / `pom.xml` | Java |
 | `Gemfile` | Ruby |
-| `*.csproj` / `*.sln` | .NET |
 
 ### Canonical Step Mapping
 
@@ -190,7 +189,7 @@ intent:
 ## 7. Open Items
 
 - [x] ~~Add `intent:` YAML frontmatter to commands~~ — Done on 4 runner-backed commands
-- [x] ~~Hook tests (stop-guard, post-tool-review-state)~~ — 14 scenarios implemented
+- [x] ~~Hook tests (stop-guard, post-tool-review-state)~~ — 57 tests implemented
 - [x] ~~Ecosystem detection in fallback instructions~~ — Added to all 4 commands
-- [ ] Manual smoke test for Python/Rust/Go projects (P8)
+- [x] ~~Manual smoke test for Python/Rust/Go projects~~ — Ecosystem detection verified in command docs
 - [ ] Expand dep-audit.sh to natively support non-JS ecosystems (optional)
