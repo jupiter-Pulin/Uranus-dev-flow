@@ -74,12 +74,12 @@
 
 | # | Key ID (short) | UID | Status | Expires |
 |---|----------------|-----|--------|---------|
-| 1 | `4517A950` | yuhooo \<yuchen@hahow.in\> | expired | 2025-03-25 |
-| 2 | `4337E823` | sd0 \<software.develop.0x@gmail.com\> | expired | 2025-03-25 |
-| 3 | `F0987834` | sd0 \<software.develop.0x@gmail.com\> | active | 2027-04-16 |
-| 4 | `C3075A75` | yuhooo \<yuchen@hahow.in\> | active | 2027-04-16 |
-| 5 | `0883C968` | SD0xOneKey \<yuhao.chen@onekey.so\> | active | 2027-05-21 |
-| 6 | `30D2BE5B` | SD0 \<107539203+sd0xdev@users.noreply.github.com\> | active | 2028-02-20 |
+| 1 | `4517A950` | yuhooo \<<yuchen@hahow.in>\> | expired | 2025-03-25 |
+| 2 | `4337E823` | sd0 \<<software.develop.0x@gmail.com>\> | expired | 2025-03-25 |
+| 3 | `F0987834` | sd0 \<<software.develop.0x@gmail.com>\> | active | 2027-04-16 |
+| 4 | `C3075A75` | yuhooo \<<yuchen@hahow.in>\> | active | 2027-04-16 |
+| 5 | `0883C968` | SD0xOneKey \<<yuhao.chen@onekey.so>\> | active | 2027-05-21 |
+| 6 | `30D2BE5B` | SD0 \<<107539203+sd0xdev@users.noreply.github.com>\> | active | 2028-02-20 |
 
 ## 3. Technical Solution
 

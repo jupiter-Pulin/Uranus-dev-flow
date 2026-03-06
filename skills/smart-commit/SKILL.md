@@ -61,6 +61,21 @@ Infer format, type vocabulary, subject conventions (capitalization/tense/ticket 
 
 **1c. Identity Diagnostics**
 
+**Shared diagnostic (preferred path)**:
+
+```bash
+bash scripts/run-skill.sh git-profile git-profile.sh doctor --json
+```
+
+If the script succeeds, parse the JSON output:
+- `status: "ok"` → silent continue, use `effective_identity` and `signing` fields
+- `status: "warn"` → display warnings from `issues[]`, continue
+- `status: "halt"` → display halt issues, stop with guidance
+
+If the script fails (not found, parse error, non-zero exit), **fall back** to the inline diagnostics below. Infrastructure failure = warn-only; never halt on fallback path itself.
+
+**Inline fallback**:
+
 ```bash
 # Read effective identity + origin
 git config --show-origin --show-scope --get-all user.name
