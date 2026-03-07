@@ -1,7 +1,7 @@
 ---
 description: Install plugin runner scripts into project .claude/scripts/ for persistent use without plugin loaded
 argument-hint: [--all] [--list] [--dry-run] [--force] [--skill <name>] [--skill-all] [--skill-list] [script-names...]
-allowed-tools: Read, Glob, Write, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*), Bash(chmod:*), Bash(cp:*)
+allowed-tools: Read, Glob, Write, AskUserQuestion, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*), Bash(chmod:*), Bash(cp:*)
 ---
 
 ## Context
@@ -29,6 +29,7 @@ sequenceDiagram
     end
     C->>C: Phase 3: Determine install set
     C->>S: Phase 4: Copy scripts + dependencies
+    C->>C: Phase 4.5: Update manifest
     C-->>C: Phase 5: Output report
 ```
 
@@ -80,7 +81,7 @@ If `--list` is specified, output this table and **stop**.
 
 #### Skill Scripts
 
-Dynamically enumerate scripts under `skills/*/scripts/*`. Known skill scripts:
+Dynamically enumerate scripts under `skills/*/scripts/*`. The table below lists known examples (non-exhaustive — actual set is discovered from filesystem at runtime):
 
 | Script | Skill | Type | Dependencies |
 |--------|-------|------|--------------|
@@ -97,14 +98,14 @@ Dynamically enumerate scripts under `skills/*/scripts/*`. Known skill scripts:
 | `intake_cached.js` | repo-intake | Node.js | None |
 | `scan_midway_repo.js` | repo-intake | Node.js | None |
 
-If `--skill-list` is specified, output this skill scripts table and **stop**.
+If `--skill-list` is specified, enumerate from filesystem and output the discovered skill scripts as a table, then **stop**.
 
 ### Phase 3: Determine Installation Set
 
 - `--all`: install all core scripts + dependencies
-- `--skill <name>`: install all scripts under the specified skill
+- `--skill <name>`: install all scripts under the specified skill. **Input validation**: `<name>` must match a discovered skill directory name exactly (from `skills/*/scripts/*`); reject `..`, `/`, leading `.`, and absolute paths.
 - `--skill-all`: install all skill scripts from every skill
-- Specific `script-names`: install those + required dependencies (auto-include `lib/utils.js` when any `.js` runner is selected). Validate names exist in Phase 2 table; error on unknown names.
+- Specific `script-names`: install those + required dependencies (auto-include `lib/utils.js` when any `.js` runner is selected). Validate names exist in discovered filesystem set; error on unknown names.
 - Neither: present the list and use AskUserQuestion to let the user select
 - Combinations: `--all --skill op-session` installs core scripts + the specified skill scripts
 
@@ -134,6 +135,27 @@ If `--dry-run`, compute the install plan without writing any files, output the p
    | File exists, content differs | **Skip** + warn as conflict | **Overwrite** |
 
 3. After copying bash scripts (core and skill): `chmod +x` all `.sh` files
+
+4. Collect hashes for manifest tracking:
+
+   ```bash
+   git hash-object --no-filters ${REPO_ROOT}/.claude/scripts/<name>
+   ```
+
+### Phase 4.5: Update Manifest
+
+Track installed scripts in the shared manifest for future smart merge operations.
+
+1. Read `.claude/.sd0x-install-state.json` via `Read` tool (create `{}` if not exists; JSON parse fails → warn + treat as missing)
+2. Read plugin version: `.claude-plugin/plugin.json` → `package.json` → `"unknown"`
+3. Update in-memory:
+   - `schema_version: 1`
+   - `installed_at`: current ISO-8601
+   - `plugin_version`: from step 2
+   - `scripts`: update hash for each file in managed state — both newly copied and already-identical (skipped). Structure: `scripts[filename] = { "hash": "<sha1>" }`
+   - Preserve `rules` / `hook_scripts` keys from existing manifest
+4. Write via `Write` tool to `.claude/.sd0x-install-state.json`
+5. Error: warn + continue (manifest is advisory; next run recovers)
 
 ### Phase 5: Output Report
 

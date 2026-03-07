@@ -1,7 +1,7 @@
 ---
 description: Install plugin hooks into project .claude/ for persistent use without plugin loaded
 argument-hint: [--all] [--list] [--dry-run] [--force] [--local] [--guard-mode warn|strict] [hook-names...]
-allowed-tools: Read, Grep, Glob, Write, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*), Bash(chmod:*), Bash(jq:*)
+allowed-tools: Read, Grep, Glob, Write, AskUserQuestion, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*), Bash(chmod:*), Bash(jq:*)
 ---
 
 ## Context
@@ -33,6 +33,8 @@ sequenceDiagram
     C->>C: Phase 3: Determine install set
     C->>S: Phase 4a: Copy scripts
     C->>J: Phase 4b: Merge hook defs into settings
+    C->>C: Phase 4c: Update manifest
+    C->>C: Phase 4.5: Backfill CLAUDE.md
     C-->>C: Phase 5: Output report
 ```
 
@@ -119,6 +121,12 @@ If `--dry-run`, compute the install plan (conflict detection, merge preview) wit
 
 3. After copying: `chmod +x ${REPO_ROOT}/.claude/hooks/<name>.sh`
 
+4. Collect hashes for manifest tracking:
+
+   ```bash
+   git hash-object --no-filters ${REPO_ROOT}/.claude/hooks/<name>.sh
+   ```
+
 #### Phase 4b: Merge Hook Definitions into Settings
 
 Target file: `${REPO_ROOT}/.claude/settings.json` (or `settings.local.json` with `--local`).
@@ -159,14 +167,29 @@ Merge strategy:
 - `--force` semantics: **Replace** the existing entry at the same matcher (not append a duplicate). Remove the old entry, then add the new one.
 - Write updated settings back
 
+### Phase 4c: Update Manifest
+
+Track installed hook scripts in the shared manifest for future smart merge operations.
+
+1. Read `.claude/.sd0x-install-state.json` via `Read` tool (create `{}` if not exists; JSON parse fails → warn + treat as missing)
+2. Read plugin version: `.claude-plugin/plugin.json` → `package.json` → `"unknown"`
+3. Update in-memory:
+   - `schema_version: 1`
+   - `installed_at`: current ISO-8601
+   - `plugin_version`: from step 2
+   - `hook_scripts`: update hash for each file in managed state — both newly copied and already-identical (skipped). Structure: `hook_scripts[filename] = { "hash": "<sha1>" }`
+   - Preserve `rules` / `scripts` keys from existing manifest
+4. Write via `Write` tool to `.claude/.sd0x-install-state.json`
+5. Error: warn + continue (manifest is advisory; next run recovers)
+
 ### Phase 4.5: Backfill CLAUDE.md (Closed-Loop Guarantee)
 
 Ensure `.claude/CLAUDE.md` contains the behavior-layer text so the auto-loop engine can activate. This guarantees a closed loop even when `/install-hooks` is run standalone (without `/project-setup`).
 
 1. Grep `.claude/CLAUDE.md` for `Required Checks`
 2. **Found** → skip (already configured)
-3. **Not found but file exists** → append the Required Checks + Auto-Loop Rule block at end of file (content from `CLAUDE.template.md` L1-33)
-4. **File does not exist** → extract from plugin's `CLAUDE.template.md`: L1-33 (Required Checks + Auto-Loop Rule) → create minimal `.claude/CLAUDE.md`. Remove ecosystem block markers.
+3. **Not found but file exists** → append the Required Checks + Auto-Loop Rule block at end of file (extract from `CLAUDE.template.md`: `## Required Checks` through `### Auto-Loop Rule` sections)
+4. **File does not exist** → extract from plugin's `CLAUDE.template.md`: `## Required Checks` through `### Auto-Loop Rule` sections → create minimal `.claude/CLAUDE.md`. Remove ecosystem block markers.
 
 ### Phase 5: Output Report
 

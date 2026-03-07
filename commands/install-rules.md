@@ -1,7 +1,7 @@
 ---
 description: Install plugin rules into project .claude/rules/ for persistent use without plugin loaded
-argument-hint: [--all] [--list] [--dry-run] [--force] [rule-names...]
-allowed-tools: Read, Grep, Glob, Write, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*)
+argument-hint: [--all] [--list] [--dry-run] [--force] [--legacy-strategy <strategy>] [rule-names...]
+allowed-tools: Read, Grep, Glob, Write, AskUserQuestion, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*)
 ---
 
 ## Context
@@ -11,7 +11,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash(mkdir:*), Bash(diff:*), Bash(git:*)
 
 ## Task
 
-Install sd0x-dev-flow plugin rules into the current project's `.claude/rules/` directory so they persist even without the plugin loaded.
+Install sd0x-dev-flow plugin rules into the current project's `.claude/rules/` directory so they persist even without the plugin loaded. Uses manifest-tracked smart merge to auto-upgrade unchanged rules, preserve user edits, and intelligently handle conflicts.
 
 > **Note**: Installed rules are behavioral guidance for Claude. They reference commands in short form (`/codex-review-fast`). When the sd0x-dev-flow plugin is loaded, commands are auto-namespaced as `/sd0x-dev-flow:codex-review-fast`. For full command execution support without the plugin, also run `/install-hooks` to set up the hook scripts locally.
 
@@ -20,19 +20,46 @@ Install sd0x-dev-flow plugin rules into the current project's `.claude/rules/` d
 ```mermaid
 sequenceDiagram
     participant C as Claude
-    participant P as Plugin Rules
+    participant M as .claude/.sd0x-install-state.json
+    participant S as Plugin rules/
     participant T as .claude/rules/
+    participant U as User (AskUserQuestion)
 
-    C->>P: Phase 1: Locate plugin rules dir
-    P-->>C: Found (glob / fallback)
-    C->>P: Phase 2: Enumerate *.md rules
-    alt --list
-        C-->>C: Output table & stop
-    end
+    C->>S: Phase 1: Locate plugin rules dir
+    C->>S: Phase 2: Enumerate *.md
     C->>C: Phase 3: Determine install set
-    C->>T: Phase 4: Check conflicts & install
-    Note over T: mkdir -p, diff, write
-    C-->>C: Phase 5: Output report
+    C->>M: Phase 3.5: Read manifest + classify
+    alt Manifest missing
+        alt Target files exist
+            C->>C: Legacy migration mode
+        else No target files
+            C->>C: Fresh install mode
+        end
+    end
+    loop Each rule in install set
+        C->>T: Hash local (git hash-object)
+        C->>S: Hash plugin source
+        C->>M: Compare vs manifest base hash
+        alt !local_changed && plugin_changed
+            C->>T: Auto-update
+        else local_changed && !plugin_changed
+            C->>C: Keep local
+        else local_changed && plugin_changed
+            alt Has ## headings
+                C->>C: Section merge
+                alt Has conflicts
+                    C->>U: AskUserQuestion per file
+                end
+            else Flat
+                C->>U: AskUserQuestion
+            end
+        else Neither changed
+            C->>C: Skip
+        end
+    end
+    C->>M: Phase 4.5: Write updated manifest
+    C->>T: Phase 4.6: Backfill CLAUDE.md
+    C->>C: Phase 5: Output report
 ```
 
 ### Arguments
@@ -46,7 +73,8 @@ $ARGUMENTS
 | `--all` | Install all available rules |
 | `--list` | List available rules without installing |
 | `--dry-run` | Show what would be installed, no changes |
-| `--force` | Overwrite existing rules with different content |
+| `--force` | Overwrite all rules with plugin source + update manifest |
+| `--legacy-strategy prompt\|keep-local\|use-plugin\|unmanaged` | Strategy for legacy migration (no manifest, files exist). Default: `prompt` |
 | `rule-names...` | Space-separated rule names (without .md extension) |
 
 ### Phase 1: Locate Plugin Rules Directory
@@ -91,29 +119,113 @@ If `--list` is specified, output this table and **stop**.
 - Specific `rule-names`: install only those (validate they exist in the enumerated list)
 - Neither: present the list and use AskUserQuestion to let the user select
 
-### Phase 4: Check Conflicts and Install
+### Phase 3.5: Read Manifest and Classify
 
-Use the repo root from Context (Phase 0) to build absolute paths. All paths below use `REPO_ROOT` from `git rev-parse --show-toplevel`.
+1. **Read manifest**: `Read` tool to read `.claude/.sd0x-install-state.json`
+   - Not found → `{}`
+   - JSON parse fails → warn + treat as missing
 
-1. Ensure target directory exists:
+2. **Read plugin version**: `.claude-plugin/plugin.json` → `package.json` → `"unknown"`
+
+3. **Compute hashes**: Per rule in install set:
 
    ```bash
-   mkdir -p ${REPO_ROOT}/.claude/rules
+   # manifest_hash: from manifest.rules[filename].hash (null if missing)
+   # local_hash:
+   git hash-object --no-filters ${REPO_ROOT}/.claude/rules/<filename>   # null if file missing
+   # plugin_hash:
+   git hash-object --no-filters <plugin-rules-dir>/<filename>
    ```
 
-2. For each rule to install:
+4. **Multi-state classification** (single if/elif chain, first match wins):
 
-   | Scenario | Default | `--force` |
-   |----------|---------|-----------|
-   | `${REPO_ROOT}/.claude/rules/<name>.md` does not exist | **Install** | **Install** |
-   | File exists, content identical | **Skip** (already installed) | **Skip** |
-   | File exists, content differs | **Skip** + warn as conflict | **Overwrite** |
+   | Priority | Condition | Classification |
+   |----------|-----------|---------------|
+   | 0 | `deleted:true` AND local missing | SKIP_DELETED |
+   | 0b | `deleted:true` AND local exists | Clear flag, re-classify |
+   | 1 | manifest_hash is null AND local missing | FRESH_INSTALL |
+   | 2 | manifest_hash is null AND local exists | LEGACY |
+   | 3 | local_hash is null | DELETED_LOCAL |
+   | 4 | local==manifest AND plugin==manifest | SKIP |
+   | 5 | local==manifest AND plugin!=manifest | AUTO_UPDATE |
+   | 6 | local!=manifest AND plugin==manifest | KEEP_LOCAL |
+   | 7 | local!=manifest AND plugin!=manifest | CONFLICT |
 
-3. If `--dry-run`, output the plan table and **stop** (do not write any files).
+   Note: treat missing manifest entry as `{ deleted: false }`
 
-4. For each file to install: Read the source rule content, then Write to `${REPO_ROOT}/.claude/rules/<name>.md`.
+5. **DELETED_LOCAL sub-handling**:
+   - plugin changed (plugin_hash != manifest_hash) → AskUserQuestion: "Rule `<file>` was deleted locally but plugin has updates." Options: "Reinstall (Recommended)" / "Keep deleted"
+   - plugin unchanged → keep deleted silently + write tombstone
 
-### Phase 4.5: Backfill CLAUDE.md (Closed-Loop Guarantee)
+6. Store classifications in memory for Phase 4.
+
+### Phase 4: Smart Merge and Install
+
+**4.0** Ensure target directory exists:
+
+```bash
+mkdir -p ${REPO_ROOT}/.claude/rules
+```
+
+**4.1** `--dry-run` gate → output classification table (see Phase 5 dry-run format) and **stop**.
+
+**4.2** `--force` short-circuit → overwrite all files with plugin source + set manifest hash = plugin_hash + clear all deleted flags. Status = `Forced`.
+
+**4.3** Per-file action table:
+
+| Classification | Action | Manifest Update |
+|---------------|--------|-----------------|
+| SKIP | No action | Unchanged |
+| SKIP_DELETED | No action | Unchanged (tombstone stays) |
+| FRESH_INSTALL | Write plugin source | hash = plugin_hash |
+| AUTO_UPDATE | Write plugin source | hash = plugin_hash |
+| KEEP_LOCAL | No file change | Unchanged |
+| CONFLICT | Merge strategy (4.3a/4.3b) | hash = plugin_hash |
+| LEGACY | Legacy migration (4.3c) | Per user choice |
+| DELETED_LOCAL | Per AskUserQuestion from Phase 3.5 | reinstall: hash=plugin_hash / keep: tombstone |
+
+**4.3a** Section merge (structured rules — has `##` headings):
+
+- Parse both files by `^##` into ordered sections (heading text = key)
+- Preamble (content before first `##`): keep local
+- Plugin sections in order:
+  - identical → keep
+  - both-differ → conflict
+  - plugin-only → add
+- Append local-only sections
+- If conflicts → AskUserQuestion per file:
+  - "Keep local version (Recommended)"
+  - "Use plugin version"
+  - "Apply non-conflicting merge + keep local for conflicts"
+
+**4.3b** Flat file conflict (no `##` headings):
+
+- AskUserQuestion: "Rule `<filename>` was modified both locally and in the plugin update."
+  - "Keep local version (Recommended)"
+  - "Use plugin version"
+
+**4.3c** Legacy migration (no manifest, local file exists):
+
+- hash equal → auto-adopt (write manifest hash, no file change)
+- hash differs → `--legacy-strategy` or AskUserQuestion:
+  - `keep-local` → manifest hash = plugin_hash (enroll for future tracking)
+  - `use-plugin` → overwrite + manifest hash = plugin_hash
+  - `unmanaged` → no manifest entry (opt out)
+  - `prompt` (default) → AskUserQuestion with above 3 options
+
+### Phase 4.5: Write Manifest
+
+1. Re-read existing manifest via `Read` tool (reduce race window)
+2. Update in-memory:
+   - `schema_version: 1`
+   - `installed_at`: current ISO-8601
+   - `plugin_version`: from Phase 3.5
+   - `rules`: update each processed file's hash/deleted flag
+   - Preserve `hook_scripts` / `scripts` keys from existing manifest
+3. Write via `Write` tool to `.claude/.sd0x-install-state.json`
+4. Error: warn + continue (next run → legacy migration)
+
+### Phase 4.6: Backfill CLAUDE.md (Closed-Loop Guarantee)
 
 Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine can activate. This guarantees a closed loop even when `/install-rules` is run standalone (without `/project-setup`).
 
@@ -137,32 +249,62 @@ Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine
    - @rules/self-improvement.md -- Corrected → record → prevent recurrence
    ```
 
-4. **File does not exist** → extract from plugin's `CLAUDE.template.md`: L1-33 (Required Checks + Auto-Loop Rule) + L288-300 (Rules references) → create minimal `.claude/CLAUDE.md`. Remove ecosystem block markers and leave unresolved placeholders as `{PLACEHOLDER}`.
+4. **File does not exist** → extract from plugin's `CLAUDE.template.md`: `## Required Checks` through `### Auto-Loop Rule` sections + `## Rules` section → create minimal `.claude/CLAUDE.md`. Remove ecosystem block markers and leave unresolved placeholders as `{PLACEHOLDER}`.
 
 ### Phase 5: Output Report
 
 ## Output
 
+### Dry-run output (when `--dry-run`):
+
 ```markdown
-## Install Rules Report
+## Smart Merge Dry Run
+
+**Plugin**: v<old> → v<new>
+**Manifest**: .claude/.sd0x-install-state.json (found|missing)
+
+| Rule | Local | Plugin | Classification | Action |
+|------|-------|--------|---------------|--------|
+| auto-loop.md | modified | updated | CONFLICT | Section merge (2 conflicts) |
+| security.md | original | updated | AUTO_UPDATE | Auto-update |
+| git-workflow.md | modified | original | KEEP_LOCAL | Keep local |
+| testing.md | original | original | SKIP | Skip |
+| docs-writing.md | — | new | FRESH_INSTALL | Install |
+| framework.md | deleted | — | SKIP_DELETED | Skip (tombstone) |
+
+**Summary**: 1 auto-update, 1 install, 1 section merge (needs interaction), 1 keep, 1 skip, 1 skip-deleted
+```
+
+### Report output (normal run):
+
+```markdown
+## Install Rules Report (Smart Merge)
 
 **Source**: <plugin-rules-path>
 **Target**: <repo-root>/.claude/rules/
+**Plugin**: v<old> → v<new>
+**Manifest**: .claude/.sd0x-install-state.json
 
-| Rule | Status |
-|------|--------|
-| auto-loop.md | ✅ Installed |
-| codex-invocation.md | ✅ Installed |
-| docs-writing.md | ⚠️ Skipped (conflict — local override exists) |
-| ... | ... |
+| Rule | Status | Detail |
+|------|--------|--------|
+| auto-loop.md | ✅ Merged | 2 sections merged, 0 conflicts |
+| security.md | ✅ Auto-updated | Plugin updated, no local edits |
+| git-workflow.md | ⏭️ Kept local | User edited, plugin unchanged |
+| testing.md | ⏭️ Skipped | No changes |
+| docs-writing.md | ✅ Installed | New file |
+| framework.md | 🗑️ Skip (deleted) | User previously deleted; tombstone active |
 
-**Installed**: N / **Skipped**: M / **Conflicts**: K
+**Auto-updated**: N / **Merged**: N / **Kept local**: N / **Installed**: N / **Skipped**: N / **Skip-deleted**: N
+```
+
+Status icons: ✅=Installed/Auto-updated/Merged/Adopted, ⏭️=Kept/Skipped/Enrolled, 🗑️=Skip-deleted, ⚡=Forced, ➖=Unmanaged
 
 ### Next Steps
 
-- Review any skipped conflicts manually
+- Review any conflicts or skipped items manually
 - Rules in `.claude/rules/` are auto-loaded by Claude Code for this project
-```
+- Use `--force` to overwrite all rules with plugin versions
+- Manifest tracks installed state at `.claude/.sd0x-install-state.json`
 
 ## Examples
 
@@ -176,9 +318,12 @@ Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine
 # Install specific rules only
 /install-rules auto-loop fix-all-issues security
 
-# Preview what would happen
+# Preview what would happen (smart merge classification)
 /install-rules --all --dry-run
 
 # Force overwrite existing rules
 /install-rules --all --force
+
+# Smart merge with legacy migration (keep all local)
+/install-rules --all --legacy-strategy keep-local
 ```
