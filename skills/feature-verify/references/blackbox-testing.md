@@ -70,7 +70,8 @@ Generate test cases dynamically from P1 results.
 | ----- | -- | -- | -- | -- |
 | L4 (API + Log + Metrics) | Yes | Yes | Yes | Yes |
 | L3 (API + Log) | Yes | Yes | Yes | N/A |
-| L2 (API only) | Yes | Yes (response-only) | N/A | N/A |
+| L2-API (API only) | Yes | Yes (response-only) | N/A | N/A |
+| L2-OBS (Log only) | N/A | N/A | Yes | N/A |
 | L1 (No runtime) | N/A | N/A | N/A | N/A |
 
 ### Charter Template (per endpoint)
@@ -156,6 +157,32 @@ Confirm expected log signals appear after triggering the new code path.
 ```
 
 Retry with 120s delay (background services are async).
+
+### L2-OBS: Observation-Only Mode
+
+When API is unreachable but Log System is configured, operate in observation-only mode. P3 is skipped entirely; P4 uses time-window scan and background observation without per-request correlation.
+
+#### Observation Window Determination
+
+| Priority | Source | Window |
+|----------|--------|--------|
+| 1 | Deploy timestamp (CI/CD, user-provided) | deploy_time → now |
+| 2 | User-specified window | user_start → user_end |
+| 3 | Fallback | now - 30min → now |
+
+#### Execution Flow
+
+1. **Time-window scan**: Query logs for error/warn levels within observation window
+2. **Background service observation**: Query schedule/cron tags within observation window
+3. **Skip**: Per-request correlation (no P3 requests to correlate)
+
+#### L2-OBS Verdict Constraints
+
+| Finding | Verdict | Confidence |
+|---------|---------|------------|
+| 0 errors in diff-affected modules | Pass | Medium |
+| Errors in diff-affected modules | Blocked | Medium |
+| Insufficient data (no logs in window) | Inconclusive | Low |
 
 ---
 

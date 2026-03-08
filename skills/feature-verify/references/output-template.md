@@ -7,7 +7,7 @@
 
 - **Verdict**: Pass / Warn / Blocked / Inconclusive
 - **Confidence**: High / Medium / Low
-- **Degradation Level**: L4 / L3 / L2 / L1
+- **Degradation Level**: L4 / L3 / L2-API / L2-OBS / L1
 - **Environment**: test / staging / prod
 
 ## P0: Scope & Safety
@@ -45,7 +45,23 @@
 | 1 | L1-1 | POST | /api/v1/[ep] | `{key: "val"}` | 200 | 0 | [uuid] | 120ms | ✅ |
 | 2 | L2-1 | POST | /api/v1/[ep] | `{key: "val"}` | 200 | 0 | [uuid] | 85ms | ✅ |
 
+### L2-OBS: P3 Skipped
+
+> When operating in L2-OBS mode, replace the P3 table above with:
+>
+> **P3: API Execution — SKIPPED (L2-OBS)**
+> API unreachable (3/3 health-check failures). Proceeding with observation-only mode.
+
 ## P4: Observation Correlation
+
+### L2-OBS Observation Window (if applicable)
+
+| Parameter | Value |
+|-----------|-------|
+| Window Source | Deploy timestamp / User-specified / Fallback (last 30min) |
+| Start | [YYYY-MM-DD HH:MM:SS UTC] |
+| End | [YYYY-MM-DD HH:MM:SS UTC] |
+| Baseline Available | Yes / No |
 
 ### Per-Request Log Correlation (L3+)
 
@@ -64,7 +80,7 @@
 | [start-2min] ~ [end+2min] | error | N | M | ✅/⚠️ |
 | [start-2min] ~ [end+2min] | warn | N | 0 | ✅ |
 
-### L3: Passive Observation (if applicable)
+### Background Service Observation (L2-OBS / L3+, if applicable)
 
 | Case | Service | Schedule Tag | Time Window | Log Status | Status |
 | ---- | ------- | ------------ | ----------- | ---------- | ------ |
@@ -86,11 +102,12 @@
 
 | Dimension | Result | Evidence |
 | --------- | ------ | -------- |
-| L1 Regression | ✅ | N/N cases passed |
-| L2 Active | ✅ | Expected signals found |
+| L1 Regression | ✅ / N/A (L2-OBS) | N/N cases passed |
+| L2 Active | ✅ / N/A (L2-OBS) | Expected signals found |
 | L3 Passive | ✅/N/A | [evidence] |
 | M1 Metrics | ✅/N/A | [evidence] |
 | Time-Window | ✅ | 0 related errors |
+| L2-OBS Window | ✅/N/A | [window source + findings] |
 
 ### Claude's Analysis
 

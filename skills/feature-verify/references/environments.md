@@ -39,7 +39,7 @@ curl -s -o /dev/null -w '%{http_code}' "$HOST/{{ HEALTH_ENDPOINT }}"
 
 ## Log System (Optional — enables L3/L4 degradation)
 
-> Remove this section if no log system is available. Skill degrades to L2 (API-only).
+> Remove this section if no log system is available. Skill degrades to L2-API (API-only). If API is also unreachable, degrades to L1.
 
 | Key | Value | Description |
 | --- | ----- | ----------- |
@@ -108,16 +108,40 @@ Verify deployed version matches local code before testing:
 
 ## Degradation Detection
 
-The skill auto-detects degradation level from the sections present in this file.
+The skill auto-detects degradation level from the sections present in this file and API reachability.
 
-| Required Section | Present | Level Enabled |
-| ---------------- | ------- | ------------- |
-| API Endpoints | Yes → L2+ | L2 (API only) |
-| Log System | Yes → L3+ | L3 (API + Log) |
-| Metrics System | Yes → L4 | L4 (API + Log + Metrics) |
-| Endpoint Allowlist | Yes → P3 enabled | Required for L2+ |
+### Deterministic Health-Check Algorithm
 
-**P0 fail-closed rule**: If API Endpoints section is missing or API is unreachable, degrade to L1. If Endpoint Allowlist section is missing, skip P3 (cannot verify without allowlist).
+P0 uses the following algorithm to determine API reachability (fail-closed):
+
+| Attempt | Timeout | All failures required for unreachable |
+|---------|---------|---------------------------------------|
+| 1 | 2s | — |
+| 2 | 2s | — |
+| 3 | 2s | 3/3 fails → unreachable |
+
+```bash
+REACHABLE=false
+for i in 1 2 3; do
+  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 2 --max-time 2 "$HOST/{{ HEALTH_ENDPOINT }}")
+  if [[ "$HTTP_CODE" =~ ^[23] ]]; then
+    REACHABLE=true
+    break
+  fi
+done
+```
+
+### Detection Matrix
+
+| API Status | Log System | Metrics | Level |
+|------------|------------|---------|-------|
+| Reachable | Yes | Yes | L4 |
+| Reachable | Yes | No | L3 |
+| Reachable | No | — | L2-API |
+| **Unreachable** | **Yes** | — | **L2-OBS** |
+| Unreachable | No | — | L1 |
+
+**P0 fail-closed rule**: If API Endpoints section is missing, degrade to L1. If API is unreachable: check Log System section — present → L2-OBS, absent → L1. If Endpoint Allowlist section is missing, skip P3 (cannot call unverified endpoints).
 
 ## Notes
 

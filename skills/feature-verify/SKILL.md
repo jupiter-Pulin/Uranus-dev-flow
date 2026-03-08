@@ -42,19 +42,21 @@ Auto-detect from `references/environments.md` configuration:
 | ----- | ------------------- | ------ | -------------- | -------------- |
 | **L4** | API + Log + Metrics | Full | Log + Metrics | High |
 | **L3** | API + Log | Full | Log only | High |
-| **L2** | API only | Full | Response-only | Medium |
+| **L2-API** | API only | Full | Response-only | Medium |
+| **L2-OBS** | Log only (API unreachable) | Skip | Time-window scan | Medium |
 | **L1** | No runtime access | Skip P3/P4 | Code review only | Low |
 
 **Auto-detection logic** (see environments.md § Degradation Detection):
 
-| environments.md section present | Level |
-| ------------------------------- | ----- |
-| API Endpoints + Log System + Metrics System | L4 |
-| API Endpoints + Log System | L3 |
-| API Endpoints only | L2 |
-| No config / API unreachable | L1 |
+| API Status | Log System | Metrics | Level |
+|------------|------------|---------|-------|
+| Reachable | Yes | Yes | L4 |
+| Reachable | Yes | No | L3 |
+| Reachable | No | — | L2-API |
+| **Unreachable** | **Yes** | — | **L2-OBS** |
+| Unreachable | No | — | L1 |
 
-**Fail-closed**: If Endpoint Allowlist section is missing, skip P3 (cannot call unverified endpoints). At L1, skip P3 and P4. Provide code-review-based analysis only with Low confidence.
+**Fail-closed**: If Endpoint Allowlist section is missing, skip P3 (cannot call unverified endpoints). At L1, skip P3 and P4. Provide code-review-based analysis only with Low confidence. At L2-OBS, skip P3 (API unreachable); execute P4 time-window scan and background service observation only.
 
 ## Workflow
 
@@ -84,7 +86,7 @@ Read [safety-rules.md](references/safety-rules.md) and [environments.md](referen
 | Check | Method | Fail Action |
 | ----- | ------ | ----------- |
 | Environment select | `--env` flag or ask user; load from environments.md | Default to test |
-| API reachable | `curl -s -o /dev/null -w '%{http_code}' $HOST/{{ HEALTH_ENDPOINT }}` | Unreachable → degrade to L1, output curl commands |
+| API reachable | Deterministic health-check (3x, 2s timeout — see environments.md) | Unreachable + Log config → L2-OBS; Unreachable + no Log → L1 |
 | Deployment aligned | Compare local HEAD with deployed version | Mismatch → warn, lower confidence |
 | Read-only confirmed | Review safety-rules.md, confirm all planned operations are read-only | — |
 | Degradation level | Check environments.md for log/metrics config | Set level (L1-L4) |
@@ -101,7 +103,7 @@ Read [blackbox-testing.md § P1](references/blackbox-testing.md#p1-diff-lite-sco
 
 **Fallback**: If no git diff available, ask user for feature description and build scope manually.
 
-**`--level` override**: If user passes `--level L2`, skip log/metrics cases even if configured.
+**`--level` override**: If user passes `--level L2-API`, skip log/metrics cases even if configured. `--level L2-OBS` forces observation-only mode. `--level L2` defaults to `L2-API` for backward compatibility.
 
 ## P2: Test Charter
 
@@ -111,8 +113,8 @@ Generate test cases dynamically from P1 results:
 
 | Type | Goal | When |
 | ---- | ---- | ---- |
-| **L1 Regression** | Affected API returns expected results | Always (L2+) |
-| **L2 Active Trigger** | New code path exercised, verify response | Always (L2+) |
+| **L1 Regression** | Affected API returns expected results | L2-API+ (N/A for L2-OBS) |
+| **L2 Active Trigger** | New code path exercised, verify response | L2-API+ (N/A for L2-OBS) |
 | **L3 Passive Observe** | Background service running, check logs | L3+ only |
 | **M1 Metrics** | Metrics correctly emitted with right labels | L4 only |
 
@@ -120,7 +122,7 @@ Generate test cases dynamically from P1 results:
 
 ## P3: API Execute
 
-**Prerequisites**: P2 approved, degradation level is L2+.
+**Prerequisites**: P2 approved, degradation level is L2-API or higher (L2-API/L3/L4). **L2-OBS skips P3 entirely** (API unreachable).
 
 For each test case:
 
@@ -147,7 +149,9 @@ LATENCY=$((END - START))
 
 Read [blackbox-testing.md § P4](references/blackbox-testing.md#p4-log-verification-flow).
 
-**Prerequisites**: Degradation level L3+.
+**Prerequisites**: Degradation level L2-OBS or L3+.
+
+> **L2-OBS mode**: Skip subsection A (no P3 requests to correlate). Execute B (time-window scan) and C (background service observation). Observation window: deploy_time → now (fallback: user-specified or last 30min).
 
 ### A. Per-Request Log Correlation (L1/L2 test case types, requires L3+)
 
@@ -191,7 +195,7 @@ Record what **cannot** be observed through black-box testing. List in report for
 | Level | Condition |
 | ----- | --------- |
 | **High** | L3/L4 + Claude and Codex agree |
-| **Medium** | L2 (API-only) or partial agreement |
+| **Medium** | L2-API (API-only) or L2-OBS (observation-only) or partial agreement |
 | **Low** | L1 (no runtime) or Claude and Codex diverge |
 
 ### Dual Verification (Claude + Codex)
@@ -228,10 +232,12 @@ Generate report using [output-template.md](references/output-template.md).
 - [ ] P0: Degradation level determined
 - [ ] P1: Affected endpoints mapped from diff (or user input)
 - [ ] P2: Test charter approved by user
-- [ ] P3: All API calls are read-only and on allowlist
+- [ ] P3: All API calls are read-only and on allowlist (L2-API+)
+- [ ] P3: L2-OBS correctly skips API execution
 - [ ] P3: Each call recorded with HTTP status, request ID, latency
 - [ ] P4: Log correlation attempted for each request (L3+)
-- [ ] P4: Time-window scan completed (L3+)
+- [ ] P4: Time-window scan completed (L2-OBS or L3+)
+- [ ] P4: L2-OBS time-window scan uses correct observation window
 - [ ] P4: Blind spots documented
 - [ ] P5: Claude analysis formed independently
 - [ ] P5: Codex review completed independently
@@ -271,4 +277,12 @@ Action: P0(staging, L3) → P1(diff → cron changes) → P2(L3 passive only)
 Input: /feature-verify "Cache optimization" (no env configured)
 Action: P0(no config → L1) → P1(diff → cache service) → P2(code review only)
         → P3(skip) → P4(skip) → P5(verdict: Inconclusive, Low — recommend configuring environments.md)
+```
+
+```
+Input: /feature-verify "Order processing" --env prod
+Action: P0(prod, API unreachable 3/3, Log config present → L2-OBS)
+        → P1(diff → /api/order/*) → P2(L3 passive + time-window only, no L1/L2 active)
+        → P3(skip — API unreachable) → P4(time-window scan: deploy→now, background observation)
+        → P5(verdict: Pass/Warn/Inconclusive, Medium)
 ```
