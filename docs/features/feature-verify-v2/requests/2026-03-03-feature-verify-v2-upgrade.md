@@ -1,12 +1,25 @@
 # Feature Verify v2 Upgrade
 
 > **Created**: 2026-03-03
-> **Status**: Pending
+> **Status**: Superseded
 > **Priority**: P1
-> **Tech Spec**: Pending
+> **Tech Spec**: N/A (superseded before spec)
 > **Source**: Codex Brainstorm Nash Equilibrium (2026-03-03)
+> **Superseded by**:
+> - [2026-03-08-observation-only-mode.md](./2026-03-08-observation-only-mode.md) (P1)
+> - [2026-03-08-endpoint-discovery-spike.md](./2026-03-08-endpoint-discovery-spike.md) (P2)
 
-## Background
+## Superseded Reason
+
+此 request 的大部分 AC 已在先前開發中完成（SKILL.md 已從 94 行重寫為 270+ 行的完整 P0-P5 framework）。經 `/best-practices` 審計（Codex brainstorm `019cc761-0825-7b02-8f26-8550ce4f571c`）確認：
+
+1. Plugin 已實作 P0-P5 + degradation matrix + template-driven abstraction
+2. 但 degradation matrix 缺少 **observation-only mode**（L2-OBS：API 不可達但 Log 可用，如 prod 環境）
+3. Endpoint discovery（route-scan）需要跨框架 spike 研究後才能決定是否抽象化
+
+因此拆為兩個更精確的 request，而非在過時的 AC 上打勾。
+
+## Background (Original)
 
 現有 `feature-verify` skill 為 basic-to-mid 成熟度（6 個泛用 Phase，缺乏具體執行指引）。onekey onchain 版本有已驗證的 P0-P5 Phase framework + 4-level degradation matrix + production guardrails，可抽象化為通用的 runtime-first API verification pattern。
 
@@ -68,6 +81,7 @@
 ## References
 
 - Source: onekey `feature-verify` skill (P0-P5 framework)
-- Current: `skills/feature-verify/SKILL.md` (basic, 94 lines)
-- Brainstorm threadId: `019cb1d4-8534-7932-bd24-6b3054091171`
-- 均衡結論：Rank #2，S-M effort，Codex 從 Round 1 即讓步認同
+- Current: `skills/feature-verify/SKILL.md` (270+ lines, P0-P5 complete)
+- Original brainstorm: `019cb1d4-8534-7932-bd24-6b3054091171`
+- Supersede audit brainstorm: `019cc761-0825-7b02-8f26-8550ce4f571c` (3 rounds, Nash equilibrium)
+- 均衡結論：V2 AC 大部分已滿足，拆為 observation-only-mode + endpoint-discovery-spike
