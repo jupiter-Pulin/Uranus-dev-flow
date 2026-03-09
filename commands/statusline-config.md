@@ -7,6 +7,8 @@ allowed-tools: Read, Write, Bash(bash:*), Bash(cat:*), Bash(chmod:*), Bash(echo:
 **Must read and follow the skill below before executing this command:**
 
 @skills/statusline-config/SKILL.md
+@skills/statusline-config/references/json-schema.md
+@skills/statusline-config/references/themes.md
 
 ## Context
 

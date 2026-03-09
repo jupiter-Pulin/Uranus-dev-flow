@@ -7,6 +7,7 @@ argument-hint: "[--go] [--feature <key>]"
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/next-step/SKILL.md
+@skills/next-step/references/progression-tables.md
 
 ## Context
 

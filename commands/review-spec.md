@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*)
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/tech-spec/SKILL.md
+@skills/tech-spec/references/template.md
 
 ## Context
 

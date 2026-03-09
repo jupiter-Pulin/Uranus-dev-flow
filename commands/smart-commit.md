@@ -7,6 +7,7 @@ allowed-tools: Bash(git:*), Read, Grep, Glob, AskUserQuestion
 **Must read and follow the skill below before executing this command:**
 
 @skills/smart-commit/SKILL.md
+@skills/smart-commit/references/execute-mode.md
 
 ## Context
 

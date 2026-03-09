@@ -5,6 +5,8 @@ argument-hint: "[--dir <path>]"
 ---
 
 @skills/project-audit/SKILL.md
+@skills/project-audit/references/check-catalog.md
+@skills/project-audit/references/output-template.md
 
 ## Context
 

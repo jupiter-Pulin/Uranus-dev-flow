@@ -7,6 +7,9 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Read, Grep, Glob, Bas
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/codex-brainstorm/SKILL.md
+@skills/codex-brainstorm/references/equilibrium.md
+@skills/codex-brainstorm/references/techniques.md
+@skills/codex-brainstorm/references/templates.md
 
 ## Context
 

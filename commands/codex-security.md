@@ -8,6 +8,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Gr
 
 @skills/security-review/SKILL.md
 @skills/security-review/references/codex-prompt-security.md
+@skills/security-review/references/examples.md
 
 ## Context
 

@@ -7,6 +7,8 @@ allowed-tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__codex__codex, mcp__co
 **Must read and follow the skill below before executing this command:**
 
 @skills/best-practices/SKILL.md
+@skills/best-practices/references/debate-guide.md
+@skills/best-practices/references/output-templates.md
 
 ## Context
 

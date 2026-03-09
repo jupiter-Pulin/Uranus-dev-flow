@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/post-dev-test/SKILL.md
+@skills/post-dev-test/references/test-patterns.md
 
 ## Context
 

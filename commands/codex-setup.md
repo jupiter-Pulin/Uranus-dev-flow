@@ -7,12 +7,13 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(node:*), Bash(git:*), Bash(ls
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/codex-setup/SKILL.md
+@skills/codex-setup/references/agents-kernel.md
 
 ## Context
 
 - Repo root: !`git rev-parse --show-toplevel`
 - Existing AGENTS.md: !`bash -c 'test -f AGENTS.md && echo "exists ($(wc -c < AGENTS.md) bytes)" || echo "(none)"'`
-- Existing state file: !`bash -c 'test -f .sd0x-codex-state.json && echo "exists" || echo "(none)"'`
+- Existing state file: !`bash -c 'test -f .sd0x/install-state.json && echo "exists" || echo "(none)"'`
 - Hook mode: !`bash -c 'if [ -d .husky ]; then echo husky; elif git config core.hooksPath 2>/dev/null; then echo hooksPath; elif [ -d .git/hooks ]; then echo git-hooks; else echo fallback; fi'`
 
 ## Task

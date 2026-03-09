@@ -16,6 +16,8 @@ Interact with Obsidian vault using the official CLI.
 **Must read and follow the skill below:**
 
 @skills/obsidian-cli/SKILL.md
+@skills/obsidian-cli/references/integration-patterns.md
+@skills/obsidian-cli/references/troubleshooting.md
 
 ### Arguments
 

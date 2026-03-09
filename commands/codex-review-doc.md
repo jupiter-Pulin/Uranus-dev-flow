@@ -8,6 +8,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Gl
 
 @skills/doc-review/SKILL.md
 @skills/doc-review/references/codex-prompt-doc.md
+@skills/doc-review/references/review-loop-doc.md
 
 ## Context
 

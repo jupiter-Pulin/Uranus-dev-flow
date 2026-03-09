@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, mcp__codex__codex, mcp__codex__codex-reply
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/codex-architect/SKILL.md
+@skills/codex-architect/references/project-knowledge.md
 
 ## Task
 

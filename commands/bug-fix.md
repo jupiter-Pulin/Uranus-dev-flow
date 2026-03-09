@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(git:*), Bash(yarn:*), Bash(gh
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/bug-fix/SKILL.md
+@skills/bug-fix/references/testing-guide.md
 
 ## Context
 

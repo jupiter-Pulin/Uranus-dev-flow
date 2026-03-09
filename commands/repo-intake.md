@@ -7,6 +7,7 @@ allowed-tools: Bash(git:*), Bash(node:*), Read, Write, Grep, Glob
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/repo-intake/SKILL.md
+@skills/repo-intake/references/MIDWAY_HEURISTICS.md
 
 ## Task
 

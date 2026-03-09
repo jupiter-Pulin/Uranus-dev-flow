@@ -16,6 +16,8 @@ intent:
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/security-review/SKILL.md
+@skills/security-review/references/codex-prompt-security.md
+@skills/security-review/references/examples.md
 
 ## Arguments
 

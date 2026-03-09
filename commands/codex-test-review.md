@@ -8,6 +8,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Gr
 
 @skills/test-review/SKILL.md
 @skills/test-review/references/codex-prompt-test-review.md
+@skills/test-review/references/codex-prompt-test-gen.md
 
 ## Context
 

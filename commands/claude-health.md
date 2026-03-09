@@ -16,6 +16,7 @@ Run a health check on the `.claude/` directory structure, reporting issues and s
 **⚠️ Must read and follow the skill below:**
 
 @skills/claude-health/SKILL.md
+@skills/claude-health/references/best-practices.md
 
 ### Arguments
 

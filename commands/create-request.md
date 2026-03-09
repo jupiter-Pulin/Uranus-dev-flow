@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/create-request/SKILL.md
+@skills/create-request/references/template.md
 
 ## Context
 

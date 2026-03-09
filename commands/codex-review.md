@@ -7,7 +7,11 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Bash(yar
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/codex-code-review/SKILL.md
+@skills/codex-code-review/references/codex-prompt-fast.md
 @skills/codex-code-review/references/codex-prompt-full.md
+@skills/codex-code-review/references/codex-prompt-branch.md
+@skills/codex-code-review/references/review-common.md
+@skills/codex-code-review/references/codex-research-instructions.md
 
 ## Context
 

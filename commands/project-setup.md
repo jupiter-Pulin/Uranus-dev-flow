@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(node:*), Bash(git:*), Bash(ls
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/project-setup/SKILL.md
+@skills/project-setup/references/detection-rules.md
 
 ## Context
 

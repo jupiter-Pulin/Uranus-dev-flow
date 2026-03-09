@@ -7,6 +7,8 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*)
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/test-review/SKILL.md
+@skills/test-review/references/codex-prompt-test-gen.md
+@skills/test-review/references/codex-prompt-test-review.md
 
 ## Context
 

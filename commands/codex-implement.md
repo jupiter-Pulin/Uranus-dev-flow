@@ -7,6 +7,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Gr
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/codex-implement/SKILL.md
+@skills/codex-implement/references/codex-prompts.md
 
 ## Context
 

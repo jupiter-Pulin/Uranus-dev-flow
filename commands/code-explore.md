@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*)
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/code-explore/SKILL.md
+@skills/code-explore/references/search-patterns.md
 
 ## Context
 

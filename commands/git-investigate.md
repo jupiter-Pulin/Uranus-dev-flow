@@ -7,6 +7,7 @@ allowed-tools: Bash(git:*), Read, Grep, Glob
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/git-investigate/SKILL.md
+@skills/git-investigate/references/commands.md
 
 ## Task
 

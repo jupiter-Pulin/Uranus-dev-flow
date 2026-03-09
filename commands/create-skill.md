@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Write, Task
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/create-skill/SKILL.md
+@skills/create-skill/references/skill-design-guide.md
 
 ## Task
 

@@ -5,6 +5,8 @@ argument-hint: "[--mode fast|deep] [--base <ref>]"
 ---
 
 @skills/risk-assess/SKILL.md
+@skills/risk-assess/references/output-template.md
+@skills/risk-assess/references/risk-dimensions.md
 
 ## Context
 

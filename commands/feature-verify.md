@@ -7,6 +7,10 @@ allowed-tools: Read, Grep, Glob, Bash, WebFetch, Task, Skill, mcp__codex__codex,
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/feature-verify/SKILL.md
+@skills/feature-verify/references/blackbox-testing.md
+@skills/feature-verify/references/environments.md
+@skills/feature-verify/references/output-template.md
+@skills/feature-verify/references/safety-rules.md
 
 ## Context
 

@@ -5,6 +5,9 @@ argument-hint: "[PR#|URL] [--mode summary|plan|fix] [--all] [--writeback] [--bud
 ---
 
 @skills/load-pr-review/SKILL.md
+@skills/load-pr-review/references/api-contract.md
+@skills/load-pr-review/references/token-budget.md
+@skills/load-pr-review/references/writeback-guardrails.md
 
 ## Context
 

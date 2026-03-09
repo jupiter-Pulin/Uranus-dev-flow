@@ -7,6 +7,9 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(codex:*), Bash(bash:*), Write
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/feasibility-study/SKILL.md
+@skills/feasibility-study/references/analysis-phases.md
+@skills/feasibility-study/references/codex-discussion-guide.md
+@skills/feasibility-study/references/output-template.md
 
 ## Context
 

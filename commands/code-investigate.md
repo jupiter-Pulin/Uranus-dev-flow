@@ -7,6 +7,8 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), mcp__codex__codex, mcp__codex__cod
 ⚠️ **Must read and follow the skill below before executing this command:**
 
 @skills/code-investigate/SKILL.md
+@skills/code-investigate/references/output-template.md
+@skills/code-investigate/references/prompts.md
 
 ## Context
 
