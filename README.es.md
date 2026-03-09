@@ -6,7 +6,7 @@
 
 Editar código → auto-review → auto-fix → gate-pass → entregar. Sin pasos manuales.
 
-60 commands | 44 skills | 14 agents | ~4% de context footprint
+63 commands | 47 skills | 14 agents | ~4% de context footprint
 
 ## Cómo funciona
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-El **motor auto-loop** aplica quality gates automáticamente — tras cualquier edición de código, Claude dispara la revisión en la misma respuesta. Los hooks advierten sobre revisiones incompletas antes de detenerse (usar modo strict para bloquear).
+El **motor auto-loop** aplica quality gates automáticamente — tras cualquier edición de código, Claude dispara la revisión en la misma respuesta. Los hooks bloquean revisiones incompletas antes de detenerse (strict por defecto tras `/project-setup`; plugin runtime usa warn por defecto).
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## Instalación
 
+### Claude Code (Experiencia Completa)
+
 ```bash
 # Agregar marketplace
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # Instalar plugin
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / Otros Agentes de IA
+
+```bash
+# Instalar skills individuales vía Agent Skills standard
+npx skills add sd0xdev/sd0x-dev-flow
+
+# Generar AGENTS.md + instalar hooks (en Claude Code)
+/codex-setup init
+```
+
+| Método | Herramientas | Cobertura |
+|--------|-------------|-----------|
+| Instalar plugin | Claude Code | Completa (63 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (47 skills) |
+| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional, para comandos `/codex-*`)
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### Mínimo consumo de context
 
@@ -164,6 +182,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/install-rules` | Instalar reglas del plugin en `.claude/rules/` |
 | `/install-hooks` | Instalar hooks del plugin en `.claude/` |
 | `/install-scripts` | Instalar scripts de ejecución del plugin |
+| `/codex-setup` | Inicializar infraestructura Codex CLI (AGENTS.md + hooks) |
 | `/bug-fix` | Workflow de corrección de bugs |
 | `/codex-implement` | Codex escribe código |
 | `/codex-architect` | Consultoría de arquitectura (tercer cerebro) |
@@ -173,9 +192,11 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/post-dev-test` | Tests complementarios post-desarrollo |
 | `/feature-dev` | Workflow de desarrollo (diseño → implementación → verificación → review) |
 | `/feature-verify` | Diagnóstico de sistema (verificación de solo lectura, doble perspectiva) |
+| `/load-pr-review` | Cargar comentarios de review de PR de GitHub en la sesión |
 | `/code-investigate` | Investigación de código con doble perspectiva (Claude + Codex independientes) |
 | `/next-step` | Asesor contextual de siguiente paso |
 | `/smart-commit` | Commit inteligente por lotes (agrupar + mensaje + comandos) |
+| `/git-profile` | Gestor de identidad Git y perfil de firma GPG |
 | `/push-ci` | Push (con aprobación) + monitoreo de CI |
 | `/create-pr` | Crear GitHub PR desde branch |
 | `/git-worktree` | Gestionar git worktrees |
@@ -264,13 +285,13 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `post-edit-format` | Después de Edit/Write | Auto prettier + invalidar estado de review al editar |
 | `post-tool-review-state` | Después de Bash / herramientas MCP | Tracking de estado de review (sentinel routing, soporte de comandos con namespace) |
 | `pre-edit-guard` | Antes de Edit/Write | Prevenir edición de .env/.git |
-| `stop-guard` | Antes de detener | Advertir si hay reviews incompletos + verificación stale-state git (default: warn) |
+| `stop-guard` | Antes de detener | Bloquear o advertir si hay reviews incompletos + verificación stale-state git (strict tras instalar, warn en plugin runtime) |
 
 Los hooks son seguros por defecto. Variables de entorno para personalizar:
 
 | Variable | Default | Descripción |
 |----------|---------|-------------|
-| `STOP_GUARD_MODE` | `warn` | Usar `strict` para bloquear stop si faltan pasos de review |
+| `STOP_GUARD_MODE` | `strict` (instalado) / `warn` (plugin runtime) | `strict` bloquea stop si faltan pasos de review; `warn` solo advierte |
 | `HOOK_NO_FORMAT` | (no definido) | `1` para desactivar auto-formateo |
 | `HOOK_BYPASS` | (no definido) | `1` para saltar todos los checks de stop-guard |
 | `HOOK_DEBUG` | (no definido) | `1` para mostrar info de debug |

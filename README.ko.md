@@ -6,7 +6,7 @@
 
 코드 편집 → 자동 리뷰 → 자동 수정 → Gate 통과 → 배포. 수동 작업이 필요 없습니다.
 
-60 commands | 44 skills | 14 agents | ~4% context 사용량
+63 commands | 47 skills | 14 agents | ~4% context 사용량
 
 ## 작동 원리
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드가 편집되면 Claude가 같은 응답 내에서 리뷰를 트리거하며, 리뷰가 완료되지 않으면 Hook이 경고를 발생시킵니다(strict 모드로 차단 가능).
+**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드가 편집되면 Claude가 같은 응답 내에서 리뷰를 트리거하며, 리뷰가 완료되지 않으면 Hook이 차단합니다(`/project-setup` 후 기본 strict; plugin runtime은 기본 warn).
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## 설치
 
+### Claude Code (전체 경험)
+
 ```bash
 # marketplace 추가
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # 플러그인 설치
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / 기타 AI 에이전트
+
+```bash
+# Agent Skills 표준으로 개별 스킬 설치
+npx skills add sd0xdev/sd0x-dev-flow
+
+# AGENTS.md 생성 + hooks 설치 (Claude Code 내에서 실행)
+/codex-setup init
+```
+
+| 방법 | 지원 도구 | 커버리지 |
+|------|----------|---------|
+| 플러그인 설치 | Claude Code | 전체 (63 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (47 skills) |
+| `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (선택 사항, `/codex-*` 명령어용)
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### 최소한의 Context 사용량
 
@@ -164,6 +182,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/install-rules` | 플러그인 규칙을 `.claude/rules/`에 설치 |
 | `/install-hooks` | 플러그인 hooks를 `.claude/`에 설치 |
 | `/install-scripts` | 플러그인 러너 스크립트 설치 |
+| `/codex-setup` | Codex CLI 인프라 초기화 (AGENTS.md + hooks) |
 | `/bug-fix` | Bug/Issue 수정 워크플로 |
 | `/codex-implement` | Codex가 코드 작성 |
 | `/codex-architect` | 아키텍처 자문 (제3의 두뇌) |
@@ -173,9 +192,11 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/post-dev-test` | 개발 후 테스트 보완 |
 | `/feature-dev` | 기능 개발 워크플로 (설계 → 구현 → 검증 → 리뷰) |
 | `/feature-verify` | 시스템 진단 (읽기 전용 검증, 이중 관점 확인) |
+| `/load-pr-review` | GitHub PR 리뷰 코멘트를 세션에 로드 |
 | `/code-investigate` | 이중 관점 코드 조사 (Claude + Codex 독립 탐색) |
 | `/next-step` | 컨텍스트 인식 다음 단계 어드바이저 |
 | `/smart-commit` | 스마트 배치 커밋 (그룹화 + 메시지 + 명령어) |
+| `/git-profile` | Git 아이덴티티 및 GPG 서명 프로파일 관리 |
 | `/push-ci` | 푸시 (승인 필요) + CI 모니터링 |
 | `/create-pr` | 브랜치에서 GitHub PR 생성 |
 | `/git-worktree` | git worktree 관리 |
@@ -264,13 +285,13 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `post-edit-format` | Edit/Write 후 | 자동 prettier + 편집 시 리뷰 상태 리셋 |
 | `post-tool-review-state` | Bash / MCP 도구 후 | 리뷰 상태 트래킹 (sentinel 라우팅, 네임스페이스 명령어 지원) |
 | `pre-edit-guard` | Edit/Write 전 | .env/.git 편집 방지 |
-| `stop-guard` | 중지 전 | 리뷰 미완료 시 경고 + stale-state git 체크 (기본값: warn) |
+| `stop-guard` | 중지 전 | 리뷰 미완료 시 차단 또는 경고 + stale-state git 체크 (설치 후 strict, plugin runtime warn) |
 
 Hook은 기본적으로 안전합니다. 환경 변수로 동작을 커스터마이즈할 수 있습니다:
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `STOP_GUARD_MODE` | `warn` | `strict`로 설정 시 리뷰 단계 누락 시 중지 차단 |
+| `STOP_GUARD_MODE` | `strict` (설치 후) / `warn` (plugin runtime) | `strict`는 리뷰 단계 누락 시 중지 차단; `warn`은 경고만 |
 | `HOOK_NO_FORMAT` | (미설정) | `1`로 설정 시 자동 포맷팅 비활성화 |
 | `HOOK_BYPASS` | (미설정) | `1`로 설정 시 stop-guard 체크 전부 스킵 |
 | `HOOK_DEBUG` | (미설정) | `1`로 설정 시 디버그 정보 출력 |

@@ -6,7 +6,7 @@
 
 コード編集 → 自動レビュー → 自動修正 → ゲート通過 → 出荷。手動操作は不要です。
 
-60 commands | 44 skills | 14 agents | ~4% context footprint
+63 commands | 47 skills | 14 agents | ~4% context footprint
 
 ## 仕組み
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、Claude は同じ返答内でレビューを開始し、レビュー未完了時に Hook が警告を出します（strict モードでブロック可能）。
+**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、Claude は同じ返答内でレビューを開始し、レビュー未完了時に Hook がブロックします（`/project-setup` 後はデフォルト strict、plugin runtime はデフォルト warn）。
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## インストール
 
+### Claude Code（フル体験）
+
 ```bash
 # marketplace を追加
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # プラグインをインストール
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / その他の AI エージェント
+
+```bash
+# Agent Skills 標準で個別スキルをインストール
+npx skills add sd0xdev/sd0x-dev-flow
+
+# AGENTS.md を生成 + フックをインストール（Claude Code 内で実行）
+/codex-setup init
+```
+
+| 方法 | 対応ツール | カバー範囲 |
+|------|-----------|-----------|
+| プラグインインストール | Claude Code | フル（63 コマンド、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（47 スキル） |
+| `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション、`/codex-*` コマンド用）
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| スキル | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| コマンド | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| スキル | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
 | フック | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | ルール | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| スクリプト | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| スクリプト | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### 極小の Context 使用量
 
@@ -164,6 +182,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/install-rules` | プラグインルールを `.claude/rules/` にインストール |
 | `/install-hooks` | プラグイン hooks を `.claude/` にインストール |
 | `/install-scripts` | プラグインランナースクリプトをインストール |
+| `/codex-setup` | Codex CLI インフラの初期化（AGENTS.md + フック） |
 | `/bug-fix` | バグ/Issue 修正ワークフロー |
 | `/codex-implement` | Codex がコードを書く |
 | `/codex-architect` | アーキテクチャ相談（第三の頭脳） |
@@ -173,9 +192,11 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/post-dev-test` | 開発後のテスト補完 |
 | `/feature-dev` | 機能開発ワークフロー（設計 → 実装 → 検証 → レビュー） |
 | `/feature-verify` | システム診断（読み取り専用の検証、デュアル視点確認） |
+| `/load-pr-review` | GitHub PR レビューコメントをセッションに読み込み |
 | `/code-investigate` | デュアル視点コード調査（Claude + Codex 独立探索） |
 | `/next-step` | コンテキスト認識型の次ステップアドバイザー |
 | `/smart-commit` | スマートバッチコミット（グループ化 + メッセージ + コマンド） |
+| `/git-profile` | Git ID と GPG 署名プロファイルの管理 |
 | `/push-ci` | プッシュ（承認制）+ CI モニタリング |
 | `/create-pr` | ブランチから GitHub PR を作成 |
 | `/git-worktree` | git worktree の管理 |
@@ -264,13 +285,13 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `post-edit-format` | Edit/Write 後 | 自動 prettier + 編集時にレビュー状態をリセット |
 | `post-tool-review-state` | Bash / MCP ツール後 | レビュー状態の追跡（sentinel ルーティング、名前空間コマンド対応） |
 | `pre-edit-guard` | Edit/Write 前 | .env/.git の編集を防止 |
-| `stop-guard` | 停止前 | 未完了レビュー時に警告 + stale-state git チェック（デフォルト：warn） |
+| `stop-guard` | 停止前 | 未完了レビュー時にブロックまたは警告 + stale-state git チェック（インストール後 strict、plugin runtime warn） |
 
 フックはデフォルトで安全です。環境変数で挙動をカスタマイズできます：
 
 | 変数 | デフォルト | 説明 |
 |------|------------|------|
-| `STOP_GUARD_MODE` | `warn` | `strict` にするとレビュー手順不足時に停止をブロック |
+| `STOP_GUARD_MODE` | `strict`（インストール後）/ `warn`（plugin runtime） | `strict` はレビュー手順不足時に停止をブロック；`warn` は警告のみ |
 | `HOOK_NO_FORMAT` | （未設定） | `1` で自動フォーマットを無効化 |
 | `HOOK_BYPASS` | （未設定） | `1` で stop-guard チェックをすべてスキップ |
 | `HOOK_DEBUG` | （未設定） | `1` でデバッグ情報を出力 |

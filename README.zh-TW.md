@@ -6,7 +6,7 @@
 
 編輯程式碼 → 自動 review → 自動修正 → gate 通過 → 交付。無需手動步驟。
 
-60 commands | 44 skills | 14 agents | ~4% context 佔用
+63 commands | 47 skills | 14 agents | ~4% context 佔用
 
 ## 運作方式
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-loop 引擎**自動執行品質關卡——任何程式碼編輯後，Claude 在同一回覆中觸發 review。Hooks 在 review 未完成時發出警告（設為 strict 模式可阻止停止）。
+**Auto-loop 引擎**自動執行品質關卡——任何程式碼編輯後，Claude 在同一回覆中觸發 review。Hooks 在 review 未完成時阻止停止（`/project-setup` 後預設 strict；plugin runtime 預設 warn）。
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## 安裝
 
+### Claude Code（完整體驗）
+
 ```bash
 # 新增 marketplace
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # 安裝 plugin
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / 其他 AI Agent
+
+```bash
+# 透過 Agent Skills 標準安裝個別 skill
+npx skills add sd0xdev/sd0x-dev-flow
+
+# 產生 AGENTS.md + 安裝 hooks（在 Claude Code 中執行）
+/codex-setup init
+```
+
+| 方式 | 適用工具 | 涵蓋範圍 |
+|------|---------|---------|
+| Plugin 安裝 | Claude Code | 完整（63 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（47 skills） |
+| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用，供 `/codex-*` 指令使用）
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Commands | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### 極小的 Context 佔用
 
@@ -164,6 +182,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/install-rules` | 安裝 plugin 規則到 `.claude/rules/` |
 | `/install-hooks` | 安裝 plugin hooks 到 `.claude/` |
 | `/install-scripts` | 安裝 plugin runner 腳本 |
+| `/codex-setup` | 初始化 Codex CLI 基建（AGENTS.md + hooks） |
 | `/bug-fix` | Bug/Issue 修正 workflow |
 | `/codex-implement` | Codex 寫 code |
 | `/codex-architect` | 架構建議（第三大腦） |
@@ -173,9 +192,11 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/post-dev-test` | 開發後測試補全 |
 | `/feature-dev` | 功能開發流程（設計 → 實作 → 驗證 → Review） |
 | `/feature-verify` | 系統診斷（唯讀驗證，雙視角確認） |
+| `/load-pr-review` | 載入 GitHub PR review 評論至 session |
 | `/code-investigate` | 雙視角程式碼調查（Claude + Codex 獨立探索） |
 | `/next-step` | 情境感知的下一步建議 |
 | `/smart-commit` | 智慧批次 commit（分組 + 訊息 + 指令） |
+| `/git-profile` | Git 身份與 GPG 簽名 profile 管理 |
 | `/push-ci` | 推送（需核准）+ CI 監控 |
 | `/create-pr` | 從 branch 建立 GitHub PR |
 | `/git-worktree` | 管理 git worktree |
@@ -264,13 +285,13 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `post-edit-format` | Edit/Write 之後 | 自動 prettier + 編輯後重設 review 狀態 |
 | `post-tool-review-state` | Bash / MCP 工具之後 | 追蹤 review 狀態（sentinel routing，支援命名空間指令） |
 | `pre-edit-guard` | Edit/Write 之前 | 防止編輯 .env/.git |
-| `stop-guard` | 停止之前 | 未完成 review 時警告 + stale-state git 檢查（預設：warn） |
+| `stop-guard` | 停止之前 | 未完成 review 時阻止或警告 + stale-state git 檢查（安裝後 strict，plugin runtime warn） |
 
 Hook 預設是安全的。使用環境變數自訂行為：
 
 | 變數 | 預設值 | 說明 |
 |------|--------|------|
-| `STOP_GUARD_MODE` | `warn` | 設為 `strict` 可在缺少 review 步驟時阻止停止 |
+| `STOP_GUARD_MODE` | `strict`（安裝後）/ `warn`（plugin runtime） | `strict` 在缺少 review 步驟時阻止停止；`warn` 僅警告 |
 | `HOOK_NO_FORMAT` | （未設定） | 設為 `1` 停用自動 format |
 | `HOOK_BYPASS` | （未設定） | 設為 `1` 跳過所有 stop-guard 檢查 |
 | `HOOK_DEBUG` | （未設定） | 設為 `1` 輸出 debug 資訊 |

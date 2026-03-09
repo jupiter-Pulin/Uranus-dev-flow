@@ -6,7 +6,7 @@
 
 编辑代码 → 自动审查 → 自动修复 → 质量关卡通过 → 交付。无需手动步骤。
 
-60 commands | 44 skills | 14 agents | ~4% context 占用
+63 commands | 47 skills | 14 agents | ~4% context 占用
 
 ## 工作原理
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 引擎**自动执行质量关卡——任何代码编辑后，Claude 会在同一回复中自动触发审查。Hooks 在审查未完成时发出警告（设为 strict 模式可阻止停止）。
+**Auto-Loop 引擎**自动执行质量关卡——任何代码编辑后，Claude 会在同一回复中自动触发审查。Hooks 在审查未完成时阻止停止（`/project-setup` 后默认 strict；plugin runtime 默认 warn）。
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## 安装
 
+### Claude Code（完整体验）
+
 ```bash
 # 添加 marketplace
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # 安装插件
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / 其他 AI Agent
+
+```bash
+# 通过 Agent Skills 标准安装单个 skill
+npx skills add sd0xdev/sd0x-dev-flow
+
+# 生成 AGENTS.md + 安装 hooks（在 Claude Code 中执行）
+/codex-setup init
+```
+
+| 方式 | 适用工具 | 覆盖范围 |
+|------|---------|---------|
+| 插件安装 | Claude Code | 完整（63 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（47 skills） |
+| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（可选，用于 `/codex-*` 命令）
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| 命令 | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| 技能 | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| 命令 | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| 技能 | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | 代理 | 14 | strict-reviewer, verify-app, coverage-analyst |
 | 钩子 | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | 规则 | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| 脚本 | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| 脚本 | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### 极小的 Context 占用
 
@@ -164,6 +182,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/install-rules` | 安装插件规则到 `.claude/rules/` |
 | `/install-hooks` | 安装插件 hooks 到 `.claude/` |
 | `/install-scripts` | 安装插件 runner 脚本 |
+| `/codex-setup` | 初始化 Codex CLI 基础设施（AGENTS.md + hooks） |
 | `/bug-fix` | 缺陷修复工作流 |
 | `/codex-implement` | Codex 编写代码 |
 | `/codex-architect` | 架构建议（第三大脑） |
@@ -173,9 +192,11 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/post-dev-test` | 开发后补充测试 |
 | `/feature-dev` | 功能开发流程（设计 → 实现 → 验证 → 审查） |
 | `/feature-verify` | 系统诊断（只读验证，双视角确认） |
+| `/load-pr-review` | 加载 GitHub PR 审查评论到 session |
 | `/code-investigate` | 双视角代码调查（Claude + Codex 独立探索） |
 | `/next-step` | 情境感知的下一步建议 |
 | `/smart-commit` | 智能批量 commit（分组 + 消息 + 命令） |
+| `/git-profile` | Git 身份与 GPG 签名 profile 管理 |
 | `/push-ci` | 推送（需审批）+ CI 监控 |
 | `/create-pr` | 从分支创建 GitHub PR |
 | `/git-worktree` | 管理 git worktree |
@@ -264,13 +285,13 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `post-edit-format` | 编辑/写入之后 | 自动格式化 + 编辑后重置审查状态 |
 | `post-tool-review-state` | Bash / MCP 工具之后 | 追踪审查状态（sentinel 路由，支持命名空间命令） |
 | `pre-edit-guard` | 编辑/写入之前 | 禁止编辑 .env/.git |
-| `stop-guard` | 停止之前 | 未完成审查时告警 + stale-state git 检查（默认：warn） |
+| `stop-guard` | 停止之前 | 未完成审查时阻止或告警 + stale-state git 检查（安装后 strict，plugin runtime warn） |
 
 钩子默认安全。通过环境变量自定义行为：
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `STOP_GUARD_MODE` | `warn` | 设为 `strict` 可在缺少审查步骤时阻止停止 |
+| `STOP_GUARD_MODE` | `strict`（安装后）/ `warn`（plugin runtime） | `strict` 在缺少审查步骤时阻止停止；`warn` 仅告警 |
 | `HOOK_NO_FORMAT` | （未设置） | 设为 `1` 禁用自动格式化 |
 | `HOOK_BYPASS` | （未设置） | 设为 `1` 跳过所有停止守卫检查 |
 | `HOOK_DEBUG` | （未设置） | 设为 `1` 输出调试信息 |

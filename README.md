@@ -6,7 +6,7 @@
 
 Edit code → auto-review → auto-fix → gate-pass → ship. No manual steps.
 
-60 commands | 44 skills | 14 agents | ~4% context footprint
+63 commands | 47 skills | 14 agents | ~4% context footprint
 
 ## How It Works
 
@@ -22,7 +22,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-The **auto-loop engine** enforces quality gates automatically — after any code edit, Claude triggers review in the same reply. Hooks warn on incomplete reviews before stopping (set strict mode to block).
+The **auto-loop engine** enforces quality gates automatically — after any code edit, Claude triggers review in the same reply. Hooks block incomplete reviews before stopping (strict mode by default after `/project-setup`; plugin runtime defaults to warn).
 
 ```mermaid
 sequenceDiagram
@@ -51,6 +51,8 @@ sequenceDiagram
 
 ## Install
 
+### Claude Code (Full Experience)
+
 ```bash
 # Add marketplace
 /plugin marketplace add sd0xdev/sd0x-dev-flow
@@ -58,6 +60,22 @@ sequenceDiagram
 # Install plugin
 /plugin install sd0x-dev-flow@sd0xdev-marketplace
 ```
+
+### Codex CLI / Other AI Agents
+
+```bash
+# Install individual skills via Agent Skills standard
+npx skills add sd0xdev/sd0x-dev-flow
+
+# Generate AGENTS.md + install hooks (in Claude Code)
+/codex-setup init
+```
+
+| Method | Tools | Coverage |
+|--------|-------|----------|
+| Plugin install | Claude Code | Full (63 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (47 skills) |
+| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional, for `/codex-*` commands)
 
@@ -133,12 +151,12 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 60 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 44 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 7 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate |
+| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
 
 ### Minimal Context Footprint
 
@@ -164,6 +182,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/install-rules` | Install plugin rules to `.claude/rules/` |
 | `/install-hooks` | Install plugin hooks to `.claude/` |
 | `/install-scripts` | Install plugin runner scripts |
+| `/codex-setup` | Initialize Codex CLI infrastructure (AGENTS.md + hooks) |
 | `/bug-fix` | Bug/Issue fix workflow |
 | `/codex-implement` | Codex writes code |
 | `/codex-architect` | Architecture advice (third brain) |
@@ -173,9 +192,11 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/post-dev-test` | Post-dev test completion |
 | `/feature-dev` | Feature development workflow (design → implement → verify → review) |
 | `/feature-verify` | System diagnosis (read-only verification with dual-perspective) |
+| `/load-pr-review` | Load GitHub PR review comments into session |
 | `/code-investigate` | Dual-perspective code investigation (Claude + Codex independent) |
 | `/next-step` | Context-aware next step advisor |
 | `/smart-commit` | Smart batch commit (group + message + commands) |
+| `/git-profile` | Git identity and GPG signing profile manager |
 | `/push-ci` | Push (with approval) + CI monitor |
 | `/create-pr` | Create GitHub PR from branch |
 | `/git-worktree` | Manage git worktrees |
@@ -264,13 +285,13 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `post-edit-format` | After Edit/Write | Auto prettier + invalidate review state on edit |
 | `post-tool-review-state` | After Bash / MCP tools | Track review state (sentinel routing, supports namespaced commands) |
 | `pre-edit-guard` | Before Edit/Write | Prevent editing .env/.git |
-| `stop-guard` | Before stop | Warn on incomplete reviews + stale-state git check (default: warn) |
+| `stop-guard` | Before stop | Block or warn on incomplete reviews + stale-state git check (strict after install, warn in plugin runtime) |
 
 Hooks are safe by default. Use environment variables to customize:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `STOP_GUARD_MODE` | `warn` | Set `strict` to block stop on missing review steps |
+| `STOP_GUARD_MODE` | `strict` (installed) / `warn` (plugin runtime) | `strict` blocks stop on missing review steps; `warn` only warns |
 | `HOOK_NO_FORMAT` | (unset) | Set `1` to disable auto-formatting |
 | `HOOK_BYPASS` | (unset) | Set `1` to skip all stop-guard checks |
 | `HOOK_DEBUG` | (unset) | Set `1` to output debug info |
