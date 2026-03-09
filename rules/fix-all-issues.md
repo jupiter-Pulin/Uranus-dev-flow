@@ -58,6 +58,7 @@ When fixing, must answer:
 | Beyond current scope       | Requires architecture-level changes; report and log |
 | Third-party library issue  | Cannot modify; document workaround                  |
 | Nit persists after AI fix  | AI attempted fix, Codex still reports same Nit (possible false-positive); logged via `[NIT_DEFERRED]` |
+| P2 dismiss verified via `/seek-verdict` | Codex independently confirmed NON_ACTIONABLE with confidence >= 0.80 + evidence >= 2 (see `skills/seek-verdict/references/policy-mapping.md` for full thresholds); logged via `[DISMISS_VERDICT]` |
 
 ## Precedence
 

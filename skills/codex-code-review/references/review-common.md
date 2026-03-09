@@ -88,6 +88,20 @@ Please verify:
 });
 ```
 
+## Dismiss Verdict Format
+
+When a P2 finding is verified via `/seek-verdict`, output:
+
+```
+[DISMISS_VERDICT] key=<file|canonical_issue> | severity=P2 | verdict=<DISMISS_VERIFIED|FIX_REQUIRED|NEED_HUMAN> | confidence=<0..1> | codex_thread=<id> | evidence=<brief> | timestamp=<ISO8601>
+```
+
+| Field | Redaction |
+|-------|-----------|
+| `key` | File path + issue summary (<= 120 chars); no code snippets |
+| `evidence` | File:line references only; no source code |
+| All fields | No secrets/tokens/passwords/API keys |
+
 ## Output Findings Format
 
 ```
