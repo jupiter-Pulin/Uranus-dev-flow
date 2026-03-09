@@ -136,7 +136,7 @@ sequenceDiagram
     G-->>CS: AGENTS.md (≤ 24 KiB)
     CS->>CS: Multi-mode hook installer
     CS->>CS: Copy runner scripts
-    CS-->>U: 安裝完成 + .sd0x-codex-state.json
+    CS-->>U: 安裝完成 + .sd0x/install-state.json
 ```
 
 | 層 | 負責元件 | 解決問題 |
@@ -188,7 +188,7 @@ sequenceDiagram
     CS->>H: Multi-mode hook install
     Note over CS,H: Husky → core.hooksPath → .git/hooks/ → .githooks/ fallback
     CS->>H: Copy runner scripts (precommit-runner.js, verify-runner.js, lib/utils.js, dep-audit.sh)
-    CS->>H: Write .sd0x-codex-state.json (version lock)
+    CS->>H: Write .sd0x/install-state.json (version lock)
 ```
 
 #### Multi-mode Hook Installer
@@ -242,9 +242,9 @@ sequenceDiagram
 ## Available Scripts
 | Script | Command | When |
 |--------|---------|------|
-| Precommit (fast) | node scripts/precommit-runner.js --mode fast | Before commit |
-| Precommit (full) | node scripts/precommit-runner.js --mode full | Before PR |
-| Verify | node scripts/verify-runner.js --mode full | After changes |
+| Precommit (fast) | node .sd0x/scripts/precommit-runner.js --mode fast | Before commit |
+| Precommit (full) | node .sd0x/scripts/precommit-runner.js --mode full | Before PR |
+| Verify | node .sd0x/scripts/verify-runner.js --mode full | After changes |
 
 ## Test Requirements
 {auto-detected from host CLAUDE.md or package.json}
@@ -298,9 +298,9 @@ sd0x-flow-core/
 | 檔案 | 用途 | 生命週期 | 現有實作 |
 |------|------|----------|----------|
 | `.claude_review_state.json` | Runtime review state（session 內 code/doc review + precommit 追蹤） | State-file-aware：不存在時初始化，之後持續更新（無自動 session reset） | hooks/post-tool-review-state.sh、hooks/post-edit-format.sh、hooks/stop-guard.sh |
-| `.sd0x-codex-state.json` | Install manifest（version lock + drift detection） | 跨 session 持久 | 新建（skills/codex-setup init 產出） |
+| `.sd0x/install-state.json` | Install manifest（version lock + drift detection） | 跨 session 持久 | 新建（skills/codex-setup init 產出） |
 
-> **Migration**：現有 `.claude_review_state.json` 維持不變（Tier A runtime 專用）。`.sd0x-codex-state.json` 為全新檔案，不需 migration。兩者用途不重疊。
+> **Migration**：現有 `.claude_review_state.json` 維持不變（Tier A runtime 專用）。`.sd0x/install-state.json` 為全新檔案，與 runtime state 不重疊。**舊名稱遷移**：v1.8.15 之前安裝的 host 可能存有 `.sd0x-codex-state.json`；`codex-setup sync` 預計處理自動遷移（Phase 2 backlog，尚未實作）。
 
 #### State Model（Runtime）
 
@@ -333,7 +333,7 @@ Hook parser（`post-tool-review-state.sh`）辨識的完整 sentinel 集合：
 
 ### 3.7 Version Lock + Drift Gate
 
-#### `.sd0x-codex-state.json`
+#### `.sd0x/install-state.json`
 
 ```json
 {
@@ -357,8 +357,8 @@ Hook parser（`post-tool-review-state.sh`）辨識的完整 sentinel 集合：
 `pre-push-gate.sh` 可選整合：
 
 ```bash
-# If .sd0x-codex-state.json exists, warn on version drift
-if [[ -f ".sd0x-codex-state.json" ]]; then
+# If .sd0x/install-state.json exists, warn on version drift
+if [[ -f ".sd0x/install-state.json" ]]; then
   # Compare installed version vs plugin version
   # DRIFT_MODE=strict: block push; default: warn only
 fi
@@ -402,9 +402,9 @@ codex> /codex-setup sync
 | 2 | Windsurf hooks API 可能變更 | adapter 需持續維護 | Pin 版本 + 相容性測試 |
 | 3 | Cursor hooks 為 beta | 不適合立即投入 | 等穩定後再開發 adapter |
 | 4 | 32 KiB AGENTS.md 限制 | CLAUDE.md + rules 全文 = 32,716 bytes，僅差 52 bytes 超標 | Core/Extended rule 分層 + kernel 摘要（≤ 8 KiB） |
-| 5 | `npx skills add` 為第三方 CLI（Vercel） | 供應鏈依賴 + API 變更風險 | `.sd0x-codex-state.json` 記錄安裝狀態 + `codex-setup doctor` 驗證安裝完整性 + **Planned**：Pin `skills` CLI 版本於 `package.json` devDependencies（Phase 1a 追加）+ 提供 manual install fallback 文件（Phase 1b setup guide 包含） |
+| 5 | `npx skills add` 為第三方 CLI（Vercel） | 供應鏈依賴 + API 變更風險 | `.sd0x/install-state.json` 記錄安裝狀態 + `codex-setup doctor` 驗證安裝完整性 + **Planned**：Pin `skills` CLI 版本於 `package.json` devDependencies（Phase 1a 追加）+ 提供 manual install fallback 文件（Phase 1b setup guide 包含） |
 | 6 | 62 commands 無法自動移植 | 使用者體驗落差大 | 提供 top-20 prompt recipe 文件 |
-| 7 | State file 路徑/格式跨工具一致性 | 多工具共用同一 repo 可能衝突 | Runtime state 維持 `.claude_review_state.json`（Tier A 專用）；install manifest 使用 `.sd0x-codex-state.json`（跨工具通用） |
+| 7 | State file 路徑/格式跨工具一致性 | 多工具共用同一 repo 可能衝突 | Runtime state 維持 `.claude_review_state.json`（Tier A 專用）；install manifest 使用 `.sd0x/install-state.json`（跨工具通用） |
 | 8 | Version drift（plugin 更新但 AGENTS.md 未同步） | 規則不一致 | `codex-setup sync` + drift gate 偵測 |
 
 ## 5. Work Breakdown
