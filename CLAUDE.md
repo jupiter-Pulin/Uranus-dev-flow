@@ -92,6 +92,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/install-rules` | Install plugin rules to .claude/rules/ | Onboarding |
 | `/install-hooks` | Install plugin hooks to .claude/ | Onboarding |
 | `/install-scripts` | Install plugin scripts to .claude/scripts/ | Onboarding |
+| `/codex-setup` | Initialize Codex CLI infrastructure (AGENTS.md + hooks) | Onboarding |
 | `/project-setup` | Auto-detect and configure project | Onboarding |
 | `/claude-health` | Claude Code config health check | Onboarding |
 | `/pr-review` | PR self-review checklist | Before PR |
