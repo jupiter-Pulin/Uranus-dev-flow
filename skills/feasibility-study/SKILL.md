@@ -45,14 +45,14 @@ Research existing codebase:
 Brainstorm 2-3+ solutions, each with:
 1. Core idea (one sentence)
 2. Implementation path
-3. Quantified feasibility (see @references/analysis-phases.md)
+3. Quantified feasibility (see `references/analysis-phases.md`)
 4. Cost and trade-offs
 
 ### Phase 5: In-Depth Codex Discussion
 
 **⚠️ Core step — not optional (unless `--no-codex`) ⚠️**
 
-See @references/codex-discussion-guide.md for full rules and examples.
+See `references/codex-discussion-guide.md` for full rules and examples.
 
 | Tool | Purpose | When |
 |------|---------|------|

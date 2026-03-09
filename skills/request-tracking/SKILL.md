@@ -83,7 +83,7 @@ docs/features/{feature}/
 
 ```
 Input: How to write a request document?
-Action: Explain template structure + reference template.md
+Action: Explain template structure + reference references/template.md
 ```
 
 ```

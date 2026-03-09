@@ -58,9 +58,9 @@ Use `mcp__codex__codex` with variant-specific prompt:
 
 | Variant | Prompt Template |
 |---------|-----------------|
-| Fast    | @references/codex-prompt-fast.md |
-| Full    | @references/codex-prompt-full.md |
-| Branch  | @references/codex-prompt-branch.md |
+| Fast    | `references/codex-prompt-fast.md` |
+| Full    | `references/codex-prompt-full.md` |
+| Branch  | `references/codex-prompt-branch.md` |
 
 Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
@@ -68,7 +68,7 @@ Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
 **Case B: Loop review (has `--continue`)**
 
-Use `mcp__codex__codex-reply` with re-review template from @references/review-common.md.
+Use `mcp__codex__codex-reply` with re-review template from `references/review-common.md`.
 
 ### Step 4: Consolidate Output
 
@@ -76,7 +76,7 @@ Organize Codex results into standard format with severity-grouped findings and g
 
 ## Shared Definitions
 
-See @references/review-common.md for:
+See `references/review-common.md` for:
 - Severity levels (P0/P1/P2/Nit)
 - Review dimensions
 - Merge gate definitions
@@ -106,8 +106,7 @@ Ready + P2/Nit → batch fix → 1 Codex `--continue` verify → evaluate (see `
 - Fast prompt: `references/codex-prompt-fast.md`
 - Full prompt: `references/codex-prompt-full.md`
 - Branch prompt: `references/codex-prompt-branch.md`
-- Rubric: `review_rubric.md`
-- Output template: `templates/review_output.md`
+- Research instructions: `references/codex-research-instructions.md`
 
 ## Examples
 

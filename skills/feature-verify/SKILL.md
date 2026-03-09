@@ -32,7 +32,7 @@ context: fork
 Claude independent analysis → Codex third-perspective confirmation → Integrated verdict
 ```
 
-> **Tool safety note**: `allowed-tools` includes `Bash` for curl/log queries. Read-only enforcement is behavioral — all commands MUST be reviewed against safety-rules.md before execution. Codex independently verifies compliance at P5.
+> **Tool safety note**: `allowed-tools` includes `Bash` for curl/log queries. Read-only enforcement is behavioral — all commands MUST be reviewed against `references/safety-rules.md` before execution. Codex independently verifies compliance at P5.
 
 ## Degradation Matrix
 
@@ -46,7 +46,7 @@ Auto-detect from `references/environments.md` configuration:
 | **L2-OBS** | Log only (API unreachable) | Skip | Time-window scan | Medium |
 | **L1** | No runtime access | Skip P3/P4 | Code review only | Low |
 
-**Auto-detection logic** (see environments.md § Degradation Detection):
+**Auto-detection logic** (see `references/environments.md` § Degradation Detection):
 
 | API Status | Log System | Metrics | Level |
 |------------|------------|---------|-------|
@@ -85,11 +85,11 @@ Read [safety-rules.md](references/safety-rules.md) and [environments.md](referen
 
 | Check | Method | Fail Action |
 | ----- | ------ | ----------- |
-| Environment select | `--env` flag or ask user; load from environments.md | Default to test |
-| API reachable | Deterministic health-check (3x, 2s timeout — see environments.md) | Unreachable + Log config → L2-OBS; Unreachable + no Log → L1 |
+| Environment select | `--env` flag or ask user; load from `references/environments.md` | Default to test |
+| API reachable | Deterministic health-check (3x, 2s timeout — see `references/environments.md`) | Unreachable + Log config → L2-OBS; Unreachable + no Log → L1 |
 | Deployment aligned | Compare local HEAD with deployed version | Mismatch → warn, lower confidence |
-| Read-only confirmed | Review safety-rules.md, confirm all planned operations are read-only | — |
-| Degradation level | Check environments.md for log/metrics config | Set level (L1-L4) |
+| Read-only confirmed | Review `references/safety-rules.md`, confirm all planned operations are read-only | — |
+| Degradation level | Check `references/environments.md` for log/metrics config | Set level (L1-L4) |
 
 ## P1: Diff-Lite Scoping
 
@@ -126,11 +126,11 @@ Generate test cases dynamically from P1 results:
 
 For each test case:
 
-1. Load headers from environments.md (generate unique request ID per call)
-2. Send request — **only allowlisted endpoints** (safety-rules.md)
+1. Load headers from `references/environments.md` (generate unique request ID per call)
+2. Send request — **only allowlisted endpoints** (`references/safety-rules.md`)
 3. Record: HTTP status, response code, key response fields, request ID, latency
 4. Single request at a time (no concurrent/load testing)
-5. Use fixed test parameters from environments.md (no real user data)
+5. Use fixed test parameters from `references/environments.md` (no real user data)
 
 ```bash
 # Example execution pattern
@@ -201,12 +201,12 @@ Record what **cannot** be observed through black-box testing. List in report for
 ### Dual Verification (Claude + Codex)
 
 1. **Claude analysis**: Form independent conclusion from P3 + P4 evidence
-2. **Codex review**: Use `/codex-brainstorm` with P1 scope + P3 results + P4 observations (see blackbox-testing.md § P5)
+2. **Codex review**: Use `/codex-brainstorm` with P1 scope + P3 results + P4 observations (see `references/blackbox-testing.md` § P5)
 3. **Integrated verdict**: Synthesize both perspectives
 
-Codex must independently verify (see blackbox-testing.md § P5 prompt):
+Codex must independently verify (see `references/blackbox-testing.md` § P5 prompt):
 - No write operations were performed during P3
-- Each endpoint called was on the Endpoint Allowlist (environments.md)
+- Each endpoint called was on the Endpoint Allowlist (`references/environments.md`)
 - All HTTP methods match allowlist (GET or allowlisted POST)
 - Verdict is justified by evidence
 
@@ -221,8 +221,8 @@ Generate report using [output-template.md](references/output-template.md).
 | Rule | Description |
 | ---- | ----------- |
 | Single request | One request at a time (no load testing) |
-| Fixed parameters | Use test parameters from environments.md |
-| Read-only only | Only allowlisted endpoints (safety-rules.md) |
+| Fixed parameters | Use test parameters from `references/environments.md` |
+| Read-only only | Only allowlisted endpoints (`references/safety-rules.md`) |
 | No PII | No real user credentials, keys, or sensitive data in payloads |
 | Rate aware | Respect API rate limits |
 
@@ -242,7 +242,7 @@ Generate report using [output-template.md](references/output-template.md).
 - [ ] P5: Claude analysis formed independently
 - [ ] P5: Codex review completed independently
 - [ ] P5: Integrated verdict with confidence level
-- [ ] Report follows output-template.md format
+- [ ] Report follows `references/output-template.md` format
 
 ## References
 
@@ -276,7 +276,7 @@ Action: P0(staging, L3) → P1(diff → cron changes) → P2(L3 passive only)
 ```
 Input: /feature-verify "Cache optimization" (no env configured)
 Action: P0(no config → L1) → P1(diff → cache service) → P2(code review only)
-        → P3(skip) → P4(skip) → P5(verdict: Inconclusive, Low — recommend configuring environments.md)
+        → P3(skip) → P4(skip) → P5(verdict: Inconclusive, Low — recommend configuring references/environments.md)
 ```
 
 ```

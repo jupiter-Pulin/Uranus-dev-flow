@@ -47,13 +47,13 @@ Read target file, save as `FILE_CONTENT`.
 
 ### Step 3: Codex Review
 
-**First review**: `mcp__codex__codex` with doc review prompt. See @references/codex-prompt-doc.md.
+**First review**: `mcp__codex__codex` with doc review prompt. See `references/codex-prompt-doc.md`.
 
 Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
 **Save the returned `threadId`.**
 
-**Loop review**: `mcp__codex__codex-reply` with re-review template. See @references/review-loop-doc.md.
+**Loop review**: `mcp__codex__codex-reply` with re-review template. See `references/review-loop-doc.md`.
 
 ### Step 4: Consolidate Output
 

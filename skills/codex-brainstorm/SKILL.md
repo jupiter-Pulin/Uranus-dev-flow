@@ -91,9 +91,9 @@ Structure per round:
 
 | File             | Purpose                        |
 | ---------------- | ------------------------------ |
-| `templates.md`   | Claude/debate/report templates |
-| `techniques.md`  | Attack/defense techniques      |
-| `equilibrium.md` | Equilibrium determination flow |
+| `references/templates.md`   | Claude/debate/report templates |
+| `references/techniques.md`  | Attack/defense techniques      |
+| `references/equilibrium.md` | Equilibrium determination flow |
 
 ## Example
 

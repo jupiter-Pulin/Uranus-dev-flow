@@ -11,9 +11,9 @@
 
 | Script | Command | When |
 |--------|---------|------|
-| Precommit (fast) | `node scripts/precommit-runner.js --mode fast` | Before commit |
-| Precommit (full) | `node scripts/precommit-runner.js --mode full` | Before PR |
-| Verify | `node scripts/verify-runner.js --mode full` | After changes |
+| Precommit (fast) | `node .sd0x/scripts/precommit-runner.js --mode fast` | Before commit |
+| Precommit (full) | `node .sd0x/scripts/precommit-runner.js --mode full` | Before PR |
+| Verify | `node .sd0x/scripts/verify-runner.js --mode full` | After changes |
 
 ## Test Requirements
 

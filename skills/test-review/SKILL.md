@@ -49,9 +49,9 @@ Smart detect target → Read test + source → Codex review (5 dimensions) → C
 
 ### Step 3: Codex Review
 
-**First review**: `mcp__codex__codex` with test review prompt. See @references/codex-prompt-test-review.md.
+**First review**: `mcp__codex__codex` with test review prompt. See `references/codex-prompt-test-review.md`.
 
-**Loop review**: `mcp__codex__codex-reply` with re-review template. See @references/codex-prompt-test-review.md.
+**Loop review**: `mcp__codex__codex-reply` with re-review template. See `references/codex-prompt-test-review.md`.
 
 Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
@@ -67,7 +67,7 @@ Read source → Derive test path → Codex generate → Save test file → Sugge
 
 1. Read source file
 2. Derive test path: `src/service/xxx.ts` → `test/unit/service/xxx.test.ts`
-3. Codex generates tests. See @references/codex-prompt-test-gen.md.
+3. Codex generates tests. See `references/codex-prompt-test-gen.md`.
 4. Save to target path
 5. Suggest: run tests then `/codex-test-review`
 

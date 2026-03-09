@@ -44,13 +44,13 @@ Priority order:
 
 ### Step 3: Codex Security Review
 
-**First review**: `mcp__codex__codex` with OWASP prompt. See @references/codex-prompt-security.md.
+**First review**: `mcp__codex__codex` with OWASP prompt. See `references/codex-prompt-security.md`.
 
 Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
 **Save the returned `threadId`.**
 
-**Loop review**: `mcp__codex__codex-reply` with re-review template. See @references/codex-prompt-security.md.
+**Loop review**: `mcp__codex__codex-reply` with re-review template. See `references/codex-prompt-security.md`.
 
 ### Step 4: Consolidate Output
 

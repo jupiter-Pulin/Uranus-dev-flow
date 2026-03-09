@@ -66,15 +66,15 @@ Copy these scripts to the host project:
 
 | Source | Target |
 |--------|--------|
-| `scripts/precommit-runner.js` | `scripts/precommit-runner.js` |
-| `scripts/verify-runner.js` | `scripts/verify-runner.js` |
-| `scripts/lib/utils.js` | `scripts/lib/utils.js` |
+| `scripts/precommit-runner.js` | `.sd0x/scripts/precommit-runner.js` |
+| `scripts/verify-runner.js` | `.sd0x/scripts/verify-runner.js` |
+| `scripts/lib/utils.js` | `.sd0x/scripts/lib/utils.js` |
 
 Ensure target directories exist (`mkdir -p`).
 
 ### Phase 5: Write State File
 
-Write `.sd0x-codex-state.json` to repo root:
+Write `.sd0x/install-state.json` to repo root:
 
 ```json
 {
@@ -112,7 +112,7 @@ Detect sandbox: if `mkdir -p` or file write fails, switch to read-only output mo
 | AGENTS.md hash match | Compare `git hash-object` vs state file | Match | Drift detected |
 | AGENTS.md size ≤ 24 KiB | `wc -c` | ≤ 24576 | Oversized |
 | Hooks installed | Check hook files exist in detected mode | Present | Missing |
-| Scripts installed | Check script files exist | Present | Missing |
+| Scripts installed | Check `.sd0x/scripts/` files exist | Present | Missing |
 | Version match | Compare state `sd0x_version` vs current plugin | Match | Update available |
 
 Output a summary table with pass/fail status for each check.
@@ -122,8 +122,8 @@ Output a summary table with pass/fail status for each check.
 1. Re-run `build-codex-artifacts.js` → overwrite AGENTS.md
 2. Re-copy hook scripts (overwrite if changed)
 3. Re-copy runner scripts (overwrite if changed)
-4. Update `.sd0x-codex-state.json` with new hashes
+4. Update `.sd0x/install-state.json` with new hashes
 
 ## References
 
-- @references/agents-kernel.md — AGENTS.md kernel template
+- `references/agents-kernel.md` — AGENTS.md kernel template

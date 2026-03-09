@@ -28,7 +28,7 @@ Read file content. If `--lines` specified, extract only that range.
 
 ### Step 2: Codex Explanation
 
-Use `mcp__codex__codex` with explanation prompt. See @references/codex-prompt-explain.md.
+Use `mcp__codex__codex` with explanation prompt. See `references/codex-prompt-explain.md`.
 
 Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 

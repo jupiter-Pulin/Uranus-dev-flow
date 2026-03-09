@@ -81,7 +81,7 @@ If `cast` is unavailable or crashes, fall back to Step 3 API query.
 
 ### Step 3: External API Query
 
-See @references/apis.md for full endpoints and parameters.
+See `references/apis.md` for full endpoints and parameters.
 
 **Query strategy**:
 
