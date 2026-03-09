@@ -173,3 +173,93 @@ test('skills with references/ directory have at least one .md file', () => {
     }
   }
 });
+
+test('commands preload all reference files for their bound skills', () => {
+  const commandsDir = resolve(__dirname, '../../commands');
+  const commandFiles = readdirSync(commandsDir).filter((f) => f.endsWith('.md'));
+
+  for (const file of commandFiles) {
+    const content = readFileSync(join(commandsDir, file), 'utf8');
+
+    // Find the skill this command binds to
+    const skillMatch = content.match(/@skills\/([^/]+)\/SKILL\.md/);
+    if (!skillMatch) continue; // Skip commands without skill binding
+
+    const skillName = skillMatch[1];
+    const refsDir = join(skillsDir, skillName, 'references');
+    if (!existsSync(refsDir)) continue;
+
+    // List all reference files for this skill
+    const refFiles = readdirSync(refsDir).filter((f) => f.endsWith('.md'));
+
+    // Every reference file must be preloaded by the command
+    for (const ref of refFiles) {
+      const directive = `@skills/${skillName}/references/${ref}`;
+      assert.ok(
+        content.includes(directive),
+        `${file} binds skill "${skillName}" but does not preload "${ref}". ` +
+          `Add: ${directive}`
+      );
+    }
+  }
+});
+
+test('SKILL.md uses consistent reference syntax (no @references/ prefix)', () => {
+  const dirs = getSkillDirs();
+
+  for (const dir of dirs) {
+    const skillPath = join(skillsDir, dir, 'SKILL.md');
+    if (!existsSync(skillPath)) continue;
+
+    const content = readFileSync(skillPath, 'utf8');
+
+    // Forbid @references/ prefix (avoid confusion with command @skills/ directives)
+    const atRefPattern = /@references\//g;
+    const matches = content.match(atRefPattern);
+    assert.ok(
+      !matches,
+      `skills/${dir}/SKILL.md uses @references/ syntax (${matches?.length} occurrences). ` +
+        'Use `references/<file>.md` instead.'
+    );
+  }
+});
+
+test('SKILL.md reference mentions include references/ path prefix', () => {
+  const dirs = getSkillDirs();
+
+  for (const dir of dirs) {
+    const skillPath = join(skillsDir, dir, 'SKILL.md');
+    if (!existsSync(skillPath)) continue;
+
+    const content = readFileSync(skillPath, 'utf8');
+    const refsDir = join(skillsDir, dir, 'references');
+    if (!existsSync(refsDir)) continue;
+
+    const refFiles = readdirSync(refsDir).filter((f) => f.endsWith('.md'));
+
+    // Strip References table section (bare filenames allowed as human-readable list)
+    const bodyContent = content.replace(/## References[\s\S]*?(?=\n## |$)/g, '');
+
+    for (const ref of refFiles) {
+      const escaped = ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Remove valid patterns:
+      // 1. Markdown links where URL points to references/<file>.md (with optional ./ prefix and #fragment)
+      let cleaned = bodyContent.replace(
+        new RegExp(`\\[[^\\]]*\\]\\(\\.?\\/?\\.?\\/?references/${escaped}[^)]*\\)`, 'g'),
+        ''
+      );
+      // 2. Inline references/<file>.md mentions (with optional ./ prefix)
+      cleaned = cleaned.replace(
+        new RegExp(`\\.?\\/?\\.?\\/?references/${escaped}`, 'g'),
+        ''
+      );
+      const barePattern = new RegExp(`\\b${escaped}\\b`, 'g');
+      const bareMatches = cleaned.match(barePattern) || [];
+
+      assert.ok(
+        bareMatches.length === 0,
+        `skills/${dir}/SKILL.md has bare reference to "${ref}" without "references/" prefix`
+      );
+    }
+  }
+});

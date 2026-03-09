@@ -166,6 +166,32 @@ test('--output flag writes to file', () => {
   assert.ok(byteSize <= 24576, `Output file ${byteSize} bytes exceeds limit`);
 });
 
+test('kernel contains .sd0x/scripts/ paths', () => {
+  const dir = createTempDir();
+  writeFileSync(
+    join(dir, 'package.json'),
+    JSON.stringify({ name: 'path-test', scripts: { test: 'jest' } })
+  );
+
+  const output = runScript(['--project-dir', dir]);
+  assert.ok(
+    output.includes('.sd0x/scripts/precommit-runner.js'),
+    'Should reference .sd0x/scripts/precommit-runner.js'
+  );
+  assert.ok(
+    output.includes('.sd0x/scripts/verify-runner.js'),
+    'Should reference .sd0x/scripts/verify-runner.js'
+  );
+  assert.ok(
+    !output.includes('node scripts/precommit-runner.js'),
+    'Should not contain legacy scripts/ path for precommit-runner'
+  );
+  assert.ok(
+    !output.includes('node scripts/verify-runner.js'),
+    'Should not contain legacy scripts/ path for verify-runner'
+  );
+});
+
 test('version is read from plugin.json', () => {
   const dir = createTempDir();
   writeFileSync(
