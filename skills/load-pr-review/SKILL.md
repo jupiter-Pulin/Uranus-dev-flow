@@ -14,6 +14,7 @@ description: "Load GitHub PR review comments into AI session — summarize, plan
 | Need | Use Instead |
 |------|-------------|
 | Create a code review | `/codex-review-fast` or `/codex-review` |
+| Post new review comments | `/pr-comment` |
 | Create a PR | `/create-pr` |
 | PR status overview | `/pr-summary` |
 | Investigate code history | `/git-investigate` |
