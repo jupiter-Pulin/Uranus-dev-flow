@@ -94,9 +94,9 @@ Dynamically enumerate scripts under `skills/*/scripts/*`. The table below lists 
 | `audit.js` | project-audit | Node.js | None |
 | `analyze.js` | next-step | Node.js | None |
 | `risk-analyze.js` | risk-assess | Node.js | None |
-| `scan_midway_delta.js` | repo-intake | Node.js | None |
+| `scan_delta.js` | repo-intake | Node.js | None |
 | `intake_cached.js` | repo-intake | Node.js | None |
-| `scan_midway_repo.js` | repo-intake | Node.js | None |
+| `scan_repo.js` | repo-intake | Node.js | None |
 
 If `--skill-list` is specified, enumerate from filesystem and output the discovered skill scripts as a table, then **stop**.
 

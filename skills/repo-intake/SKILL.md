@@ -76,24 +76,24 @@ Cache stored at: `~/.claude/cache/repo-intake/<repoKey>/`
 
 ## References
 
-- `references/MIDWAY_HEURISTICS.md` — MidwayJS-specific detection heuristics (read when scanning MidwayJS projects)
+- `references/archived/MIDWAY_HEURISTICS.md` — Legacy MidwayJS heuristics (archived, for reference only)
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
 | `scripts/intake_cached.js` | Main intake with caching |
-| `scripts/scan_midway_repo.js` | Full MidwayJS repo scanner |
-| `scripts/scan_midway_delta.js` | Delta scan for changed files |
+| `scripts/scan_repo.js` | Full repo scanner (framework-agnostic) |
+| `scripts/scan_delta.js` | Delta scan for changed files |
 
 ## Examples
 
 ```
-Input: /midway-intake
+Input: /repo-intake
 Action: Execute intake script -> Output project map
 ```
 
 ```
-Input: /midway-intake save
+Input: /repo-intake save
 Action: Execute intake script -> Output and write to docs/ai/intake/
 ```

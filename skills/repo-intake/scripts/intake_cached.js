@@ -14,7 +14,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
-const SCANNER_VERSION = 'repo-intake-midway@1.0.0';
+const SCANNER_VERSION = 'repo-intake@2.0.0';
 
 function run(cmd, args, cwd = process.cwd()) {
   const r = spawnSync(cmd, args, { cwd, encoding: 'utf8' });
@@ -149,6 +149,11 @@ function main() {
 
   const cacheBase =
     process.env.CLAUDE_REPO_INTAKE_CACHE_DIR ||
+    path.join(os.homedir(), '.claude', 'cache', 'repo-intake');
+
+  // Legacy cache path (pre-v2 used 'repo-intake-midway')
+  const legacyCacheBase =
+    process.env.CLAUDE_REPO_INTAKE_LEGACY_CACHE_DIR ||
     path.join(os.homedir(), '.claude', 'cache', 'repo-intake-midway');
 
   const repoCacheDir = path.join(cacheBase, key);
@@ -207,8 +212,8 @@ function main() {
     writeJson(latestInfo, payload);
   }
 
-  const fullScanner = path.join(__dirname, 'scan_midway_repo.js');
-  const deltaScanner = path.join(__dirname, 'scan_midway_delta.js');
+  const fullScanner = path.join(__dirname, 'scan_repo.js');
+  const deltaScanner = path.join(__dirname, 'scan_delta.js');
 
   if (!branch || branch === 'HEAD') branch = 'unknown';
 
@@ -268,6 +273,29 @@ function main() {
     return;
   }
 
+  // Legacy cache migration: check if old 'repo-intake-midway' cache exists
+  // If new-path cache misses but legacy exists, trigger rescan with new scanner
+  function hasLegacyCache() {
+    try {
+      const legacyRepoDir = path.join(legacyCacheBase, key);
+      const legacyMeta = path.join(legacyRepoDir, 'commits');
+      if (!fs.existsSync(legacyMeta)) return false;
+      // Validate: at least one commit dir with a meta.json
+      const dirs = fs.readdirSync(legacyMeta, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+      for (const d of dirs) {
+        const metaFile = path.join(legacyMeta, d.name, 'meta.json');
+        try {
+          const m = JSON.parse(readText(metaFile) || 'null');
+          if (m && m.repoRoot) return true;
+        } catch { /* skip invalid */ }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   // auto cache hit
   if (args.mode === 'auto' && fullCacheHit) {
     updateLatest({
@@ -282,6 +310,30 @@ function main() {
     });
     process.stdout.write(
       args.format === 'json' ? readText(fullJson) : readText(fullMd)
+    );
+    return;
+  }
+
+  // Legacy cache migration: only on first-time bootstrap (new cache has no prior commits)
+  function isNewCacheEmpty() {
+    try {
+      if (!fs.existsSync(commitsDir)) return true;
+      const dirs = fs.readdirSync(commitsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+      // The current HEAD dir is auto-created by ensureDir above, so exclude it
+      const otherDirs = dirs.filter(d => d.name !== head);
+      return otherDirs.length === 0;
+    } catch { return true; }
+  }
+
+  if (args.mode === 'auto' && !fullCacheHit && isNewCacheEmpty() && hasLegacyCache()) {
+    process.stderr.write(
+      `[repo-intake] Legacy cache detected at ${legacyCacheBase}/${key}, running fresh scan with v2 scanner\n`
+    );
+    runFullScan(
+      { mode: 'auto', decided: 'full', reason: 'legacy-cache-migration' },
+      'auto-legacy-migration',
+      { reason: 'legacy-cache-migration' }
     );
     return;
   }

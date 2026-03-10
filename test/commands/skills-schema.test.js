@@ -158,7 +158,7 @@ test('skills with references/ directory have at least one .md file', () => {
     const refsDir = join(skillsDir, dir, 'references');
     if (!existsSync(refsDir)) continue;
 
-    const refFiles = readdirSync(refsDir).filter((f) => f.endsWith('.md'));
+    const refFiles = readdirSync(refsDir, { recursive: true }).filter((f) => String(f).endsWith('.md'));
 
     // If SKILL.md mentions @references/, the directory must not be empty
     const skillPath = join(skillsDir, dir, 'SKILL.md');

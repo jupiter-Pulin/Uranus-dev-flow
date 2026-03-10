@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * scan_midway_delta.js
- * Delta scanner: compare --base (default HEAD~1) to HEAD
+ * scan_delta.js
+ * Generic delta scanner: compare --base (default HEAD~1) to HEAD
  *
  * Output JSON includes:
  * - shouldRunFull: boolean
@@ -9,8 +9,39 @@
  * - changedFiles: { added/modified/deleted/renamed: [...] }
  */
 
+const fs = require('fs');
+const path = require('path');
 const { spawnSync } = require('child_process');
 
+// ---------------------------------------------------------------------------
+// Config loading
+// ---------------------------------------------------------------------------
+function loadIntakeConfig() {
+  try {
+    const p = path.join(__dirname, '../../../scripts/config/repo-intake.json');
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+const INTAKE_CONFIG = loadIntakeConfig();
+const TOPOLOGY_FILES = INTAKE_CONFIG?.topology_files ?? [
+  'package.json', 'pnpm-lock.yaml', 'yarn.lock', 'package-lock.json',
+  'tsconfig.json', 'tsconfig.build.json',
+  'go.mod', 'go.sum', 'Cargo.toml', 'Cargo.lock',
+  'pyproject.toml', 'setup.py', 'requirements.txt',
+  'pom.xml', 'build.gradle', 'build.gradle.kts',
+  'Gemfile', 'Gemfile.lock', 'composer.json', 'composer.lock',
+  'Dockerfile', 'docker-compose.yml', 'docker-compose.yaml',
+  'Makefile', 'justfile',
+];
+const TOPOLOGY_SET = new Set(TOPOLOGY_FILES.map(f => f.toLowerCase()));
+const LARGE_DIFF_COUNT = INTAKE_CONFIG?.delta_thresholds?.large_diff_count ?? 80;
+
+// ---------------------------------------------------------------------------
+// Shell helper
+// ---------------------------------------------------------------------------
 function run(cmd, args, cwd = process.cwd()) {
   const r = spawnSync(cmd, args, { cwd, encoding: 'utf8' });
   return {
@@ -21,6 +52,9 @@ function run(cmd, args, cwd = process.cwd()) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Args
+// ---------------------------------------------------------------------------
 function parseArgs(argv) {
   const out = { format: 'md', base: 'HEAD~1' };
   for (let i = 0; i < argv.length; i++) {
@@ -32,21 +66,15 @@ function parseArgs(argv) {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// Diff classification
+// ---------------------------------------------------------------------------
 function classifyNameStatus(lines) {
   const res = { added: [], modified: [], deleted: [], renamed: [] };
-
   for (const line of lines) {
     if (!line) continue;
-    // A\tpath
-    // M\tpath
-    // D\tpath
-    // R100\told\tnew
-    const parts = line
-      .split('\t')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const parts = line.split('\t').map(s => s.trim()).filter(Boolean);
     if (parts.length < 2) continue;
-
     const code = parts[0];
     if (code.startsWith('R')) {
       res.renamed.push({ from: parts[1], to: parts[2] || '' });
@@ -58,44 +86,39 @@ function classifyNameStatus(lines) {
     else if (code === 'D') res.deleted.push(p);
     else res.modified.push(p);
   }
-
   return res;
 }
 
+// ---------------------------------------------------------------------------
+// Topology detection (config-driven)
+// ---------------------------------------------------------------------------
 function isTopologyFile(p) {
   const low = (p || '').toLowerCase();
-
-  const TOP = [
-    'src/configuration.ts',
-    'src/configuration.js',
-    'bootstrap.js',
-    'bootstrap.ts',
-    'midway.config.ts',
-    'midway.config.js',
-    'package.json',
-    'pnpm-lock.yaml',
-    'yarn.lock',
-    'package-lock.json',
-    'tsconfig.json',
-    'tsconfig.build.json',
-  ];
-
-  if (TOP.includes(low)) return true;
+  if (TOPOLOGY_SET.has(low)) return true;
+  // Also match by basename for monorepo nested paths (e.g. packages/api/package.json)
+  const base = path.basename(low);
+  if (base !== low && TOPOLOGY_SET.has(base)) return true;
+  // Test directory structure changes also trigger full scan
   if (/(^|\/)test\/unit\//.test(low)) return true;
   if (/(^|\/)test\/integration\//.test(low)) return true;
   if (/(^|\/)test\/e2e\//.test(low)) return true;
-
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function pickHighlights(files, limit = 20) {
   const uniq = Array.from(new Set(files)).sort();
   return uniq.slice(0, limit);
 }
 
+// ---------------------------------------------------------------------------
+// Markdown renderer
+// ---------------------------------------------------------------------------
 function renderMd(obj) {
   const lines = [];
-  lines.push(`# Repo Intake Delta（base: ${obj.base} → HEAD）`);
+  lines.push(`# Repo Intake Delta (base: ${obj.base} -> HEAD)`);
   lines.push(`- shouldRunFull: **${obj.shouldRunFull ? 'YES' : 'no'}**`);
   if (obj.reasons.length) {
     lines.push(`- reasons: ${obj.reasons.map(r => `\`${r}\``).join(', ')}`);
@@ -103,10 +126,9 @@ function renderMd(obj) {
   lines.push('');
 
   const cf = obj.changedFiles;
-
   const section = (title, arr) => {
-    lines.push(`## ${title}（${arr.length}）`);
-    if (!arr.length) lines.push('- （無）');
+    lines.push(`## ${title} (${arr.length})`);
+    if (!arr.length) lines.push('- (none)');
     else for (const f of pickHighlights(arr, 30)) lines.push(`- \`${f}\``);
     lines.push('');
   };
@@ -116,27 +138,26 @@ function renderMd(obj) {
   section('Deleted', cf.deleted);
 
   lines.push('## Renamed');
-  if (!cf.renamed.length) lines.push('- （無）');
+  if (!cf.renamed.length) lines.push('- (none)');
   else
     for (const r of cf.renamed.slice(0, 30))
-      lines.push(`- \`${r.from}\` → \`${r.to}\``);
+      lines.push(`- \`${r.from}\` -> \`${r.to}\``);
   lines.push('');
 
-  lines.push('## 建議');
+  lines.push('## Recommendation');
   if (obj.shouldRunFull) {
-    lines.push(
-      '- 建議跑 full intake（入口/設定/測試拓樸有變更，或更動範圍過大）'
-    );
+    lines.push('- Recommend running full intake (entry/config/test topology changed, or large diff)');
   } else {
-    lines.push(
-      '- 只看 delta 就夠：可直接進入「需求檔/變更檔」或只重跑受影響的 tests'
-    );
+    lines.push('- Delta only: proceed to changed-file analysis or re-run affected tests');
   }
   lines.push('');
 
   return lines.join('\n');
 }
 
+// ---------------------------------------------------------------------------
+// main
+// ---------------------------------------------------------------------------
 function main() {
   const args = parseArgs(process.argv.slice(2));
 
@@ -158,10 +179,7 @@ function main() {
   }
 
   const lines = r.stdout
-    ? r.stdout
-        .split('\n')
-        .map(s => s.trim())
-        .filter(Boolean)
+    ? r.stdout.split('\n').map(s => s.trim()).filter(Boolean)
     : [];
   const changed = classifyNameStatus(lines);
 
@@ -181,7 +199,7 @@ function main() {
     reasons.push('topology-changed');
   }
 
-  if (allChanged.length >= 80) {
+  if (allChanged.length >= LARGE_DIFF_COUNT) {
     shouldRunFull = true;
     reasons.push('large-diff');
   }
