@@ -108,6 +108,10 @@ exec "$@"
 /**
  * Run a script with controlled PATH and HOME.
  */
+// 30s timeout — obsidian shell scripts spawn multiple subprocesses; under
+// parallel test load (500+ tests) the default 10s frequently times out.
+const SPAWN_TIMEOUT_MS = 30_000;
+
 function runScript(script, args, binDir, envOverrides = {}) {
   const home = makeTempDir('home');
   const env = {
@@ -118,7 +122,7 @@ function runScript(script, args, binDir, envOverrides = {}) {
   const result = spawnSync('bash', [script, ...args], {
     encoding: 'utf8',
     env,
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   return { ...result, home };
 }
@@ -258,7 +262,7 @@ test('exec: resolves vault from OBSIDIAN_VAULT env and passes vault= option', ()
       OBSIDIAN_VAULT: 'EnvVault',
       OBSIDIAN_TRACE_FILE: traceFile,
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   // Verify vault=EnvVault was passed (key=value syntax, not --vault flag)
@@ -281,7 +285,7 @@ test('exec: resolves vault from config file and passes vault= option', () => {
       HOME: home,
       OBSIDIAN_TRACE_FILE: traceFile,
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   // Verify vault=ConfigVault was passed (key=value syntax)
@@ -355,7 +359,7 @@ test('preflight: --vault persists config and verifies', () => {
   const result = spawnSync('bash', [preflightScript, '--vault', 'MyVault'], {
     encoding: 'utf8',
     env: { PATH: `${binDir}:/usr/bin:/bin`, HOME: home },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Vault persisted: MyVault/);
@@ -377,14 +381,14 @@ test('preflight: config round-trip — vault persisted then read back', () => {
   spawnSync('bash', [preflightScript, '--vault', 'RoundTrip'], {
     encoding: 'utf8',
     env,
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
 
   // Step 2: Print env should show the persisted vault
   const result = spawnSync('bash', [preflightScript, '--print-env'], {
     encoding: 'utf8',
     env,
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /OBSIDIAN_VAULT=RoundTrip/);
@@ -415,7 +419,7 @@ test('preflight: vault resolution precedence — explicit arg wins over env', ()
       HOME: home,
       OBSIDIAN_VAULT: 'EnvVault',
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   // The persisted vault should be ExplicitVault
@@ -435,7 +439,7 @@ test('preflight: vault resolution — env var used when no explicit arg', () => 
       HOME: home,
       OBSIDIAN_VAULT: 'EnvVault',
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /VAULT=EnvVault/);
@@ -451,7 +455,7 @@ test('preflight: vault resolution — config file used when no env', () => {
   const result = spawnSync('bash', [preflightScript, '--check'], {
     encoding: 'utf8',
     env: { PATH: `${binDir}:/usr/bin:/bin`, HOME: home },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /VAULT=ConfigVault/);
@@ -498,7 +502,7 @@ test('exec: uses perl fallback when no timeout/gtimeout in PATH', () => {
       PATH: `${binDir}`,
       HOME: home,
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   // Should succeed via perl fallback (not "No timeout command found")
   if (result.status !== 0) {
@@ -523,7 +527,7 @@ test('exec: capture uses create when read returns error (file does not exist)', 
       STUB_READ_NOT_FOUND: '1',
       OBSIDIAN_TRACE_FILE: traceFile,
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Created/);
@@ -547,7 +551,7 @@ test('exec: capture uses append when read succeeds (file exists)', () => {
       OBSIDIAN_TRACE_FILE: traceFile,
       // STUB_READ_NOT_FOUND not set — read returns success (no Error: in output)
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Appended/);
@@ -570,7 +574,7 @@ test('exec: capture uses append when multi-line content contains Error: (not a C
       // Multi-line file content — CLI diagnostics are single-line, so multi-line = file content
       STUB_READ_CONTENT: 'Error: something went wrong in production\nSecond line of the note',
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.equal(result.status, 0);
   // Should append (multi-line = file exists), not create
@@ -589,7 +593,7 @@ test('exec: capture fails fast when append returns CLI error', () => {
       // File exists (read returns empty), but append fails with CLI error
       STUB_APPEND_ERROR: 'Vault not found',
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   // Should fail (die) — not silently succeed
   assert.notEqual(result.status, 0);
@@ -608,7 +612,7 @@ test('exec: capture fails fast when create returns CLI error', () => {
       STUB_READ_NOT_FOUND: '1',
       STUB_CREATE_ERROR: 'Permission denied',
     },
-    timeout: 10000,
+    timeout: SPAWN_TIMEOUT_MS,
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /capture:/);
