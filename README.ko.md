@@ -6,7 +6,7 @@
 
 코드 편집 → 자동 리뷰 → 자동 수정 → Gate 통과 → 배포. 수동 작업이 필요 없습니다.
 
-63 commands | 47 skills | 14 agents | ~4% context 사용량
+65 commands | 49 skills | 14 agents | ~4% context 사용량
 
 ## 작동 원리
 
@@ -73,8 +73,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (63 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (47 skills) |
+| 플러그인 설치 | Claude Code | 전체 (65 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (49 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (선택 사항, `/codex-*` 명령어용)
@@ -151,8 +151,8 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
@@ -193,6 +193,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/feature-dev` | 기능 개발 워크플로 (설계 → 구현 → 검증 → 리뷰) |
 | `/feature-verify` | 시스템 진단 (읽기 전용 검증, 이중 관점 확인) |
 | `/load-pr-review` | GitHub PR 리뷰 코멘트를 세션에 로드 |
+| `/pr-comment` | GitHub PR에 친절한 리뷰 코멘트 게시 |
 | `/code-investigate` | 이중 관점 코드 조사 (Claude + Codex 독립 탐색) |
 | `/next-step` | 컨텍스트 인식 다음 단계 어드바이저 |
 | `/smart-commit` | 스마트 배치 커밋 (그룹화 + 메시지 + 명령어) |
@@ -216,6 +217,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-test-gen` | 유닛 테스트 생성 | - |
 | `/codex-test-review` | 테스트 커버리지 리뷰 | `--continue <threadId>` |
 | `/codex-explain` | 복잡한 코드 설명 | - |
+| `/seek-verdict` | P2 dismiss 블라인드 검증 | - |
 
 ### 검증
 

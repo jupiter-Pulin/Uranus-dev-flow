@@ -6,7 +6,7 @@
 
 Editar código → auto-review → auto-fix → gate-pass → entregar. Sin pasos manuales.
 
-63 commands | 47 skills | 14 agents | ~4% de context footprint
+65 commands | 49 skills | 14 agents | ~4% de context footprint
 
 ## Cómo funciona
 
@@ -73,8 +73,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (63 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (47 skills) |
+| Instalar plugin | Claude Code | Completa (65 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (49 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional, para comandos `/codex-*`)
@@ -151,8 +151,8 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
@@ -193,6 +193,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/feature-dev` | Workflow de desarrollo (diseño → implementación → verificación → review) |
 | `/feature-verify` | Diagnóstico de sistema (verificación de solo lectura, doble perspectiva) |
 | `/load-pr-review` | Cargar comentarios de review de PR de GitHub en la sesión |
+| `/pr-comment` | Publicar comentarios de review amigables en un PR de GitHub |
 | `/code-investigate` | Investigación de código con doble perspectiva (Claude + Codex independientes) |
 | `/next-step` | Asesor contextual de siguiente paso |
 | `/smart-commit` | Commit inteligente por lotes (agrupar + mensaje + comandos) |
@@ -216,6 +217,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-test-gen` | Generar tests unitarios | - |
 | `/codex-test-review` | Review de test coverage | `--continue <threadId>` |
 | `/codex-explain` | Explicar código complejo | - |
+| `/seek-verdict` | Verificación ciega de dismiss P2 | - |
 
 ### Verificación
 

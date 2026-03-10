@@ -1,7 +1,7 @@
 # seek-verdict: Dismiss-with-Evidence Verification Skill
 
 > **Created**: 2026-03-09
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -41,28 +41,28 @@ Claude Code 在 review loop 中判斷 P2 finding 為 false positive 時，缺乏
 
 ## Acceptance Criteria
 
-- [ ] `skills/seek-verdict/SKILL.md` 建立，含 3-phase protocol 描述
-- [ ] `skills/seek-verdict/references/verdict-prompt.md` 包含 blind verification prompt（含 independent research block）
-- [ ] `skills/seek-verdict/references/policy-mapping.md` 定義 asymmetric thresholds（dismiss ≥ 0.80, fix ≥ 0.70）
-- [ ] `commands/seek-verdict.md` 建立，支援 `<finding-key>` 位置參數和 `--thread` 參數
-- [ ] Prompt template 不含 Claude 結論（anti-anchoring enforcement）
-- [ ] `[DISMISS_VERDICT]` audit trail 格式含 redaction rules
-- [ ] Anti-abuse guard 實作（streak ≥ 3 → warning；warning 狀態：confidence ≥ 0.85 + evidence refs ≥ 3）
-- [ ] Rebuttal mechanism 限制 1 輪
-- [ ] `fix-all-issues.md` 新增 verified dismiss exception
-- [ ] `review-common.md` 新增 `[DISMISS_VERDICT]` 格式
-- [ ] 13 test cases 全部通過（T1-T13，含 threshold boundary + anti-abuse）
-- [ ] Pass `/codex-review-fast`
-- [ ] Pass `/precommit-fast`
+- [x] `skills/seek-verdict/SKILL.md` 建立，含 3-phase protocol 描述
+- [x] `skills/seek-verdict/references/verdict-prompt.md` 包含 blind verification prompt（含 independent research block）
+- [x] `skills/seek-verdict/references/policy-mapping.md` 定義 asymmetric thresholds（dismiss ≥ 0.80, fix ≥ 0.70）
+- [x] `commands/seek-verdict.md` 建立，支援 `<finding-key>` 位置參數和 `--thread` 參數
+- [x] Prompt template 不含 Claude 結論（anti-anchoring enforcement）
+- [x] `[DISMISS_VERDICT]` audit trail 格式含 redaction rules
+- [x] Anti-abuse guard 實作（streak ≥ 3 → warning；warning 狀態：confidence ≥ 0.85 + evidence refs ≥ 3）
+- [x] Rebuttal mechanism 限制 1 輪
+- [x] `fix-all-issues.md` 新增 verified dismiss exception
+- [x] `review-common.md` 新增 `[DISMISS_VERDICT]` 格式
+- [x] 13 test cases 全部通過（T1-T13，含 threshold boundary + anti-abuse）
+- [x] Pass `/codex-review-fast`
+- [x] Pass `/precommit-fast`
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Best practices audit + adversarial debate (threadId: 019cd149-6fce-7e12-8cb6-2db73637a106) |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | `36e13a3` feat: Adds seek-verdict skill for P2 blind verification |
+| Testing | Done | 13 tests passed (T1-T13) |
+| Acceptance | Done | All AC checked, shipped in v1.8.17 |
 
 ## References
 

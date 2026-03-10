@@ -6,7 +6,7 @@
 
 编辑代码 → 自动审查 → 自动修复 → 质量关卡通过 → 交付。无需手动步骤。
 
-63 commands | 47 skills | 14 agents | ~4% context 占用
+65 commands | 49 skills | 14 agents | ~4% context 占用
 
 ## 工作原理
 
@@ -73,8 +73,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
-| 插件安装 | Claude Code | 完整（63 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（47 skills） |
+| 插件安装 | Claude Code | 完整（65 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（49 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（可选，用于 `/codex-*` 命令）
@@ -151,8 +151,8 @@ flowchart TD
 
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| 命令 | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| 技能 | 47 | project-setup, code-explore, smart-commit, contract-decode |
+| 命令 | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| 技能 | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | 代理 | 14 | strict-reviewer, verify-app, coverage-analyst |
 | 钩子 | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | 规则 | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
@@ -193,6 +193,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/feature-dev` | 功能开发流程（设计 → 实现 → 验证 → 审查） |
 | `/feature-verify` | 系统诊断（只读验证，双视角确认） |
 | `/load-pr-review` | 加载 GitHub PR 审查评论到 session |
+| `/pr-comment` | 在 GitHub PR 上发布友善的审查评论 |
 | `/code-investigate` | 双视角代码调查（Claude + Codex 独立探索） |
 | `/next-step` | 情境感知的下一步建议 |
 | `/smart-commit` | 智能批量 commit（分组 + 消息 + 命令） |
@@ -216,6 +217,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/codex-test-gen` | 生成单元测试 | - |
 | `/codex-test-review` | 审查测试覆盖率 | `--continue <threadId>` |
 | `/codex-explain` | 解释复杂代码 | - |
+| `/seek-verdict` | P2 dismiss 盲审验证 | - |
 
 ### 验证
 

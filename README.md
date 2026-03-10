@@ -6,7 +6,7 @@
 
 Edit code → auto-review → auto-fix → gate-pass → ship. No manual steps.
 
-63 commands | 47 skills | 14 agents | ~4% context footprint
+65 commands | 49 skills | 14 agents | ~4% context footprint
 
 ## How It Works
 
@@ -73,8 +73,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (63 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (47 skills) |
+| Plugin install | Claude Code | Full (65 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (49 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional, for `/codex-*` commands)
@@ -151,8 +151,8 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 47 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
@@ -193,6 +193,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/feature-dev` | Feature development workflow (design → implement → verify → review) |
 | `/feature-verify` | System diagnosis (read-only verification with dual-perspective) |
 | `/load-pr-review` | Load GitHub PR review comments into session |
+| `/pr-comment` | Post friendly review comments to a GitHub PR |
 | `/code-investigate` | Dual-perspective code investigation (Claude + Codex independent) |
 | `/next-step` | Context-aware next step advisor |
 | `/smart-commit` | Smart batch commit (group + message + commands) |
@@ -216,6 +217,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-test-gen` | Generate unit tests | - |
 | `/codex-test-review` | Review test coverage | `--continue <threadId>` |
 | `/codex-explain` | Explain complex code | - |
+| `/seek-verdict` | P2 dismiss blind verification | - |
 
 ### Verification
 

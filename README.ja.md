@@ -6,7 +6,7 @@
 
 コード編集 → 自動レビュー → 自動修正 → ゲート通過 → 出荷。手動操作は不要です。
 
-63 commands | 47 skills | 14 agents | ~4% context footprint
+65 commands | 49 skills | 14 agents | ~4% context footprint
 
 ## 仕組み
 
@@ -73,8 +73,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（63 コマンド、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（47 スキル） |
+| プラグインインストール | Claude Code | フル（65 コマンド、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（49 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション、`/codex-*` コマンド用）
@@ -151,8 +151,8 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 63 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| スキル | 47 | project-setup, code-explore, smart-commit, contract-decode |
+| コマンド | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
+| スキル | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
 | フック | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | ルール | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
@@ -193,6 +193,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/feature-dev` | 機能開発ワークフロー（設計 → 実装 → 検証 → レビュー） |
 | `/feature-verify` | システム診断（読み取り専用の検証、デュアル視点確認） |
 | `/load-pr-review` | GitHub PR レビューコメントをセッションに読み込み |
+| `/pr-comment` | GitHub PR にフレンドリーなレビューコメントを投稿 |
 | `/code-investigate` | デュアル視点コード調査（Claude + Codex 独立探索） |
 | `/next-step` | コンテキスト認識型の次ステップアドバイザー |
 | `/smart-commit` | スマートバッチコミット（グループ化 + メッセージ + コマンド） |
@@ -216,6 +217,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-test-gen` | ユニットテスト生成 | - |
 | `/codex-test-review` | テストカバレッジレビュー | `--continue <threadId>` |
 | `/codex-explain` | 複雑なコードの解説 | - |
+| `/seek-verdict` | P2 dismiss のブラインド検証 | - |
 
 ### 検証
 
