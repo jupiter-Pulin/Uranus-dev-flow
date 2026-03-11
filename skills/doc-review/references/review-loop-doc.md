@@ -9,12 +9,10 @@ mcp__codex__codex-reply({
   threadId: '<from --continue parameter>',
   prompt: `I have revised the document. Please re-review:
 
-## Updated Document Content
-\`\`\`${FILE_TYPE}
-${FILE_CONTENT}
-\`\`\`
+## Document Path
+${FILE_PATH}
 
-Please verify:
+Please read the updated document yourself using \`cat ${FILE_PATH}\` and verify:
 1. Have previous 🔴 must-fix items been addressed?
 2. Did revisions introduce new issues?
 3. What is the quality of the revised document?
