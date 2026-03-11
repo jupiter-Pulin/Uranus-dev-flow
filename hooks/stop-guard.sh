@@ -171,13 +171,11 @@ BLOCKED_REASON="${BLOCKED_REASON:-}"
 
 if [[ "$USE_STATE_FILE" == "true" ]]; then
   # State file mode
-  # Dual mode: aggregate_gate is the primary gate (checked independently of HAS_CODE_CHANGE)
-  if [[ "${DUAL_GATE_PASSED:-}" == "false" ]]; then
-    MISSING="$MISSING /codex-review-fast"
-  fi
   if [[ "$HAS_CODE_CHANGE" == "true" ]]; then
-    # In dual mode, CODE_REVIEW_PASSED already reflects aggregate_gate
-    if [[ -z "${DUAL_GATE_PASSED:-}" && "$CODE_REVIEW_PASSED" != "true" ]]; then
+    # Dual mode: aggregate_gate overrides individual code_review
+    if [[ "${DUAL_GATE_PASSED:-}" == "false" ]]; then
+      MISSING="$MISSING /codex-review-fast"
+    elif [[ -z "${DUAL_GATE_PASSED:-}" && "$CODE_REVIEW_PASSED" != "true" ]]; then
       MISSING="$MISSING /codex-review-fast"
     fi
     if [[ "$PRECOMMIT_PASSED" != "true" ]]; then

@@ -100,26 +100,42 @@ EOF
   fi
 }
 
-# Update state file
+# Update state file (acquires lock for consistency with aggregate_gate writes)
 update_state() {
   local key="$1"
   local executed="$2"
   local passed="$3"
 
-  init_state_file
+  if _lock; then
+    init_state_file
 
-  local now
-  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local now
+    now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-  # Update using jq
-  local tmp
-  tmp=$(mktemp)
-  jq --arg key "$key" \
-     --argjson executed "$executed" \
-     --argjson passed "$passed" \
-     --arg now "$now" \
-     '.[$key].executed = $executed | .[$key].passed = $passed | .[$key].last_run = $now | .updated_at = $now' \
-     "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+    # Update using jq
+    local tmp
+    tmp=$(mktemp)
+    jq --arg key "$key" \
+       --argjson executed "$executed" \
+       --argjson passed "$passed" \
+       --arg now "$now" \
+       '.[$key].executed = $executed | .[$key].passed = $passed | .[$key].last_run = $now | .updated_at = $now' \
+       "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+    _unlock
+  else
+    # Fail-open for review state (not as critical as aggregate gate)
+    init_state_file
+    local now
+    now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local tmp
+    tmp=$(mktemp)
+    jq --arg key "$key" \
+       --argjson executed "$executed" \
+       --argjson passed "$passed" \
+       --arg now "$now" \
+       '.[$key].executed = $executed | .[$key].passed = $passed | .[$key].last_run = $now | .updated_at = $now' \
+       "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE" 2>/dev/null || true
+  fi
 }
 
 # Check for pass markers (anchored to line start to avoid false positives in error messages)
