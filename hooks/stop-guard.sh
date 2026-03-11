@@ -56,8 +56,44 @@ if [[ -f "$STATE_FILE" ]]; then
   HAS_CODE_CHANGE=$(echo "$STATE" | jq -r '.has_code_change // false')
   HAS_DOC_CHANGE=$(echo "$STATE" | jq -r '.has_doc_change // false')
 
+  # === Sidecar fail-closed marker (race-safe lock-failure signal) ===
+  if [[ -f "${STATE_FILE}.blocked" ]]; then
+    GUARD_MODE="strict"
+    SIDECAR_REASON=$(cat "${STATE_FILE}.blocked" 2>/dev/null || echo "unknown")
+    echo "[Stop Guard] Sidecar blocked marker found (reason: $SIDECAR_REASON)" >&2
+    # Force aggregate gate to BLOCKED regardless of JSON state
+    DUAL_GATE_PASSED="false"
+  fi
+
+  # === Dual mode: prefer aggregate_gate + force strict blocking ===
+  # Skip recompute if sidecar already set DUAL_GATE_PASSED (sidecar is authoritative)
+  REVIEW_MODE=$(echo "$STATE" | jq -r '.review_mode // "single"')
+  if [[ "$REVIEW_MODE" == "dual" && "${DUAL_GATE_PASSED:-}" != "false" ]]; then
+    GUARD_MODE="strict"  # dual mode forces strict blocking
+    AGG_EXECUTED=$(echo "$STATE" | jq -r '.aggregate_gate.executed // false')
+    AGG_GATE=$(echo "$STATE" | jq -r '.aggregate_gate.gate // empty')
+    if [[ "$AGG_EXECUTED" == "true" ]]; then
+      DUAL_GATE_PASSED=$([[ "$AGG_GATE" == "READY" ]] && echo "true" || echo "false")
+    else
+      DUAL_GATE_PASSED="false"  # fail-closed: aggregation incomplete
+    fi
+    # In dual mode, aggregate_gate overrides individual code_review
+    CODE_REVIEW_PASSED="$DUAL_GATE_PASSED"
+    if [[ "${HOOK_DEBUG:-}" == "1" ]]; then
+      echo "[Debug] Dual mode: AGG_EXECUTED=$AGG_EXECUTED, AGG_GATE=$AGG_GATE, DUAL_GATE_PASSED=$DUAL_GATE_PASSED" >&2
+    fi
+  elif [[ "${DUAL_GATE_PASSED:-}" == "false" ]]; then
+    # Sidecar-forced BLOCKED: propagate to CODE_REVIEW_PASSED
+    GUARD_MODE="strict"
+    CODE_REVIEW_PASSED="false"
+    if [[ "${HOOK_DEBUG:-}" == "1" ]]; then
+      echo "[Debug] Sidecar override: DUAL_GATE_PASSED=false (sidecar authoritative)" >&2
+    fi
+  fi
+
   if [[ "${HOOK_DEBUG:-}" == "1" ]]; then
     echo "[Debug] Using state file mode" >&2
+    echo "[Debug] REVIEW_MODE=$REVIEW_MODE" >&2
     echo "[Debug] CODE_REVIEW_PASSED=$CODE_REVIEW_PASSED" >&2
     echo "[Debug] PRECOMMIT_PASSED=$PRECOMMIT_PASSED" >&2
   fi
@@ -135,8 +171,13 @@ BLOCKED_REASON="${BLOCKED_REASON:-}"
 
 if [[ "$USE_STATE_FILE" == "true" ]]; then
   # State file mode
+  # Dual mode: aggregate_gate is the primary gate (checked independently of HAS_CODE_CHANGE)
+  if [[ "${DUAL_GATE_PASSED:-}" == "false" ]]; then
+    MISSING="$MISSING /codex-review-fast"
+  fi
   if [[ "$HAS_CODE_CHANGE" == "true" ]]; then
-    if [[ "$CODE_REVIEW_PASSED" != "true" ]]; then
+    # In dual mode, CODE_REVIEW_PASSED already reflects aggregate_gate
+    if [[ -z "${DUAL_GATE_PASSED:-}" && "$CODE_REVIEW_PASSED" != "true" ]]; then
       MISSING="$MISSING /codex-review-fast"
     fi
     if [[ "$PRECOMMIT_PASSED" != "true" ]]; then
