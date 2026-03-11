@@ -13,18 +13,17 @@ mcp__codex__codex({
 - Type: ${FILE_TYPE}
 - Project root: ${PROJECT_ROOT}
 
-## Document Content
-\`\`\`${FILE_TYPE}
-${FILE_CONTENT}
-\`\`\`
+## ⚠️ Important: You must independently read and research the project ⚠️
 
-## ⚠️ Important: You must independently research the project ⚠️
+The document path is provided above. You **must** read the document content and research the project yourself using your sandbox access. Do NOT expect pre-provided file content — you are responsible for reading the document and verifying its accuracy.
 
-When reviewing "code-documentation consistency", you **must** perform the following research:
+### Document Reading (Priority)
+1. Read the full document: \`cat ${FILE_PATH}\`
+2. If the document is long: \`cat ${FILE_PATH} | head -300\` then \`cat ${FILE_PATH} | tail -200\`
 
-### Research Steps
-1. Run \`ls src/\` to understand project structure
-2. Search for files/classes mentioned in the document: \`grep -r "keyword" src/ -l | head -10\`
+### Code-Documentation Consistency Research
+1. Check project structure: \`ls src/\`, \`ls scripts/\`, \`ls skills/\`
+2. Search for files/classes mentioned in the document: \`grep -r "keyword" . -l --include="*.ts" --include="*.js" --include="*.sh" | head -10\`
 3. Read related files: \`cat <file-path> | head -100\`
 4. Verify:
    - Do files mentioned in the document exist?
@@ -77,11 +76,11 @@ When reviewing "code-documentation consistency", you **must** perform the follow
 
 ### 🔴 Must Fix (P0/P1)
 
-- [Section/Line] Issue description → Fix recommendation
+- [Section/Line] Issue description -> Fix recommendation
 
 ### 🟡 Suggested Changes (P2)
 
-- [Section/Line] Issue description → Fix recommendation
+- [Section/Line] Issue description -> Fix recommendation
 
 ### ⚪ Optional Improvements
 

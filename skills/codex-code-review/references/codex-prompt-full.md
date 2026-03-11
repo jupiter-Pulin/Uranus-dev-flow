@@ -6,31 +6,32 @@ Used with `mcp__codex__codex`:
 
 ```typescript
 mcp__codex__codex({
-  prompt: `You are a senior Code Reviewer. Perform a comprehensive review of the following code changes.
+  prompt: `You are a senior Code Reviewer. Perform a comprehensive review of the code changes in this project.
 
 ## Local Check Results
 ${LOCAL_CHECKS || 'Skipped (--no-tests)'}
 
-## Git Diff
-\`\`\`diff
-${GIT_DIFF}
-\`\`\`
+## Changed Files
+${CHANGED_FILES}
+
+## Diff Stats
+${DIFF_STAT}
 
 ${FOCUS ? `## Focus Area\nPay special attention to: ${FOCUS}` : ''}
 
 ## ⚠️ Important: You must independently research the project ⚠️
 
-When reviewing code, you **must** perform the following research, do not rely only on the diff above:
+The changed files and diff stats are listed above. You **must** read the actual diffs and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
 
 ### Git Exploration (Priority)
 1. Check change status: \`git status\`
-2. Check changed files: \`git diff --name-only HEAD\`
-3. Check full changes for specific file: \`git diff HEAD -- <file-path>\`
-4. Check full content of changed files: \`cat <changed file> | head -200\`
+2. Read the full diff: \`git diff HEAD\`
+3. For each changed file, read the full diff: \`git diff HEAD -- <file-path>\`
+4. Read full content of changed files for context: \`cat <changed file> | head -200\`
 
 ### Project Research
 1. Understand project structure: \`ls src/\`, \`ls test/\`
-2. Search related source: \`grep -r "functionName" src/ -l | head -10\`
+2. Search related source: \`grep -r "functionName" . -l --include="*.ts" --include="*.js" --include="*.md" | head -10\`
 3. Read full source for context: \`cat <source path> | head -200\`
 4. Search existing tests: \`ls test/unit/\` or \`grep -r "describe" test/ -l | head -5\`
 5. Read related tests for expected behavior: \`cat <test path> | head -100\`

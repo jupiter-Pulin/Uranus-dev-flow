@@ -105,12 +105,75 @@ When a P2 finding is verified via `/seek-verdict`, output:
 ## Output Findings Format
 
 ```
-- [P0/P1/P2/Nit] <file:line> <issue description> -> <fix recommendation>
+- [P0/P1/P2/Nit] <file:line> <issue description> -> <fix recommendation> [source: codex|toolkit|both]
 ```
 
-## Gate Sentinels (for Hook parsing)
+> Note: `[source: ...]` tag is required in dual review mode. In single-reviewer mode it may be omitted.
+
+## Gate Sentinels
+
+Hook gate is emitted via `bash scripts/emit-review-gate.sh READY|BLOCKED` (outputs `REVIEW_GATE=<value>`, consumed by `post-tool-review-state.sh`).
+
+Text sentinels below are for **behavior-layer** (auto-loop) and **stop-guard** visual confirmation:
 
 - `✅ Ready` — Passed (code review)
 - `⛔ Blocked` — Failed (code review)
 
-> Note: Use explicit `✅ Ready` / `⛔ Blocked` tokens. Bare `## Gate:` prefix is optional label only.
+> Note: Always emit both: (1) `emit-review-gate.sh` for hook state, (2) text sentinel for behavior layer.
+
+## Dual Reviewer Aggregation
+
+When `review_mode=dual`, two reviewers run in parallel. This section defines how to merge their results.
+
+### Severity Mapping (toolkit → standard)
+
+`pr-review-toolkit:code-reviewer` uses confidence scoring. Map to P0-Nit:
+
+| toolkit Output | Default Mapping | Upgrade Condition |
+|----------------|-----------------|-------------------|
+| Critical (confidence 90-100) | P1 | Contains P0 keywords → P0 |
+| Important (confidence 80-89) | P2 | — |
+| < 80 confidence | Not reported | toolkit filters internally |
+
+**P0 keywords**: crash, data loss, security vulnerability, injection, auth bypass, RCE, SSRF, XSS
+
+`strict-reviewer` already uses P0/P1/P2/Nit format — no mapping needed.
+
+### Deduplication Algorithm
+
+| Step | Rule |
+|------|------|
+| Key | `canonical_file_path + canonical_issue_text` |
+| Line tolerance | ±5 lines (ignore line number differences within range) |
+| Conflict resolution | Same key → keep highest severity (P0 > P1 > P2 > Nit) |
+| Source merge | Same key from both reviewers → `source = "both"` |
+
+### Degradation Matrix
+
+| Scenario | Behavior | Gate Source | Output |
+|----------|----------|------------|--------|
+| Codex ✅ + Secondary ✅ | Union aggregation | `codex+toolkit` | Full dual findings |
+| Codex ✅ + Secondary ❌ | Codex-only + degradation warning | `codex-only` | `⚠️ Secondary reviewer unavailable` |
+| Codex ❌ + Secondary ✅ | Secondary-only + degradation warning | `toolkit-only` | `⚠️ Codex MCP unavailable` |
+| Both ❌ | `⛔ Blocked` + `⚠️ Need Human` | `none` | Both reviewers failed |
+
+### Source Attribution
+
+Every finding includes a source tag:
+
+| Source | Meaning |
+|--------|---------|
+| `codex` | Found by Codex MCP only |
+| `toolkit` | Found by secondary reviewer only |
+| `both` | Found by both reviewers (deduplicated) |
+
+Output format: `- [P0] file:line issue → fix [source: both]`
+
+### Review Loop (Dual Mode)
+
+| Reviewer | Loop Behavior |
+|----------|---------------|
+| Codex MCP | Stateful → `mcp__codex__codex-reply(threadId)` continues context |
+| Secondary | Stateless → fresh Task each loop iteration with latest diff |
+
+Aggregation gate is recalculated and emitted at the end of each loop iteration.

@@ -6,29 +6,30 @@ Used with `mcp__codex__codex`:
 
 ```typescript
 mcp__codex__codex({
-  prompt: `You are a senior Code Reviewer. Review the following code changes, focus on finding issues rather than praise.
+  prompt: `You are a senior Code Reviewer. Review the code changes in this project, focus on finding issues rather than praise.
 
-## Git Diff
-\`\`\`diff
-${GIT_DIFF}
-\`\`\`
+## Changed Files
+${CHANGED_FILES}
+
+## Diff Stats
+${DIFF_STAT}
 
 ${FOCUS ? `## Focus Area\nPay special attention to: ${FOCUS}` : ''}
 
 ## ⚠️ Important: You must independently research the project ⚠️
 
-When reviewing code, you **must** perform the following research, do not rely only on the diff above:
+The changed files and diff stats are listed above. You **must** read the actual diffs and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
 
 ### Git Exploration (Priority)
 1. Check change status: \`git status\`
-2. Check changed files: \`git diff --name-only HEAD\`
-3. Check full changes for specific file: \`git diff HEAD -- <file-path>\`
-4. Check full content of changed files: \`cat <changed file> | head -200\`
+2. Read the full diff: \`git diff HEAD\`
+3. For each changed file, read the full diff: \`git diff HEAD -- <file-path>\`
+4. Read full content of changed files for context: \`cat <changed file> | head -200\`
 
 ### Project Research
-- Search called functions: \`grep -r "functionName" src/ -l | head -10\`
+- Search called functions: \`grep -r "functionName" . -l --include="*.ts" --include="*.js" --include="*.md" | head -10\`
 - Read related files: \`cat <file-path> | head -100\`
-- Understand class definitions: \`grep -A 20 "class ClassName" src/\`
+- Understand class definitions: \`grep -rA 20 "class ClassName" . --include="*.ts" --include="*.js"\`
 
 ## Review Dimensions
 

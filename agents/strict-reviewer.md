@@ -2,7 +2,6 @@
 name: strict-reviewer
 description: Strict code reviewer. Finds correctness/security/performance issues and provides actionable suggestions.
 tools: Bash, Read, Grep, Glob
-skills: codex-code-review
 model: opus
 ---
 

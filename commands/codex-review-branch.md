@@ -1,7 +1,7 @@
 ---
 description: Fully automated review of an entire feature branch using Codex MCP
 argument-hint: [base-branch] [--continue <threadId>]
-allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Grep, Glob
+allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Bash(bash:*), Read, Grep, Glob, Task
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -40,10 +40,10 @@ $ARGUMENTS
 Collect branch info → Codex review (6 dimensions) → Rating table + Findings + Gate → Loop if Blocked
 ```
 
-1. **Collect branch info**:
-   - `git diff ${BASE_BRANCH}..HEAD --no-color | head -3000`
-   - `git log --oneline ${BASE_BRANCH}..HEAD`
+1. **Collect branch metadata** (Codex reads full diffs itself via sandbox):
    - `git diff --name-only ${BASE_BRANCH}..HEAD`
+   - `git diff --stat ${BASE_BRANCH}..HEAD`
+   - `git log --oneline ${BASE_BRANCH}..HEAD`
 2. **Codex review**: New session (`mcp__codex__codex`) or continue (`mcp__codex__codex-reply`)
 3. **Output**: Branch overview + rating table (6 dimensions) + severity-grouped findings + Merge Gate
 
@@ -80,6 +80,7 @@ Collect branch info → Codex review (6 dimensions) → Rating table + Findings 
 | Security             | ⭐⭐⭐⭐⭐ | ...   |
 | Performance          | ⭐⭐⭐⭐☆ | ...   |
 | Test Coverage        | ⭐⭐⭐☆☆  | ...   |
+| Documentation        | ⭐⭐⭐⭐☆ | ...   |
 
 ### Findings
 #### P0 (Must Fix)

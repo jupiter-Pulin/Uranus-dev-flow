@@ -13,26 +13,27 @@ mcp__codex__codex({
 - Base branch: ${BASE_BRANCH}
 - Commit count: ${COMMIT_COUNT}
 
-## Commit History
-${COMMIT_HISTORY}
-
 ## Changed Files
 ${CHANGED_FILES}
 
-## Git Diff
-\`\`\`diff
-${GIT_DIFF}
-\`\`\`
+## Diff Stats
+${DIFF_STAT}
 
 ## ⚠️ Important: You must independently research the project ⚠️
 
-Before reviewing the branch, you **must** perform the following research:
+The changed files and diff stats are listed above. You **must** read the actual diffs, commit history, and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
 
-### Research Steps
+### Git Exploration (Priority)
+1. Read commit history: \`git log ${BASE_BRANCH}..HEAD --oneline\`
+2. Read the full branch diff: \`git diff ${BASE_BRANCH}..HEAD\`
+3. For each changed file, read the full diff: \`git diff ${BASE_BRANCH}..HEAD -- <file-path>\`
+4. Read full content of key changed files: \`cat <changed file> | head -200\`
+
+### Project Research
 1. Understand project structure: \`ls src/\`, \`ls test/\`
 2. Read core changed files: \`cat <main changed file> | head -200\`
 3. Search related tests: \`ls test/unit/\` or \`grep -r "describe" test/ -l | head -5\`
-4. Understand module dependencies of changes: \`grep -r "import.*<module name>" src/ -l | head -10\`
+4. Understand module dependencies of changes: \`grep -r "import.*<module name>" . -l --include="*.ts" --include="*.js" | head -10\`
 5. Check for missing tests: compare changed files with test files
 
 ### Verification Focus

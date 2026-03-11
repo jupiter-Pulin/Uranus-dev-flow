@@ -33,6 +33,7 @@ When reviewing, you **must** perform the following research:
 
 | Pattern | Example | Why It's Wrong |
 |---------|---------|---------------|
+| Feeding full diff/content | `"## Git Diff \`\`\`diff ... 2000 lines ...\`\`\`"` | Wastes tokens, Codex sees truncated slice instead of full context |
 | Feeding code | `"Here's the fix: \`\`\`code\`\`\` Is it correct?"` | Codex only sees what you show, can't find what you missed |
 | Feeding conclusion | `"Claude found the bug is in X, confirm?"` | Presupposes the answer, Codex won't challenge it |
 | Leading question | `"I think the problem is caching, verify?"` | Anchors Codex to your hypothesis |
@@ -42,17 +43,18 @@ When reviewing, you **must** perform the following research:
 ## Correct Pattern
 
 ```typescript
-// ✅ CORRECT: Give context + mandate independent exploration
+// ✅ CORRECT: Give metadata + mandate independent exploration
 mcp__codex__codex({
   prompt: `You are a senior Code Reviewer...
 
-## Git Diff
-\`\`\`diff
-${GIT_DIFF}
-\`\`\`
+## Changed Files
+${CHANGED_FILES}
+
+## Diff Stats
+${DIFF_STAT}
 
 ## ⚠️ You must independently research the project ⚠️
-[... full research instructions ...]
+[... full research instructions: git diff, cat, grep ...]
 
 ## Review Dimensions
 [... checklist ...]`,
