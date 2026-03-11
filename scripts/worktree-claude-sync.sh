@@ -80,14 +80,13 @@ TARGET_CLAUDE="$WORKTREE_ROOT/.claude"
 STAGING_DIR="$WORKTREE_ROOT/.claude-staging"
 
 # Expected symlink targets (allowlist)
-declare -A EXPECTED_TARGETS=(
-  ["agents"]="../agents"
-  ["commands"]="../commands"
-  ["hooks"]="../hooks"
-  ["rules"]="../rules"
-  ["scripts"]="../scripts"
-  ["skills"]="../skills"
-)
+# Uses a function instead of associative array for bash 3.2 (stock macOS) compatibility
+expected_target_for() {
+  case "$1" in
+    agents|commands|hooks|rules|scripts|skills) echo "../$1" ;;
+    *) echo "" ;;
+  esac
+}
 
 SYMLINK_DIRS=("agents" "commands" "hooks" "rules" "scripts" "skills")
 COPY_FILES=(".gitignore" ".sd0x-install-state.json" "settings.local.json")
@@ -160,7 +159,7 @@ if [[ -n "$DRY_RUN" ]]; then
   echo ""
   echo "Would create:"
   for dir in "${SYMLINK_DIRS[@]}"; do
-    echo "  symlink: .claude/$dir → ${EXPECTED_TARGETS[$dir]}"
+    echo "  symlink: .claude/$dir → $(expected_target_for "$dir")"
   done
   echo "  symlink: .claude/CLAUDE.md → ../CLAUDE.md"
   for file in "${COPY_FILES[@]}"; do
@@ -188,7 +187,7 @@ ROOT_CANONICAL="$(cd "$WORKTREE_ROOT" && pwd -P)"
 
 for dir in "${SYMLINK_DIRS[@]}"; do
   source_link="$SOURCE_CLAUDE/$dir"
-  expected="${EXPECTED_TARGETS[$dir]}"
+  expected="$(expected_target_for "$dir")"
 
   if [[ -L "$source_link" ]]; then
     actual_target="$(readlink "$source_link")"
