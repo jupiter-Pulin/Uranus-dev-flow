@@ -200,7 +200,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/git-profile` | Git ID と GPG 署名プロファイルの管理 |
 | `/push-ci` | プッシュ（承認制）+ CI モニタリング |
 | `/create-pr` | ブランチから GitHub PR を作成 |
-| `/git-worktree` | git worktree の管理 |
+| `/git-worktree` | git worktree の管理（.claude/ 自動同期） |
 | `/merge-prep` | マージ前の分析と準備 |
 | `/smart-rebase` | squash-merge リポジトリ向けスマート部分 rebase |
 

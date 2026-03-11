@@ -200,7 +200,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/git-profile` | Git identity and GPG signing profile manager |
 | `/push-ci` | Push (with approval) + CI monitor |
 | `/create-pr` | Create GitHub PR from branch |
-| `/git-worktree` | Manage git worktrees |
+| `/git-worktree` | Manage git worktrees (auto-syncs .claude/) |
 | `/merge-prep` | Pre-merge analysis and preparation |
 | `/smart-rebase` | Smart partial rebase for squash-merge repos |
 

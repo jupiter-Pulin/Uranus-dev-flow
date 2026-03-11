@@ -200,7 +200,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/git-profile` | Git 身份与 GPG 签名 profile 管理 |
 | `/push-ci` | 推送（需审批）+ CI 监控 |
 | `/create-pr` | 从分支创建 GitHub PR |
-| `/git-worktree` | 管理 git worktree |
+| `/git-worktree` | 管理 git worktree（自动同步 .claude/） |
 | `/merge-prep` | 合并前分析与准备 |
 | `/smart-rebase` | 智能局部 rebase（squash-merge 仓库适用） |
 

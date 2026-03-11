@@ -1,7 +1,7 @@
 ---
 name: git-worktree
 description: "Git worktree management. Work on multiple branches simultaneously without switching or re-cloning. Use when: user mentions worktree, parallel development, simultaneous branches, or /git-worktree"
-allowed-tools: Read, Grep, Glob, Bash(git:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*)
 ---
 
 # Git Worktree
@@ -114,12 +114,30 @@ git worktree move ../wt-old ../wt-new
 |-------|-------|----------|
 | `branch is already checked out` | Branch is in use by another worktree | Create new branch or use `--detach` |
 | `is not a valid directory` | Worktree directory was manually deleted | `git worktree prune` |
-| `.claude` config not in worktree | Worktree only has working files | `.claude/` is in main repo, shared via git |
+| `.claude` config not in worktree | `.claude/` is gitignored (local-only) | Auto-synced on `add`; run sync script manually if needed |
+
+## `.claude/` Auto-Sync
+
+After `git worktree add`, the sync script (`scripts/worktree-claude-sync.sh`) automatically recreates `.claude/` in the new worktree:
+
+| Entry | Strategy | Notes |
+|-------|----------|-------|
+| `agents`, `commands`, `hooks`, `rules`, `scripts`, `skills` | Symlink (`../<dir>`) | Points to worktree's own tracked dirs |
+| `CLAUDE.md` | Symlink (`../CLAUDE.md`) | Points to worktree's tracked root file |
+| `.gitignore`, `.sd0x-install-state.json` | Copy | Isolated per worktree |
+| `settings.local.json` | Copy | Isolated (contains absolute paths) |
+| `cache/`, `.git/` | Skip | Per-worktree, auto-created |
+
+**Opt-out**: Use `--no-claude-sync` to skip.
+
+**Existing `.claude/`**: If `.claude/` already exists in the worktree (user-managed), sync is skipped.
 
 ## Verification
 
 - [ ] `git worktree list` shows correct worktrees
 - [ ] Worktree directory can `git status` normally
+- [ ] `.claude/` exists in worktree with correct symlinks
+- [ ] Claude Code loads hooks/rules/skills normally in worktree
 - [ ] After completion, clean up with `git worktree remove`
 
 ## References

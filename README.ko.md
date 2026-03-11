@@ -200,7 +200,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/git-profile` | Git 아이덴티티 및 GPG 서명 프로파일 관리 |
 | `/push-ci` | 푸시 (승인 필요) + CI 모니터링 |
 | `/create-pr` | 브랜치에서 GitHub PR 생성 |
-| `/git-worktree` | git worktree 관리 |
+| `/git-worktree` | git worktree 관리 (.claude/ 자동 동기화) |
 | `/merge-prep` | 병합 전 분석 및 준비 |
 | `/smart-rebase` | squash-merge 리포지토리용 스마트 부분 rebase |
 

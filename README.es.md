@@ -200,7 +200,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/git-profile` | Gestor de identidad Git y perfil de firma GPG |
 | `/push-ci` | Push (con aprobación) + monitoreo de CI |
 | `/create-pr` | Crear GitHub PR desde branch |
-| `/git-worktree` | Gestionar git worktrees |
+| `/git-worktree` | Gestionar git worktrees (sincronización automática de .claude/) |
 | `/merge-prep` | Análisis y preparación pre-merge |
 | `/smart-rebase` | Rebase parcial inteligente para repos con squash-merge |
 

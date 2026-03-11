@@ -72,5 +72,5 @@ git worktree remove ../wt-feat-B
 | Branch exclusive | Same branch cannot be checked out in two worktrees |
 | Cleanup method | Prefer `git worktree remove`, avoid just `rm -rf` |
 | Path convention | Place in repo's parent directory, name `wt-{repo}-{purpose}` |
-| .claude sharing | `.claude/` is in main repo root, shared across worktrees |
+| .claude sync | `.claude/` is gitignored; auto-synced to worktree on `add` via `scripts/worktree-claude-sync.sh` |
 | node_modules | Not shared across worktrees, run `install` separately |

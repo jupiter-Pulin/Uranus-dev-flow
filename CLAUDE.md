@@ -102,7 +102,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/git-profile` | Git identity and GPG signing profile manager | Git |
 | `/push-ci` | Push (with approval) + CI monitor | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
-| `/git-worktree` | Manage git worktrees | Git |
+| `/git-worktree` | Manage git worktrees (auto-syncs .claude/) | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
 | `/pr-summary` | PR status summary (grouped by ticket) | Git |
 | `/contract-decode` | EVM contract error/calldata decoder | Blockchain |
