@@ -193,3 +193,4 @@ intent:
 - [x] ~~Ecosystem detection in fallback instructions~~ — Added to all 4 commands
 - [x] ~~Manual smoke test for Python/Rust/Go projects~~ — Ecosystem detection verified in command docs
 - [ ] Expand dep-audit.sh to natively support non-JS ecosystems (optional)
+- [ ] Plugin manifest validation tests (`test/commands/plugin-manifest.test.js`) — [Request](./requests/2026-03-10-plugin-manifest-validation.md)
