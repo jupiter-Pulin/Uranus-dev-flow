@@ -116,11 +116,13 @@ init_state_file() {
 {
   "session_id": "",
   "updated_at": "",
+  "review_mode": "single",
   "has_code_change": false,
   "has_doc_change": false,
   "code_review": {"executed": false, "passed": false, "last_run": ""},
   "doc_review": {"executed": false, "passed": false, "last_run": ""},
-  "precommit": {"executed": false, "passed": false, "last_run": ""}
+  "precommit": {"executed": false, "passed": false, "last_run": ""},
+  "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""}
 }
 EOF
   fi
