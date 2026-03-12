@@ -142,6 +142,22 @@ if (query && query.includes('.command')) {
   process.exit(0);
 }
 
+// Dual-mode fields
+if (query && query.includes('.review_mode')) {
+  outputValue(data.review_mode || 'single');
+  process.exit(0);
+}
+if (query && query.includes('.aggregate_gate.executed')) {
+  const agg = data.aggregate_gate || {};
+  outputValue(asBoolString(agg.executed));
+  process.exit(0);
+}
+if (query && query.includes('.aggregate_gate.gate')) {
+  const agg = data.aggregate_gate || {};
+  outputValue(agg.gate != null ? agg.gate : '');
+  process.exit(0);
+}
+
 if (query && query.includes('.code_review.passed')) {
   outputValue(asBoolString(data.code_review && data.code_review.passed));
   process.exit(0);
@@ -924,4 +940,191 @@ test('git unavailable fails open (trusts state file)', () => {
   assert.equal(result.status, 2, 'should block stop (trusts state file when git unavailable)');
   const payload = parseJson(result.stdout);
   assert.equal(payload.ok, false);
+});
+
+// =============================================================================
+// Dual-mode (review_mode=dual) tests
+// =============================================================================
+
+test('dual mode: aggregate_gate READY allows stop', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-dual-ready-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: true },
+      aggregate_gate: { executed: true, gate: 'READY' },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 0, 'dual mode READY should allow stop');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, true);
+});
+
+test('dual mode: aggregate_gate BLOCKED blocks stop', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-dual-blocked-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: true },
+      aggregate_gate: { executed: true, gate: 'BLOCKED' },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 2, 'dual mode BLOCKED should block stop');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, false);
+});
+
+test('dual mode: aggregate_gate not executed (fail-closed) blocks stop', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-dual-incomplete-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: true },
+      aggregate_gate: { executed: false, gate: null },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 2, 'fail-closed: incomplete aggregation should block');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, false);
+});
+
+test('dual mode: forces strict blocking (ignores STOP_GUARD_MODE=warn)', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-dual-force-strict-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: false },
+      aggregate_gate: { executed: true, gate: 'READY' },
+    })
+  );
+  // Explicitly set warn mode — dual mode should override to strict
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { STOP_GUARD_MODE: 'warn' },
+  });
+  assert.equal(result.status, 2, 'dual mode should force strict even when STOP_GUARD_MODE=warn');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, false);
+});
+
+test('dual mode: doc-only change not blocked by aggregate_gate', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-dual-doc-only-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: false,
+      has_doc_change: true,
+      doc_review: { passed: true },
+      aggregate_gate: { executed: false, gate: null },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 0, 'doc-only change should not be blocked by aggregate_gate');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, true);
+});
+
+test('dual mode: sidecar .blocked marker forces block', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-sidecar-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: true },
+      aggregate_gate: { executed: true, gate: 'READY' },
+    })
+  );
+  // Create sidecar marker — overrides the READY gate
+  writeFileSync(join(workDir, '.claude_review_state.json.blocked'), 'lock_failure');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 2, 'sidecar .blocked marker should force block');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, false);
+});
+
+test('backward compat: no review_mode field behaves as single mode', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-compat-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      has_doc_change: false,
+      code_review: { passed: true },
+      precommit: { passed: true },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 0, 'no review_mode should behave as single mode');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, true);
 });

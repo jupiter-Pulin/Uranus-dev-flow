@@ -93,6 +93,45 @@ function outputValue(val) {
   process.stdout.write(JSON.stringify(val));
 }
 
+// Handle aggregate_gate PENDING mutation (review_mode + executed=false)
+if (query && query.includes('review_mode') && query.includes('aggregate_gate.executed = false')) {
+  data.review_mode = 'dual';
+  if (!data.aggregate_gate) data.aggregate_gate = {};
+  data.aggregate_gate.executed = false;
+  data.aggregate_gate.gate = null;
+  data.aggregate_gate.source = null;
+  data.aggregate_gate.reason = null;
+  data.aggregate_gate.last_run = vars.now || '';
+  data.updated_at = vars.now || '';
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
+// Handle aggregate_gate READY/BLOCKED mutation (executed=true + gate=$gate)
+if (query && query.includes('aggregate_gate.executed = true') && query.includes('aggregate_gate.gate = $gate')) {
+  if (!data.aggregate_gate) data.aggregate_gate = {};
+  data.aggregate_gate.executed = true;
+  data.aggregate_gate.gate = vars.gate || '';
+  data.aggregate_gate.reason = null;
+  data.aggregate_gate.last_run = vars.now || '';
+  data.updated_at = vars.now || '';
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
+// Handle aggregate_gate BLOCKED with reason (lock-failure path)
+if (query && query.includes('aggregate_gate.gate = "BLOCKED"') && query.includes('aggregate_gate.reason = $reason')) {
+  data.review_mode = 'dual';
+  if (!data.aggregate_gate) data.aggregate_gate = {};
+  data.aggregate_gate.executed = true;
+  data.aggregate_gate.gate = 'BLOCKED';
+  data.aggregate_gate.reason = vars.reason || '';
+  data.aggregate_gate.last_run = vars.now || '';
+  data.updated_at = vars.now || '';
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 if (query && query.includes('[$key]') && vars.key) {
   if (!data || typeof data !== 'object') data = {};
   if (!data[vars.key] || typeof data[vars.key] !== 'object') data[vars.key] = {};
@@ -702,4 +741,102 @@ test('MCP doc review mentioning OWASP still sets doc_review (regression)', () =>
   const state = readState(workDir);
   assert.ok(state, 'state file should exist');
   assert.equal(state.doc_review.passed, true, 'doc mentioning OWASP should still route to doc_review');
+});
+
+// =============================================================================
+// emit-review-gate aggregate_gate tests (dual-mode)
+// =============================================================================
+
+test('emit-review-gate PENDING sets review_mode=dual and aggregate_gate.executed=false', () => {
+  const workDir = makeTempDir('sd0x-post-tool-gate-pending-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'bash scripts/emit-review-gate.sh PENDING' },
+      tool_output: 'REVIEW_GATE=PENDING',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'state file should exist');
+  assert.equal(state.review_mode, 'dual');
+  assert.equal(state.aggregate_gate.executed, false);
+  assert.equal(state.aggregate_gate.gate, null);
+});
+
+test('emit-review-gate READY sets aggregate_gate.executed=true and gate=READY', () => {
+  const workDir = makeTempDir('sd0x-post-tool-gate-ready-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'bash scripts/emit-review-gate.sh READY' },
+      tool_output: 'REVIEW_GATE=READY',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'state file should exist');
+  assert.equal(state.aggregate_gate.executed, true);
+  assert.equal(state.aggregate_gate.gate, 'READY');
+});
+
+test('emit-review-gate BLOCKED sets aggregate_gate.executed=true and gate=BLOCKED', () => {
+  const workDir = makeTempDir('sd0x-post-tool-gate-blocked-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'bash scripts/emit-review-gate.sh BLOCKED' },
+      tool_output: 'REVIEW_GATE=BLOCKED',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'state file should exist');
+  assert.equal(state.aggregate_gate.executed, true);
+  assert.equal(state.aggregate_gate.gate, 'BLOCKED');
+});
+
+test('emit-review-gate with extra output still parses correctly', () => {
+  const workDir = makeTempDir('sd0x-post-tool-gate-extra-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'bash scripts/emit-review-gate.sh READY' },
+      tool_output: 'Some other output\nREVIEW_GATE=READY\nMore output',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'state file should exist');
+  assert.equal(state.aggregate_gate.executed, true);
+  assert.equal(state.aggregate_gate.gate, 'READY');
+});
+
+test('non-emit-review-gate Bash command does not write aggregate_gate', () => {
+  const workDir = makeTempDir('sd0x-post-tool-gate-nogate-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'npm test' },
+      tool_output: 'all tests passed',
+    },
+  });
+  assert.equal(result.status, 0);
+  const statePath = join(workDir, '.claude_review_state.json');
+  assert.equal(existsSync(statePath), false, 'non-gate command should not create state');
 });

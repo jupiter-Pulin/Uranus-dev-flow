@@ -83,6 +83,23 @@ if (query && query.includes('.passed = false') && vars.key) {
   process.exit(0);
 }
 
+// Handle has("aggregate_gate") check
+if (query && query.includes('has("aggregate_gate")')) {
+  process.stdout.write(Object.prototype.hasOwnProperty.call(data, 'aggregate_gate') ? 'true' : 'false');
+  process.exit(0);
+}
+
+// Handle aggregate_gate invalidation: .aggregate_gate.executed = false | .aggregate_gate.gate = null | .aggregate_gate.reason = null
+if (query && query.includes('aggregate_gate.executed = false') && query.includes('aggregate_gate.gate = null')) {
+  if (data.aggregate_gate) {
+    data.aggregate_gate.executed = false;
+    data.aggregate_gate.gate = null;
+    data.aggregate_gate.reason = null;
+  }
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 process.stdout.write('');
 `;
   writeExecutable(join(binDir, 'jq'), stubJq);
@@ -442,6 +459,121 @@ test('doc edit invalidates doc_review.passed', () => {
   assert.equal(state.doc_review.passed, false, 'doc_review.passed should be invalidated');
   assert.equal(state.doc_review.executed, true, 'doc_review.executed should be preserved');
   assert.equal(state.doc_review.last_run, 'T1', 'doc_review.last_run should be preserved');
+});
+
+// =============================================================================
+// aggregate_gate invalidation (dual-mode)
+// =============================================================================
+
+test('code edit resets aggregate_gate', () => {
+  const workDir = makeTempDir('sd0x-format-agg-code-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: false,
+      has_doc_change: false,
+      code_review: { executed: true, passed: true, last_run: 'T1' },
+      doc_review: { executed: false, passed: false, last_run: '' },
+      precommit: { executed: false, passed: false, last_run: '' },
+      aggregate_gate: { executed: true, gate: 'READY', reason: null, last_run: 'T1' },
+    })
+  );
+  runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.aggregate_gate.executed, false, 'aggregate_gate.executed should be reset');
+  assert.equal(state.aggregate_gate.gate, null, 'aggregate_gate.gate should be reset');
+  assert.equal(state.aggregate_gate.reason, null, 'aggregate_gate.reason should be reset');
+});
+
+test('doc edit resets aggregate_gate', () => {
+  const workDir = makeTempDir('sd0x-format-agg-doc-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: false,
+      has_doc_change: false,
+      code_review: { executed: false, passed: false, last_run: '' },
+      doc_review: { executed: true, passed: true, last_run: 'T1' },
+      precommit: { executed: false, passed: false, last_run: '' },
+      aggregate_gate: { executed: true, gate: 'READY', reason: null, last_run: 'T1' },
+    })
+  );
+  runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/docs/guide.md',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.aggregate_gate.executed, false, 'aggregate_gate.executed should be reset on doc edit');
+  assert.equal(state.aggregate_gate.gate, null, 'aggregate_gate.gate should be reset on doc edit');
+  assert.equal(state.aggregate_gate.reason, null, 'aggregate_gate.reason should be reset on doc edit');
+});
+
+test('no aggregate_gate in state: edit does not crash', () => {
+  const workDir = makeTempDir('sd0x-format-agg-missing-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: false,
+      has_doc_change: false,
+      code_review: { executed: false, passed: false, last_run: '' },
+      doc_review: { executed: false, passed: false, last_run: '' },
+      precommit: { executed: false, passed: false, last_run: '' },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0, 'should not crash when aggregate_gate is absent');
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.has_code_change, true);
+});
+
+test('code edit clears sidecar .blocked marker', () => {
+  const workDir = makeTempDir('sd0x-format-sidecar-clear-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      review_mode: 'dual',
+      has_code_change: false,
+      has_doc_change: false,
+      code_review: { executed: false, passed: false, last_run: '' },
+      doc_review: { executed: false, passed: false, last_run: '' },
+      precommit: { executed: false, passed: false, last_run: '' },
+      aggregate_gate: { executed: true, gate: 'BLOCKED', reason: 'lock_failure', last_run: 'T1' },
+    })
+  );
+  // Create sidecar marker
+  writeFileSync(join(workDir, '.claude_review_state.json.blocked'), 'lock_failure');
+  runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(
+    existsSync(join(workDir, '.claude_review_state.json.blocked')),
+    false,
+    'sidecar .blocked marker should be cleared after successful edit'
+  );
 });
 
 test('doc edit does NOT invalidate code_review', () => {
