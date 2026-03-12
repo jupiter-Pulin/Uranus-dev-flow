@@ -15,6 +15,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(node:*), Bash(git:*), Bash(ls
 - Existing local rules: !`bash -c 'ls .claude/rules/ 2>/dev/null || echo "(none)"'`
 - Existing local hooks: !`bash -c 'ls .claude/hooks/ 2>/dev/null || echo "(none)"'`
 - Settings file: !`bash -c 'ls .claude/settings.json 2>/dev/null || echo "(none)"'`
+- Plugin coexistence: !`bash -c 'test -f hooks/hooks.json && echo "⚠️ Plugin hooks detected (hooks/hooks.json exists) — runtime arbitration will auto-dedup" || echo "(no plugin hooks)"'`
 
 ## Task
 

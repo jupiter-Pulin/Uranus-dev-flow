@@ -144,15 +144,15 @@ Hook definition mapping (use `$CLAUDE_PROJECT_DIR` for CWD-independent paths —
       {"matcher": "Bash|mcp__codex__codex|mcp__codex__codex-reply", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-review-state.sh"}]}
     ],
     "Stop": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "STOP_GUARD_MODE=<MODE> \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
+      {"matcher": "", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
     ]
   }
 }
 ```
 
-Where `<MODE>` = `strict` (default) or `warn` (when `--guard-mode warn` is specified).
+Stop-guard mode is configured via `hooks_config.stop_guard_mode` in settings (not as a command prefix), with 4-level resolution: env `STOP_GUARD_MODE` > `settings.local.json` > `settings.json` > default `warn`.
 
-> **Default strict mode**: stop-guard is installed in `strict` mode by default. Use `--guard-mode warn` to install in warn-only mode.
+> **Default strict mode**: `/install-hooks` writes `"hooks_config": {"stop_guard_mode": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no config is found.
 
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
@@ -163,7 +163,9 @@ Merge strategy:
     - Same command path exists → **Skip**
     - Different command at same matcher → **Skip** + warn (unless `--force`)
     - No matching entry → **Append**
-- **Stop hook mode merge**: when an existing Stop entry references `stop-guard.sh`, compare the full command string (including `STOP_GUARD_MODE=...` prefix). If mode differs and `--force` is set, replace the entry. If mode differs without `--force`, warn and skip.
+- **Stop hook mode merge**: when an existing Stop entry references `stop-guard.sh`, the command string no longer contains a mode prefix. Mode is stored in `hooks_config.stop_guard_mode`. If the existing `hooks_config.stop_guard_mode` differs from the requested mode, update it (or warn without `--force`).
+- **`hooks_config` write**: after merging hook entries, write `{"hooks_config": {"stop_guard_mode": "<MODE>"}}` into the target settings file. Merge with existing `hooks_config` keys (preserve other fields).
+- **Coexistence detection**: if `hooks/hooks.json` exists at repo root (= plugin source repo), warn that plugin hooks may conflict with installed hooks. The runtime arbitration guard handles this automatically, but inform the user.
 - `--force` semantics: **Replace** the existing entry at the same matcher (not append a duplicate). Remove the old entry, then add the new one.
 - Write updated settings back
 

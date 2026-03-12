@@ -279,21 +279,22 @@ Hook definition mapping (uses `$CLAUDE_PROJECT_DIR` for portability):
       {"matcher": "Bash|mcp__codex__codex|mcp__codex__codex-reply", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-review-state.sh"}]}
     ],
     "Stop": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "STOP_GUARD_MODE=<MODE> \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
+      {"matcher": "", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
     ]
   }
 }
 ```
 
-Where `<MODE>` = `strict` (default) or `warn` (when `--guard-mode warn` is specified).
+Stop-guard mode is configured via `hooks_config.stop_guard_mode` in settings (not as a command prefix), with 4-level resolution: env `STOP_GUARD_MODE` > `settings.local.json` > `settings.json` > default `warn`.
 
-> **Default strict mode**: `/project-setup` installs stop-guard in `strict` mode (blocks stop before review completes). Use `--guard-mode warn` to install in warn-only mode. The script itself defaults to `warn` when invoked without the environment variable.
+> **Default strict mode**: `/project-setup` writes `"hooks_config": {"stop_guard_mode": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no config is found.
 
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
 - **Legacy migration**: scan for bare `.claude/hooks/<name>.sh` paths → upgrade to `"$CLAUDE_PROJECT_DIR"/.claude/hooks/<name>.sh`
 - For each event: append-only merge (skip if same command path exists)
-- **Stop hook mode merge**: when an existing Stop entry references `stop-guard.sh` but has a different `STOP_GUARD_MODE`, `/project-setup` **always replaces** the entry to match the requested mode (deterministic — no `--force` needed since `/project-setup` is an opinionated setup tool)
+- **Stop hook mode merge**: mode is stored in `hooks_config.stop_guard_mode` (not in the command string). `/project-setup` writes `{"hooks_config": {"stop_guard_mode": "<MODE>"}}` to the target settings file, merging with existing `hooks_config` keys
+- **Coexistence detection**: if `hooks/hooks.json` exists at repo root (= plugin source repo), warn that plugin hooks and installed hooks may coexist. Runtime arbitration handles dedup automatically
 - Write updated settings back
 
 ### 6.4 Output Hooks Report
@@ -325,7 +326,7 @@ Summarize all phases and perform closed-loop check:
 | `@rules/` references | `@rules/auto-loop.md` in `.claude/CLAUDE.md` | ✅ |
 | Rule files | `.claude/rules/auto-loop.md` exists | ✅ |
 | Hook enforcement | `stop-guard` in `.claude/settings.json` | ✅ |
-| Guard mode | Stop hook command contains `STOP_GUARD_MODE=strict` | ✅ (unless `--guard-mode warn`) |
+| Guard mode | `hooks_config.stop_guard_mode` = `strict` in settings | ✅ (unless `--guard-mode warn`) |
 
 ### Output
 
