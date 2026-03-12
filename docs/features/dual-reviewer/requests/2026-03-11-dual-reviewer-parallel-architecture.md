@@ -1,7 +1,7 @@
 # 雙 Reviewer 並行審查架構
 
 > **Created**: 2026-03-11
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -56,56 +56,56 @@
 
 ### AC1: 並行分派
 
-- [ ] `codex-review-fast.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `codex-review.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `codex-review-branch.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `codex-code-review/SKILL.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `strict-reviewer.md` 移除 `skills: codex-code-review` 耦合（避免 fallback 遞迴）
-- [ ] 觸發 `/codex-review-fast` 時，同時啟動 Codex MCP + `Task(pr-review-toolkit:code-reviewer)`
-- [ ] 若 `pr-review-toolkit:code-reviewer` 不可用（啟動失敗或 30s timeout），fallback 至 `Task(strict-reviewer)`
-- [ ] 若兩者皆不可用，退回為現有 Codex-only 行為
+- [x] `codex-review-fast.md` 的 `allowed-tools` 包含 `Task`
+- [x] `codex-review.md` 的 `allowed-tools` 包含 `Task`
+- [x] `codex-review-branch.md` 的 `allowed-tools` 包含 `Task`
+- [x] `codex-code-review/SKILL.md` 的 `allowed-tools` 包含 `Task`
+- [x] `strict-reviewer.md` 移除 `skills: codex-code-review` 耦合（避免 fallback 遞迴）
+- [x] 觸發 `/codex-review-fast` 時，同時啟動 Codex MCP + `Task(pr-review-toolkit:code-reviewer)`
+- [x] 若 `pr-review-toolkit:code-reviewer` 不可用（啟動失敗或 30s timeout），fallback 至 `Task(strict-reviewer)`
+- [x] 若兩者皆不可用，退回為現有 Codex-only 行為
 
 ### AC2: 結果彙整
 
-- [ ] 雙方 findings 正規化為 P0/P1/P2/Nit 格式
-- [ ] toolkit confidence 90-100 + P0 關鍵字 → P0
-- [ ] toolkit confidence 90-100 → P1
-- [ ] toolkit confidence 80-89 → P2
-- [ ] 以 `file + canonical_issue` 為 key 去重
-- [ ] 保留 `source=codex|toolkit|both` 來源標記
+- [x] 雙方 findings 正規化為 P0/P1/P2/Nit 格式
+- [x] toolkit confidence 90-100 + P0 關鍵字 → P0
+- [x] toolkit confidence 90-100 → P1
+- [x] toolkit confidence 80-89 → P2
+- [x] 以 `file + canonical_issue` 為 key 去重
+- [x] 保留 `source=codex|toolkit|both` 來源標記
 
 ### AC3: 閘門機制
 
-- [ ] `scripts/emit-review-gate.sh` 建立且可執行
-- [ ] 雙 reviewer 起始時發射 `PENDING`（設定 `review_mode=dual`）
-- [ ] 彙整完成後發射 `READY` 或 `BLOCKED`
-- [ ] `post-tool-review-state.sh` 新增 `emit-review-gate` 解析分支
-- [ ] State file 包含 `aggregate_gate` 和 `review_mode` 欄位
+- [x] `scripts/emit-review-gate.sh` 建立且可執行
+- [x] 雙 reviewer 起始時發射 `PENDING`（設定 `review_mode=dual`）
+- [x] 彙整完成後發射 `READY` 或 `BLOCKED`
+- [x] `post-tool-review-state.sh` 新增 `emit-review-gate` 解析分支
+- [x] State file 包含 `aggregate_gate` 和 `review_mode` 欄位
 
 ### AC4: Fail-closed
 
-- [ ] `stop-guard.sh` 在 `review_mode=dual` 時優先使用 `aggregate_gate`
-- [ ] `review_mode=dual` 時強制 strict blocking（無視 warn 設定）
-- [ ] `review_mode=dual` + `aggregate_gate.executed=false` → 視為 blocked（reason: `aggregation_incomplete`）
-- [ ] 鎖定失敗時寫入 `aggregate_gate.gate=BLOCKED`、`aggregate_gate.reason=lock_failure`
-- [ ] State schema 包含 `aggregate_gate.reason` 欄位（string | null）
+- [x] `stop-guard.sh` 在 `review_mode=dual` 時優先使用 `aggregate_gate`
+- [x] `review_mode=dual` 時強制 strict blocking（無視 warn 設定）
+- [x] `review_mode=dual` + `aggregate_gate.executed=false` → 視為 blocked（reason: `aggregation_incomplete`）
+- [x] 鎖定失敗時寫入 `aggregate_gate.gate=BLOCKED`、`aggregate_gate.reason=lock_failure`
+- [x] State schema 包含 `aggregate_gate.reason` 欄位（string | null）
 
 ### AC5: 狀態管理
 
-- [ ] `post-edit-format.sh` 編輯檔案後重置 `aggregate_gate`
-- [ ] 可攜式 `mkdir` lockdir 鎖定機制（macOS 相容）
-- [ ] 鎖定含 bounded wait（5s）、owner PID + timestamp、stale lock 回收
+- [x] `post-edit-format.sh` 編輯檔案後重置 `aggregate_gate`
+- [x] 可攜式 `mkdir` lockdir 鎖定機制（macOS 相容）
+- [x] 鎖定含 bounded wait（5s）、owner PID + timestamp、stale lock 回收
 
 ### AC6: 向後相容
 
-- [ ] `review_mode` 缺失時，行為與現有完全一致
-- [ ] 現有 Bash/MCP sentinel 偵測邏輯不受影響
-- [ ] 現有測試全數通過
+- [x] `review_mode` 缺失時，行為與現有完全一致
+- [x] 現有 Bash/MCP sentinel 偵測邏輯不受影響
+- [x] 現有測試全數通過
 
 ### Quality Gates
 
-- [ ] Pass `/codex-review-fast`
-- [ ] Pass `/precommit`
+- [x] Pass `/codex-review-fast`
+- [x] Pass `/precommit`
 
 ## Progress
 
@@ -113,9 +113,9 @@
 |-------|--------|------|
 | Best Practices | Done | `/best-practices` audit + `/codex-brainstorm` 9 輪辯論 |
 | Tech Spec | Done | `2-tech-spec.md` |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | R1 (config) + R2 (hooks) + R3 (skill workflow) + R4 (testing) 全部完成 |
+| Testing | Done | R1-R4 全部通過；92 hook tests（含 emit-review-gate 5 tests） |
+| Acceptance | Done | AC1-AC6 全部完成 |
 
 ## References
 

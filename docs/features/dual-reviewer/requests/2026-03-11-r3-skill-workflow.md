@@ -1,7 +1,7 @@
 # R3: Skill Workflow — 雙重分派與結果彙整
 
 > **Created**: 2026-03-11
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Parent Request**: [dual-reviewer-parallel-architecture.md](./2026-03-11-dual-reviewer-parallel-architecture.md)
@@ -39,56 +39,56 @@
 
 ### AC1: SKILL.md 工作流
 
-- [ ] Step 0: 雙 reviewer 模式下呼叫 `bash scripts/emit-review-gate.sh PENDING`
-- [ ] Step 3: 並行啟動 Codex MCP + `Task(pr-review-toolkit:code-reviewer)`
-- [ ] 若 `pr-review-toolkit:code-reviewer` 不可用（30s timeout），fallback 至 `Task(strict-reviewer)`
-- [ ] 若兩者皆不可用，退回 Codex-only 行為（`review_mode=single`）
-- [ ] Step 3.5: 等待雙方結果返回
-- [ ] Step 4: 正規化 + 去重 + 彙整為統一 findings
-- [ ] Step 4.5: 呼叫 `bash scripts/emit-review-gate.sh READY|BLOCKED`
+- [x] Step 0: 雙 reviewer 模式下呼叫 `bash scripts/emit-review-gate.sh PENDING`
+- [x] Step 3: 並行啟動 Codex MCP + `Task(pr-review-toolkit:code-reviewer)`
+- [x] 若 `pr-review-toolkit:code-reviewer` 不可用（30s timeout），fallback 至 `Task(strict-reviewer)`
+- [x] 若兩者皆不可用，退回 Codex-only 行為（`review_mode=single`）
+- [x] Step 3.5: 等待雙方結果返回
+- [x] Step 4: 正規化 + 去重 + 彙整為統一 findings
+- [x] Step 4.5: 呼叫 `bash scripts/emit-review-gate.sh READY|BLOCKED`
 
 ### AC2: Severity Mapping
 
-- [ ] toolkit confidence 90-100 + P0 關鍵字（crash, data loss, security vulnerability, injection, auth bypass）→ P0
-- [ ] toolkit confidence 90-100（無 P0 關鍵字）→ P1
-- [ ] toolkit confidence 80-89 → P2
-- [ ] `strict-reviewer` 已使用 P0/P1/P2/Nit，無需對應
+- [x] toolkit confidence 90-100 + P0 關鍵字（crash, data loss, security vulnerability, injection, auth bypass）→ P0
+- [x] toolkit confidence 90-100（無 P0 關鍵字）→ P1
+- [x] toolkit confidence 80-89 → P2
+- [x] `strict-reviewer` 已使用 P0/P1/P2/Nit，無需對應
 
 ### AC3: 結果彙整
 
-- [ ] 雙方 findings 正規化為 `[severity] file:line description → fix`
-- [ ] 去重 key = `file + canonical_issue_text`（忽略 line number ±5 差異）
-- [ ] 衝突解決：同一 key 取最高 severity（P0 > P1 > P2 > Nit）
-- [ ] 標記 `source = codex | toolkit | both`
-- [ ] 排序：P0 → P1 → P2 → Nit
-- [ ] 閘門：任一 P0/P1 → BLOCKED；否則 → READY
+- [x] 雙方 findings 正規化為 `[severity] file:line description → fix`
+- [x] 去重 key = `file + canonical_issue_text`（忽略 line number ±5 差異）
+- [x] 衝突解決：同一 key 取最高 severity（P0 > P1 > P2 > Nit）
+- [x] 標記 `source = codex | toolkit | both`
+- [x] 排序：P0 → P1 → P2 → Nit
+- [x] 閘門：任一 P0/P1 → BLOCKED；否則 → READY
 
 ### AC4: 降級處理
 
-- [ ] Codex 成功 + 次要成功 → 聯集彙整（`source=codex+toolkit`）
-- [ ] Codex 成功 + 次要失敗 → Codex-only + 降級警告（`source=codex-only`）
-- [ ] Codex 失敗 + 次要成功 → 次要-only + 降級警告（`source=toolkit-only`）
-- [ ] 都失敗 → `⛔ Blocked` + `⚠️ Need Human`（`source=none`）
+- [x] Codex 成功 + 次要成功 → 聯集彙整（`source=codex+toolkit`）
+- [x] Codex 成功 + 次要失敗 → Codex-only + 降級警告（`source=codex-only`）
+- [x] Codex 失敗 + 次要成功 → 次要-only + 降級警告（`source=toolkit-only`）
+- [x] 都失敗 → `⛔ Blocked` + `⚠️ Need Human`（`source=none`）
 
 ### AC5: Review Loop 整合
 
-- [ ] Codex MCP: `mcp__codex__codex-reply(threadId)` 延續先前上下文
-- [ ] 次要 reviewer: 每輪重新啟動，帶最新 diff
-- [ ] 彙整閘門在每輪 loop 結尾重新計算並發射
+- [x] Codex MCP: `mcp__codex__codex-reply(threadId)` 延續先前上下文
+- [x] 次要 reviewer: 每輪重新啟動，帶最新 diff
+- [x] 彙整閘門在每輪 loop 結尾重新計算並發射
 
 ### Quality Gates
 
-- [ ] Pass `/codex-review-fast`
-- [ ] P2/Nit Quality Sweep 對統一格式 findings 正常運作
+- [x] Pass `/codex-review-fast`
+- [x] P2/Nit Quality Sweep 對統一格式 findings 正常運作
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Tech Spec §3.3.1-§3.3.4, §3.4, §W6/W7 |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | SKILL.md 雙重分派 + review-common.md 彙整規則（commits `b97198a`..`962024c`） |
+| Testing | Done | `/codex-review-fast` passed（雙 reviewer 首次實際執行）+ `/precommit-fast` passed |
+| Acceptance | Done | AC1-AC5 全部完成 |
 
 ## References
 
