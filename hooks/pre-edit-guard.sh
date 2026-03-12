@@ -13,6 +13,32 @@
 
 set -euo pipefail
 
+# === Plugin-defers-to-local arbitration ===
+# When running as a plugin hook, detect if identical local hook is installed
+# and registered in project settings — if so, exit 0 to avoid double-fire.
+# Dev-mode bypass: hooks/hooks.json at project root = plugin source repo (skip arbitration).
+_SELF_NAME="$(basename "$0")"
+if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]] \
+   && [[ ! -f "${CLAUDE_PROJECT_DIR}/hooks/hooks.json" ]] \
+   && [[ -x "${CLAUDE_PROJECT_DIR}/.claude/hooks/${_SELF_NAME}" ]]; then
+  _SETTINGS_MATCH=false
+  for _sf in "${CLAUDE_PROJECT_DIR}/.claude/settings.json" \
+             "${CLAUDE_PROJECT_DIR}/.claude/settings.local.json"; do
+    if [[ -f "$_sf" ]]; then
+      if command -v jq &>/dev/null; then
+        jq -e '.hooks // {} | .. | strings | select(contains(".claude/hooks/'"${_SELF_NAME}"'"))' "$_sf" >/dev/null 2>&1 \
+          && _SETTINGS_MATCH=true && break
+      else
+        grep -q "\.claude/hooks/${_SELF_NAME}" "$_sf" 2>/dev/null \
+          && _SETTINGS_MATCH=true && break
+      fi
+    fi
+  done
+  if [[ "$_SETTINGS_MATCH" == "true" ]]; then
+    exit 0  # Defer to local hook
+  fi
+fi
+
 # Read stdin once and store it
 stdin_data=$(cat)
 

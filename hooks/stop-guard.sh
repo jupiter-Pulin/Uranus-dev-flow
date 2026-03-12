@@ -10,12 +10,60 @@
 
 set -euo pipefail
 
-# === Environment Variables ===
-# STOP_GUARD_MODE=strict - Block stop on missing steps (default: warn)
-# HOOK_BYPASS=1          - Skip all checks (emergency escape hatch)
-# HOOK_DEBUG=1           - Output debug info
+# === Plugin-defers-to-local arbitration ===
+# When running as a plugin hook, detect if identical local hook is installed
+# and registered in project settings — if so, exit 0 to avoid double-fire.
+# Dev-mode bypass: hooks/hooks.json at project root = plugin source repo (skip arbitration).
+_SELF_NAME="$(basename "$0")"
+if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]] \
+   && [[ ! -f "${CLAUDE_PROJECT_DIR}/hooks/hooks.json" ]] \
+   && [[ -x "${CLAUDE_PROJECT_DIR}/.claude/hooks/${_SELF_NAME}" ]]; then
+  _SETTINGS_MATCH=false
+  for _sf in "${CLAUDE_PROJECT_DIR}/.claude/settings.json" \
+             "${CLAUDE_PROJECT_DIR}/.claude/settings.local.json"; do
+    if [[ -f "$_sf" ]]; then
+      if command -v jq &>/dev/null; then
+        jq -e '.hooks // {} | .. | strings | select(contains(".claude/hooks/'"${_SELF_NAME}"'"))' "$_sf" >/dev/null 2>&1 \
+          && _SETTINGS_MATCH=true && break
+      else
+        grep -q "\.claude/hooks/${_SELF_NAME}" "$_sf" 2>/dev/null \
+          && _SETTINGS_MATCH=true && break
+      fi
+    fi
+  done
+  if [[ "$_SETTINGS_MATCH" == "true" ]]; then
+    exit 0  # Defer to local hook
+  fi
+fi
 
-GUARD_MODE="${STOP_GUARD_MODE:-warn}"
+# === Configuration ===
+# Mode priority: env STOP_GUARD_MODE > settings.local hooks_config.stop_guard_mode
+#                > settings.json hooks_config.stop_guard_mode > default "warn"
+# HOOK_BYPASS=1  - Skip all checks (emergency escape hatch)
+# HOOK_DEBUG=1   - Output debug info
+
+# === Mode resolution (env > settings.local > settings > default) ===
+_resolve_guard_mode() {
+  # Priority 1: Environment variable
+  if [[ -n "${STOP_GUARD_MODE:-}" ]]; then echo "$STOP_GUARD_MODE"; return; fi
+  # Priority 2-3: Settings files (jq required)
+  if command -v jq &>/dev/null; then
+    local _m
+    for _sf in "${CLAUDE_PROJECT_DIR:-.}/.claude/settings.local.json" \
+               "${CLAUDE_PROJECT_DIR:-.}/.claude/settings.json"; do
+      _m=$(jq -r '.hooks_config.stop_guard_mode // empty' "$_sf" 2>/dev/null) || true
+      if [[ -n "$_m" ]]; then echo "$_m"; return; fi
+    done
+  fi
+  # Priority 4: default
+  echo "warn"
+}
+GUARD_MODE=$(_resolve_guard_mode)
+# Validate mode value
+if [[ "$GUARD_MODE" != "strict" && "$GUARD_MODE" != "warn" ]]; then
+  echo "[Stop Guard] Invalid GUARD_MODE='$GUARD_MODE', falling back to warn" >&2
+  GUARD_MODE="warn"
+fi
 
 if [[ "${HOOK_BYPASS:-}" == "1" ]]; then
   echo "[Stop Guard] BYPASS mode, skipping checks" >&2
