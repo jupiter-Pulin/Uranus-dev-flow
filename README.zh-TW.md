@@ -4,9 +4,26 @@
 
 **[Claude Code](https://claude.com/claude-code) 的自主開發 Workflow 引擎。**
 
-編輯程式碼 → 自動 review → 自動修正 → gate 通過 → 交付。無需手動步驟。
+- **零手動關卡** — 編輯程式碼、自動 review、自動修正、交付
+- **雙 Reviewer 架構** — Codex MCP + 次要 reviewer 並行審查，fail-closed
+- **~4% context 佔用** — Claude 200k window 的 96% 留給你的程式碼
 
-65 commands | 49 skills | 14 agents | ~4% context 佔用
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## 快速開始
+
+```bash
+# 安裝 plugin
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# 設定你的專案
+/project-setup
+```
+
+一個指令自動偵測 framework、package manager、資料庫、entry point 和 script 指令。安裝 11 條 rules + 5 個 hooks。
+
+使用 `--lite` 僅設定 CLAUDE.md（跳過 rules/hooks）。
 
 ## 運作方式
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-loop 引擎**自動執行品質關卡——任何程式碼編輯後，Claude 在同一回覆中觸發 review。Hooks 在 review 未完成時阻止停止（`/project-setup` 後預設 strict；plugin runtime 預設 warn）。
+**Auto-loop 引擎**自動執行品質關卡——任何程式碼編輯後，Claude 在同一回覆中觸發**雙 Reviewer 並行審查**（Codex MCP + 次要 reviewer 同步進行）。Findings 會去重、severity 正規化，並彙整為單一 gate。Hooks 強制 fail-closed 語意：彙整 gate 未完成時，stop-guard 會阻止停止。
+
+<details>
+<summary>詳細：雙 Reviewer 時序圖</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## 功能亮點：雙 Reviewer 架構
+
+v2.0 平行分派兩個獨立 reviewer — 零單點故障：
+
+| Reviewer | 角色 | 降級策略 |
+|----------|------|----------|
+| Codex MCP | 主要（sandbox，完整 diff） | 始終可用 |
+| 次要（pr-review-toolkit） | 信心分數制審查 | strict-reviewer → 單 reviewer 模式 |
+
+Findings 會**嚴重度正規化**（P0-Nit）、**去重**（file + issue key，±5 行容差），並**標記來源**（`codex` | `toolkit` | `both`）。
+
+Gate：`✅ Ready` 或 `⛔ Blocked` — fail-closed（未完成 gate = blocked）。
+
+## 適用場景
+
+| 適合 | 不太適合 |
+|------|----------|
+| 使用 Claude Code 的個人或小團隊專案 | 完全不使用 Claude Code 的團隊 |
+| 需要自動化 review 關卡的專案 | 沒有 CI 的一次性腳本 |
+| Codex CLI / Cursor / Windsurf 使用者（skills 子集） | 需要自訂 LLM provider 的專案 |
+| 品質關卡可防止 regression 的 repo | 沒有測試基礎建設的 repo |
 
 ## 安裝
-
-### Claude Code（完整體驗）
-
-```bash
-# 新增 marketplace
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# 安裝 plugin
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / 其他 AI Agent
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用，供 `/codex-*` 指令使用）
 
-## 快速開始
-
-```bash
-/project-setup
-```
-
-一個指令完成所有設定：
-
-- 偵測 framework、package manager、資料庫、entry point 和 script 指令
-- 設定 `.claude/CLAUDE.md` 的專案參數
-- 安裝 11 條 rules 到 `.claude/rules/`（auto-loop、security、testing 等）
-- 安裝 4 個 hooks 到 `.claude/hooks/` 並 merge 至 `settings.json`
-
-使用 `--lite` 僅設定 CLAUDE.md（跳過 rules/hooks）。
-
 ## Workflow Tracks
+
+| Workflow | 指令 | Gate | 執行層 |
+|----------|------|------|--------|
+| 功能開發 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 行為層 |
+| Bug 修正 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 行為層 |
+| Auto-Loop | Code 編輯 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| 文件 Review | `.md` 編輯 → `/codex-review-doc` | ✅/⛔ | Hook |
+| 規劃 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| 上手流程 | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>視覺化：工作流程圖</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| Workflow | 指令 | Gate | 執行層 |
-|----------|------|------|--------|
-| 功能開發 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 行為層 |
-| Bug 修正 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 行為層 |
-| Auto-Loop | Code 編輯 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| 文件 Review | `.md` 編輯 → `/codex-review-doc` | ✅/⛔ | Hook |
-| 規劃 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| 上手流程 | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## 包含內容
 
@@ -156,7 +188,7 @@ flowchart TD
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 極小的 Context 佔用
 
@@ -172,6 +204,27 @@ flowchart TD
 Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ## 指令參考
+
+| 指令 | 說明 |
+|------|------|
+| `/project-setup` | 自動偵測並設定專案 |
+| `/feature-dev` | 功能開發流程 |
+| `/bug-fix` | Bug/Issue 修正 workflow |
+| `/codex-review-fast` | 快速 review（僅 diff） |
+| `/codex-review-doc` | 文件 review |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test（跳過 build） |
+| `/verify` | 完整驗證鏈 |
+| `/smart-commit` | 智慧批次 commit |
+| `/push-ci` | 推送 + CI 監控 |
+| `/create-pr` | 建立 GitHub PR |
+| `/codex-brainstorm` | 對抗式 brainstorming（Nash 均衡） |
+| `/tech-spec` | 產生 tech spec |
+| `/pr-review` | PR self-review |
+| `/codex-security` | OWASP Top 10 audit |
+
+<details>
+<summary>全部 65 個指令</summary>
 
 ### 開發
 
@@ -262,6 +315,8 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/op-session` | 初始化 1Password CLI session（避免重複生物辨識提示） |
 | `/obsidian-cli` | Obsidian vault 整合（透過官方 CLI） |
 | `/zh-tw` | 以繁體中文改寫 |
+
+</details>
 
 ## Rules
 

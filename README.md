@@ -4,9 +4,26 @@
 
 **The autonomous development workflow engine for [Claude Code](https://claude.com/claude-code).**
 
-Edit code → auto-review → auto-fix → gate-pass → ship. No manual steps.
+- **Zero manual gates** — edit code, auto-review, auto-fix, ship
+- **Dual-reviewer architecture** — Codex MCP + secondary reviewer in parallel, fail-closed
+- **~4% context footprint** — 96% of Claude's 200k window stays for your code
 
-65 commands | 49 skills | 14 agents | ~4% context footprint
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## Quick Start
+
+```bash
+# Install plugin
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# Configure your project
+/project-setup
+```
+
+One command auto-detects framework, package manager, database, entrypoints, and scripts. Installs 11 rules + 5 hooks.
+
+Use `--lite` to only configure CLAUDE.md (skip rules/hooks).
 
 ## How It Works
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-The **auto-loop engine** enforces quality gates automatically — after any code edit, Claude triggers review in the same reply. Hooks block incomplete reviews before stopping (strict mode by default after `/project-setup`; plugin runtime defaults to warn).
+The **auto-loop engine** enforces quality gates automatically — after any code edit, Claude triggers **dual review** (Codex MCP + secondary reviewer in parallel) in the same reply. Findings are deduplicated, severity-normalized, and aggregated into a single gate. Hooks enforce fail-closed semantics: if the aggregate gate is incomplete, stop-guard blocks.
+
+<details>
+<summary>Detailed: Dual-Review Sequence Diagram</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## Feature Spotlight: Dual-Reviewer Architecture
+
+v2.0 dispatches two independent reviewers in parallel — zero single-point-of-failure:
+
+| Reviewer | Role | Fallback |
+|----------|------|----------|
+| Codex MCP | Primary (sandbox, full diff) | Always available |
+| Secondary (pr-review-toolkit) | Confidence-scored review | strict-reviewer → single mode |
+
+Findings are **severity-normalized** (P0-Nit), **deduplicated** (file + issue key, ±5 line tolerance), and **source-attributed** (`codex` | `toolkit` | `both`).
+
+Gate: `✅ Ready` or `⛔ Blocked` — fail-closed (incomplete gate = blocked).
+
+## When to Use
+
+| Good Fit | Not Ideal |
+|----------|-----------|
+| Solo or small-team projects with Claude Code | Teams not using Claude Code |
+| Projects needing automated review gates | One-off scripts with no CI |
+| Codex CLI / Cursor / Windsurf users (skills subset) | Projects requiring custom LLM providers |
+| Repos where quality gates prevent regressions | Repos with no test infrastructure |
 
 ## Install
-
-### Claude Code (Full Experience)
-
-```bash
-# Add marketplace
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# Install plugin
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / Other AI Agents
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional, for `/codex-*` commands)
 
-## Quick Start
-
-```bash
-/project-setup
-```
-
-One command does it all:
-
-- Detects framework, package manager, database, entrypoints, and scripts
-- Configures `.claude/CLAUDE.md` with your project settings
-- Installs 11 rules to `.claude/rules/` (auto-loop, security, testing, etc.)
-- Installs 4 hooks to `.claude/hooks/` + merges into `settings.json`
-
-Use `--lite` to only configure CLAUDE.md (skip rules/hooks).
-
 ## Workflow Tracks
+
+| Workflow | Commands | Gate | Enforced By |
+|----------|----------|------|-------------|
+| Feature | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Behavior |
+| Bug Fix | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Behavior |
+| Auto-Loop | Code edit → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| Doc Review | `.md` edit → `/codex-review-doc` | ✅/⛔ | Hook |
+| Planning | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| Onboarding | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>Visual: Workflow Flowcharts</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| Workflow | Commands | Gate | Enforced By |
-|----------|----------|------|-------------|
-| Feature | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Behavior |
-| Bug Fix | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Behavior |
-| Auto-Loop | Code edit → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| Doc Review | `.md` edit → `/codex-review-doc` | ✅/⛔ | Hook |
-| Planning | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| Onboarding | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## What's Included
 
@@ -156,7 +188,7 @@ flowchart TD
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### Minimal Context Footprint
 
@@ -172,6 +204,27 @@ flowchart TD
 Skills load on-demand. Idle skills cost zero tokens.
 
 ## Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `/project-setup` | Auto-detect and configure project |
+| `/feature-dev` | Feature development workflow |
+| `/bug-fix` | Bug/Issue fix workflow |
+| `/codex-review-fast` | Quick review (diff only) |
+| `/codex-review-doc` | Document review |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test (no build) |
+| `/verify` | Full verification chain |
+| `/smart-commit` | Smart batch commit |
+| `/push-ci` | Push + CI monitor |
+| `/create-pr` | Create GitHub PR |
+| `/codex-brainstorm` | Adversarial brainstorm (Nash equilibrium) |
+| `/tech-spec` | Generate tech spec |
+| `/pr-review` | PR self-review |
+| `/codex-security` | OWASP Top 10 audit |
+
+<details>
+<summary>All 65 commands</summary>
 
 ### Development
 
@@ -262,6 +315,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/op-session` | Initialize 1Password CLI session (avoids repeated biometric prompts) |
 | `/obsidian-cli` | Obsidian vault integration via official CLI |
 | `/zh-tw` | Rewrite in Traditional Chinese |
+
+</details>
 
 ## Rules
 

@@ -4,9 +4,26 @@
 
 **[Claude Code](https://claude.com/claude-code) 的自主开发工作流引擎。**
 
-编辑代码 → 自动审查 → 自动修复 → 质量关卡通过 → 交付。无需手动步骤。
+- **零手动关卡** — 编辑代码、自动审查、自动修复、交付
+- **双 Reviewer 架构** — Codex MCP + 次要 reviewer 并行审查，fail-closed
+- **~4% context 占用** — Claude 200k window 的 96% 留给你的代码
 
-65 commands | 49 skills | 14 agents | ~4% context 占用
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## 快速开始
+
+```bash
+# 安装插件
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# 配置项目
+/project-setup
+```
+
+一个命令自动检测框架、包管理器、数据库、入口文件和脚本命令。安装 11 条 rules + 5 个 hooks。
+
+使用 `--lite` 仅配置 CLAUDE.md（跳过 rules/hooks）。
 
 ## 工作原理
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 引擎**自动执行质量关卡——任何代码编辑后，Claude 会在同一回复中自动触发审查。Hooks 在审查未完成时阻止停止（`/project-setup` 后默认 strict；plugin runtime 默认 warn）。
+**Auto-Loop 引擎**自动执行质量关卡——任何代码编辑后，Claude 会在同一回复中触发**双 Reviewer 并行审查**（Codex MCP + 次要 reviewer 同步进行）。Findings 会去重、severity 正规化，并汇整为单一 gate。Hooks 强制 fail-closed 语义：汇整 gate 未完成时，stop-guard 会阻止停止。
+
+<details>
+<summary>详细：双 Reviewer 时序图</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## 功能亮点：双 Reviewer 架构
+
+v2.0 并行分派两个独立 reviewer — 零单点故障：
+
+| Reviewer | 角色 | 降级策略 |
+|----------|------|----------|
+| Codex MCP | 主要（sandbox，完整 diff） | 始终可用 |
+| 次要（pr-review-toolkit） | 置信度评分制审查 | strict-reviewer → 单 reviewer 模式 |
+
+Findings 会**严重度正规化**（P0-Nit）、**去重**（file + issue key，±5 行容差），并**标记来源**（`codex` | `toolkit` | `both`）。
+
+Gate：`✅ Ready` 或 `⛔ Blocked` — fail-closed（未完成 gate = blocked）。
+
+## 适用场景
+
+| 适合 | 不太适合 |
+|------|----------|
+| 使用 Claude Code 的个人或小团队项目 | 完全不使用 Claude Code 的团队 |
+| 需要自动化审查关卡的项目 | 没有 CI 的一次性脚本 |
+| Codex CLI / Cursor / Windsurf 用户（skills 子集） | 需要自定义 LLM provider 的项目 |
+| 质量关卡可防止 regression 的仓库 | 没有测试基础设施的仓库 |
 
 ## 安装
-
-### Claude Code（完整体验）
-
-```bash
-# 添加 marketplace
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# 安装插件
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / 其他 AI Agent
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（可选，用于 `/codex-*` 命令）
 
-## 快速开始
-
-```bash
-/project-setup
-```
-
-一个命令完成所有配置：
-
-- 检测框架、包管理器、数据库、入口文件和脚本命令
-- 配置 `.claude/CLAUDE.md` 的项目参数
-- 安装 11 条 rules 到 `.claude/rules/`（auto-loop、security、testing 等）
-- 安装 4 个 hooks 到 `.claude/hooks/` 并 merge 至 `settings.json`
-
-使用 `--lite` 仅配置 CLAUDE.md（跳过 rules/hooks）。
-
 ## 工作流路径
+
+| 工作流 | 命令 | Gate | 执行层 |
+|--------|------|------|--------|
+| 功能开发 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 行为层 |
+| 缺陷修复 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 行为层 |
+| Auto-Loop | 代码编辑 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| 文档审查 | `.md` 编辑 → `/codex-review-doc` | ✅/⛔ | Hook |
+| 规划 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| 入门引导 | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>可视化：工作流程图</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| 工作流 | 命令 | Gate | 执行层 |
-|--------|------|------|--------|
-| 功能开发 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 行为层 |
-| 缺陷修复 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 行为层 |
-| Auto-Loop | 代码编辑 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| 文档审查 | `.md` 编辑 → `/codex-review-doc` | ✅/⛔ | Hook |
-| 规划 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| 入门引导 | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## 包含内容
 
@@ -156,7 +188,7 @@ flowchart TD
 | 代理 | 14 | strict-reviewer, verify-app, coverage-analyst |
 | 钩子 | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | 规则 | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| 脚本 | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| 脚本 | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 极小的 Context 占用
 
@@ -172,6 +204,27 @@ flowchart TD
 Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ## 命令参考
+
+| 命令 | 说明 |
+|------|------|
+| `/project-setup` | 自动检测并配置项目 |
+| `/feature-dev` | 功能开发流程 |
+| `/bug-fix` | 缺陷修复工作流 |
+| `/codex-review-fast` | 快速审查（仅 diff） |
+| `/codex-review-doc` | 文档审查 |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test（跳过 build） |
+| `/verify` | 完整验证链 |
+| `/smart-commit` | 智能批量 commit |
+| `/push-ci` | 推送 + CI 监控 |
+| `/create-pr` | 创建 GitHub PR |
+| `/codex-brainstorm` | 对抗式头脑风暴（纳什均衡） |
+| `/tech-spec` | 生成技术规格书 |
+| `/pr-review` | PR 自查 |
+| `/codex-security` | OWASP Top 10 审计 |
+
+<details>
+<summary>全部 65 个命令</summary>
 
 ### 开发
 
@@ -262,6 +315,8 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/op-session` | 初始化 1Password CLI session（避免重复生物识别提示） |
 | `/obsidian-cli` | Obsidian vault 集成（通过官方 CLI） |
 | `/zh-tw` | 改写为繁体中文 |
+
+</details>
 
 ## 规则
 

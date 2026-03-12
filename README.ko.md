@@ -4,9 +4,26 @@
 
 **[Claude Code](https://claude.com/claude-code)용 자율 개발 워크플로 엔진.**
 
-코드 편집 → 자동 리뷰 → 자동 수정 → Gate 통과 → 배포. 수동 작업이 필요 없습니다.
+- **수동 게이트 제로** — 코드 편집, 자동 리뷰, 자동 수정, 배포
+- **듀얼 리뷰어 아키텍처** — Codex MCP + 보조 리뷰어 병렬 실행, fail-closed
+- **~4% 컨텍스트 사용량** — Claude 200k 윈도우의 96%를 코드에 활용
 
-65 commands | 49 skills | 14 agents | ~4% context 사용량
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## 빠른 시작
+
+```bash
+# 플러그인 설치
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# 프로젝트 설정
+/project-setup
+```
+
+하나의 명령어로 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트를 자동 감지합니다. 11개 Rules + 5개 Hooks를 설치합니다.
+
+`--lite`로 CLAUDE.md만 설정 (Rules/Hooks 스킵).
 
 ## 작동 원리
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드가 편집되면 Claude가 같은 응답 내에서 리뷰를 트리거하며, 리뷰가 완료되지 않으면 Hook이 차단합니다(`/project-setup` 후 기본 strict; plugin runtime은 기본 warn).
+**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드가 편집되면 Claude가 같은 응답 내에서 **듀얼 리뷰**(Codex MCP + 보조 리뷰어 병렬 실행)를 트리거합니다. Findings는 중복 제거, 심각도 정규화 후 단일 gate로 집계됩니다. Hooks는 fail-closed를 강제합니다: 집계 gate가 미완료이면 stop-guard가 차단합니다.
+
+<details>
+<summary>상세: 듀얼 리뷰 시퀀스 다이어그램</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## 기능 하이라이트: 듀얼 리뷰어 아키텍처
+
+v2.0은 두 개의 독립적인 리뷰어를 병렬로 디스패치합니다 — 단일 장애점 제로:
+
+| 리뷰어 | 역할 | 폴백 |
+|--------|------|------|
+| Codex MCP | 프라이머리 (sandbox, 전체 diff) | 항상 사용 가능 |
+| 보조 (pr-review-toolkit) | 신뢰도 스코어링 리뷰 | strict-reviewer → 싱글 모드 |
+
+Findings는 **심각도 정규화** (P0-Nit), **중복 제거** (파일 + 이슈 키, ±5줄 허용), **소스 귀속** (`codex` | `toolkit` | `both`)됩니다.
+
+Gate: `✅ Ready` 또는 `⛔ Blocked` — fail-closed (미완료 gate = blocked).
+
+## 사용 시나리오
+
+| 적합 | 부적합 |
+|------|--------|
+| Claude Code를 사용하는 개인/소규모 팀 프로젝트 | Claude Code를 전혀 사용하지 않는 팀 |
+| 자동화된 리뷰 게이트가 필요한 프로젝트 | CI가 없는 일회성 스크립트 |
+| Codex CLI / Cursor / Windsurf 사용자 (skills 서브셋) | 커스텀 LLM 프로바이더가 필요한 프로젝트 |
+| 품질 게이트로 리그레션을 방지하는 리포지토리 | 테스트 인프라가 없는 리포지토리 |
 
 ## 설치
-
-### Claude Code (전체 경험)
-
-```bash
-# marketplace 추가
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# 플러그인 설치
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / 기타 AI 에이전트
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (선택 사항, `/codex-*` 명령어용)
 
-## 빠른 시작
-
-```bash
-/project-setup
-```
-
-하나의 명령어로 모든 설정 완료:
-
-- 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트 감지
-- `.claude/CLAUDE.md`에 프로젝트 설정 구성
-- 11개 Rules를 `.claude/rules/`에 설치 (auto-loop, security, testing 등)
-- 4개 Hooks를 `.claude/hooks/`에 설치 및 `settings.json`에 병합
-
-`--lite`로 CLAUDE.md만 설정 (Rules/Hooks 스킵).
-
 ## 워크플로 트랙
+
+| 워크플로 | 명령어 | Gate | 적용 방식 |
+|----------|--------|------|-----------|
+| 기능 개발 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Behavior |
+| 버그 수정 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Behavior |
+| Auto-Loop | 코드 편집 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| 문서 리뷰 | `.md` 편집 → `/codex-review-doc` | ✅/⛔ | Hook |
+| 기획 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| 온보딩 | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>시각화: 워크플로 플로차트</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| 워크플로 | 명령어 | Gate | 적용 방식 |
-|----------|--------|------|-----------|
-| 기능 개발 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Behavior |
-| 버그 수정 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Behavior |
-| Auto-Loop | 코드 편집 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| 문서 리뷰 | `.md` 편집 → `/codex-review-doc` | ✅/⛔ | Hook |
-| 기획 | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| 온보딩 | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## 포함 내용
 
@@ -156,7 +188,7 @@ flowchart TD
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 최소한의 Context 사용량
 
@@ -172,6 +204,27 @@ Claude의 200k context window 중 ~4%만 사용합니다. 나머지 96%는 코�
 Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비하지 않습니다.
 
 ## 명령어 레퍼런스
+
+| 명령어 | 설명 |
+|--------|------|
+| `/project-setup` | 프로젝트 자동 감지 및 설정 |
+| `/feature-dev` | 기능 개발 워크플로 |
+| `/bug-fix` | Bug/Issue 수정 워크플로 |
+| `/codex-review-fast` | 빠른 리뷰 (diff만) |
+| `/codex-review-doc` | 문서 리뷰 |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test (빌드 없음) |
+| `/verify` | 전체 검증 체인 |
+| `/smart-commit` | 스마트 배치 커밋 |
+| `/push-ci` | 푸시 + CI 모니터링 |
+| `/create-pr` | GitHub PR 생성 |
+| `/codex-brainstorm` | 대립형 브레인스토밍 (내시 균형) |
+| `/tech-spec` | 기술 스펙 작성 |
+| `/pr-review` | PR 셀프 리뷰 |
+| `/codex-security` | OWASP Top 10 감사 |
+
+<details>
+<summary>전체 65개 명령어</summary>
 
 ### 개발
 
@@ -262,6 +315,8 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/op-session` | 1Password CLI 세션 초기화 (반복 생체 인증 방지) |
 | `/obsidian-cli` | Obsidian vault 연동 (공식 CLI 경유) |
 | `/zh-tw` | 번체 중국어로 변환 |
+
+</details>
 
 ## Rules
 

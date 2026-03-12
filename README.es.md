@@ -4,9 +4,26 @@
 
 **El motor de workflow de desarrollo autónomo para [Claude Code](https://claude.com/claude-code).**
 
-Editar código → auto-review → auto-fix → gate-pass → entregar. Sin pasos manuales.
+- **Cero gates manuales** — editar código, auto-review, auto-fix, entregar
+- **Arquitectura dual-reviewer** — Codex MCP + reviewer secundario en paralelo, fail-closed
+- **~4% de context footprint** — el 96% de la ventana de 200k de Claude queda para tu código
 
-65 commands | 49 skills | 14 agents | ~4% de context footprint
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## Inicio rápido
+
+```bash
+# Instalar plugin
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# Configurar tu proyecto
+/project-setup
+```
+
+Un solo comando autodetecta framework, package manager, base de datos, entry points y scripts. Instala 11 rules + 5 hooks.
+
+Usa `--lite` para solo configurar CLAUDE.md (sin rules/hooks).
 
 ## Cómo funciona
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-El **motor auto-loop** aplica quality gates automáticamente — tras cualquier edición de código, Claude dispara la revisión en la misma respuesta. Los hooks bloquean revisiones incompletas antes de detenerse (strict por defecto tras `/project-setup`; plugin runtime usa warn por defecto).
+El **motor auto-loop** aplica quality gates automáticamente — tras cualquier edición de código, Claude dispara **dual review** (Codex MCP + reviewer secundario en paralelo) en la misma respuesta. Los hallazgos se deduplican, normalizan por severidad y agregan en un único gate. Los hooks aplican semántica fail-closed: si el gate agregado está incompleto, stop-guard bloquea.
+
+<details>
+<summary>Detalle: Diagrama de secuencia del dual-review</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## Funcionalidad destacada: Arquitectura Dual-Reviewer
+
+v2.0 despacha dos reviewers independientes en paralelo — cero punto único de fallo:
+
+| Reviewer | Rol | Fallback |
+|----------|-----|----------|
+| Codex MCP | Primario (sandbox, diff completo) | Siempre disponible |
+| Secundario (pr-review-toolkit) | Review con puntuación de confianza | strict-reviewer → modo single |
+
+Los hallazgos se **normalizan por severidad** (P0-Nit), **deduplican** (archivo + clave de issue, tolerancia ±5 líneas) y se **atribuyen por fuente** (`codex` | `toolkit` | `both`).
+
+Gate: `✅ Ready` o `⛔ Blocked` — fail-closed (gate incompleto = bloqueado).
+
+## Cuándo usar
+
+| Buen ajuste | No ideal |
+|-------------|----------|
+| Proyectos individuales o de equipos pequeños con Claude Code | Equipos que no usan Claude Code |
+| Proyectos que necesitan gates de review automatizados | Scripts únicos sin CI |
+| Usuarios de Codex CLI / Cursor / Windsurf (subconjunto de skills) | Proyectos que requieren proveedores de LLM personalizados |
+| Repos donde los quality gates previenen regresiones | Repos sin infraestructura de testing |
 
 ## Instalación
-
-### Claude Code (Experiencia Completa)
-
-```bash
-# Agregar marketplace
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# Instalar plugin
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / Otros Agentes de IA
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional, para comandos `/codex-*`)
 
-## Inicio rápido
-
-```bash
-/project-setup
-```
-
-Un solo comando lo hace todo:
-
-- Detecta framework, package manager, base de datos, entry points y scripts
-- Configura `.claude/CLAUDE.md` con los parámetros del proyecto
-- Instala 11 rules en `.claude/rules/` (auto-loop, security, testing, etc.)
-- Instala 4 hooks en `.claude/hooks/` y los integra en `settings.json`
-
-Usa `--lite` para solo configurar CLAUDE.md (sin rules/hooks).
-
 ## Tracks de workflow
+
+| Workflow | Comandos | Gate | Aplicado por |
+|----------|----------|------|--------------|
+| Funcionalidad | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Comportamiento |
+| Bug Fix | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Comportamiento |
+| Auto-Loop | Edición de código → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| Doc Review | Edición `.md` → `/codex-review-doc` | ✅/⛔ | Hook |
+| Planificación | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| Onboarding | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>Visual: Diagramas de flujo de workflows</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| Workflow | Comandos | Gate | Aplicado por |
-|----------|----------|------|--------------|
-| Funcionalidad | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + Comportamiento |
-| Bug Fix | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + Comportamiento |
-| Auto-Loop | Edición de código → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| Doc Review | Edición `.md` → `/codex-review-doc` | ✅/⛔ | Hook |
-| Planificación | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| Onboarding | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## Contenido
 
@@ -156,7 +188,7 @@ flowchart TD
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### Mínimo consumo de context
 
@@ -172,6 +204,27 @@ flowchart TD
 Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ## Referencia de comandos
+
+| Comando | Descripción |
+|---------|-------------|
+| `/project-setup` | Autodetección y configuración del proyecto |
+| `/feature-dev` | Workflow de desarrollo de funcionalidades |
+| `/bug-fix` | Workflow de corrección de bugs |
+| `/codex-review-fast` | Review rápido (solo diff) |
+| `/codex-review-doc` | Review de documentación |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test (sin build) |
+| `/verify` | Cadena de verificación completa |
+| `/smart-commit` | Commit inteligente por lotes |
+| `/push-ci` | Push + monitoreo de CI |
+| `/create-pr` | Crear GitHub PR |
+| `/codex-brainstorm` | Brainstorming adversarial (equilibrio de Nash) |
+| `/tech-spec` | Generar tech spec |
+| `/pr-review` | Self-review de PR |
+| `/codex-security` | Auditoría OWASP Top 10 |
+
+<details>
+<summary>Los 65 comandos</summary>
 
 ### Desarrollo
 
@@ -262,6 +315,8 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/op-session` | Inicializar sesión de 1Password CLI (evita solicitudes biométricas repetidas) |
 | `/obsidian-cli` | Integración con vault de Obsidian vía CLI oficial |
 | `/zh-tw` | Reescribir en chino tradicional |
+
+</details>
 
 ## Rules
 

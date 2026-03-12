@@ -4,9 +4,26 @@
 
 **[Claude Code](https://claude.com/claude-code) 向け自律型開発ワークフローエンジン。**
 
-コード編集 → 自動レビュー → 自動修正 → ゲート通過 → 出荷。手動操作は不要です。
+- **手動ゲートゼロ** — コード編集、自動レビュー、自動修正、出荷
+- **デュアルレビューアーキテクチャ** — Codex MCP + セカンダリレビューアーを並列実行、fail-closed
+- **~4% のコンテキスト使用量** — Claude の 200k ウィンドウの 96% はコードに使えます
 
-65 commands | 49 skills | 14 agents | ~4% context footprint
+65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+
+## クイックスタート
+
+```bash
+# プラグインをインストール
+/plugin marketplace add sd0xdev/sd0x-dev-flow
+/plugin install sd0x-dev-flow@sd0xdev-marketplace
+
+# プロジェクトを設定
+/project-setup
+```
+
+1つのコマンドでフレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを自動検出します。11個のルール + 5個のフックをインストールします。
+
+`--lite` で CLAUDE.md のみ設定（ルール/フックをスキップ）。
 
 ## 仕組み
 
@@ -22,19 +39,31 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、Claude は同じ返答内でレビューを開始し、レビュー未完了時に Hook がブロックします（`/project-setup` 後はデフォルト strict、plugin runtime はデフォルト warn）。
+**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、Claude は同じ返答内で**デュアルレビュー**（Codex MCP + セカンダリレビューアーを並列実行）をトリガーします。Findings は重複排除・重要度正規化後、単一ゲートに集約されます。Hooks は fail-closed を強制：集約ゲートが未完了なら stop-guard がブロックします。
+
+<details>
+<summary>詳細：デュアルレビュー シーケンス図</summary>
 
 ```mermaid
 sequenceDiagram
     participant D as Developer
     participant C as Claude
     participant X as Codex MCP
+    participant T as Secondary Reviewer
     participant H as Hooks
 
     D->>C: Edit code
     H->>H: Track file change
-    C->>X: /codex-review-fast (auto)
-    X-->>C: P0/P1 findings
+    C->>H: emit-review-gate PENDING
+    par Dual Review
+        C->>X: Codex review (sandbox)
+    and
+        C->>T: Task(code-reviewer)
+    end
+    X-->>C: Findings (primary)
+    T-->>C: Findings (secondary)
+    C->>C: Aggregate + dedup + gate
+    C->>H: emit-review-gate READY/BLOCKED
 
     alt Issues found
         C->>C: Fix all issues
@@ -42,24 +71,37 @@ sequenceDiagram
         X-->>C: Re-verify
     end
 
-    X-->>C: ✅ Ready
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: stop-guard warns until<br/>review + precommit pass
+    Note over H: Fail-closed: incomplete gate → blocked
 ```
+
+</details>
+
+## 機能スポットライト：デュアルレビューアーキテクチャ
+
+v2.0 では2つの独立したレビューアーを並列でディスパッチします — 単一障害点ゼロ：
+
+| レビューアー | 役割 | フォールバック |
+|-------------|------|---------------|
+| Codex MCP | プライマリ（sandbox、完全 diff） | 常時利用可能 |
+| セカンダリ（pr-review-toolkit） | 信頼度スコアリングレビュー | strict-reviewer → シングルモード |
+
+Findings は**重要度正規化**（P0-Nit）、**重複排除**（ファイル + issue キー、±5 行許容）、**ソース帰属**（`codex` | `toolkit` | `both`）されます。
+
+ゲート：`✅ Ready` または `⛔ Blocked` — fail-closed（未完了ゲート = ブロック）。
+
+## 使用に適したケース
+
+| 適している | 不向き |
+|-----------|--------|
+| Claude Code を使う個人・小規模チームのプロジェクト | Claude Code を全く使わないチーム |
+| 自動レビューゲートが必要なプロジェクト | CI のないワンオフスクリプト |
+| Codex CLI / Cursor / Windsurf ユーザー（skills サブセット） | カスタム LLM プロバイダーが必要なプロジェクト |
+| 品質ゲートでリグレッションを防ぐリポジトリ | テストインフラがないリポジトリ |
 
 ## インストール
-
-### Claude Code（フル体験）
-
-```bash
-# marketplace を追加
-/plugin marketplace add sd0xdev/sd0x-dev-flow
-
-# プラグインをインストール
-/plugin install sd0x-dev-flow@sd0xdev-marketplace
-```
 
 ### Codex CLI / その他の AI エージェント
 
@@ -79,22 +121,19 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション、`/codex-*` コマンド用）
 
-## クイックスタート
-
-```bash
-/project-setup
-```
-
-1つのコマンドですべて完了：
-
-- フレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを検出
-- `.claude/CLAUDE.md` をプロジェクト設定で構成
-- 11個のルールを `.claude/rules/` にインストール（auto-loop、security、testing など）
-- 4個のフックを `.claude/hooks/` にインストールし、`settings.json` にマージ
-
-`--lite` で CLAUDE.md のみ設定（ルール/フックをスキップ）。
-
 ## ワークフロートラック
+
+| ワークフロー | コマンド | ゲート | 実行レイヤー |
+|-------------|----------|------|-------------|
+| 機能開発 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 動作レイヤー |
+| バグ修正 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 動作レイヤー |
+| Auto-Loop | コード編集 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
+| ドキュメントレビュー | `.md` 編集 → `/codex-review-doc` | ✅/⛔ | Hook |
+| プランニング | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
+| オンボーディング | `/project-setup` → `/repo-intake` | — | — |
+
+<details>
+<summary>ビジュアル：ワークフロー フローチャート</summary>
 
 ```mermaid
 flowchart TD
@@ -138,14 +177,7 @@ flowchart TD
     end
 ```
 
-| ワークフロー | コマンド | ゲート | 実行レイヤー |
-|-------------|----------|------|-------------|
-| 機能開発 | `/feature-dev` → `/verify` → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook + 動作レイヤー |
-| バグ修正 | `/issue-analyze` → `/bug-fix` → `/verify` → `/precommit` | ✅/⛔ | Hook + 動作レイヤー |
-| Auto-Loop | コード編集 → `/codex-review-fast` → `/precommit` | ✅/⛔ | Hook |
-| ドキュメントレビュー | `.md` 編集 → `/codex-review-doc` | ✅/⛔ | Hook |
-| プランニング | `/codex-brainstorm` → `/feasibility-study` → `/tech-spec` | — | — |
-| オンボーディング | `/project-setup` → `/repo-intake` | — | — |
+</details>
 
 ## 同梱内容
 
@@ -156,7 +188,7 @@ flowchart TD
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
 | フック | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
 | ルール | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
-| スクリプト | 8 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, codex kernel generator |
+| スクリプト | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 極小の Context 使用量
 
@@ -172,6 +204,27 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 スキルはオンデマンドで読み込まれます。未使用のスキルはトークンを消費しません。
 
 ## コマンドリファレンス
+
+| コマンド | 説明 |
+|----------|------|
+| `/project-setup` | プロジェクトの自動検出・設定 |
+| `/feature-dev` | 機能開発ワークフロー |
+| `/bug-fix` | バグ/Issue 修正ワークフロー |
+| `/codex-review-fast` | クイックレビュー（diff のみ） |
+| `/codex-review-doc` | ドキュメントレビュー |
+| `/precommit` | lint:fix → build → test |
+| `/precommit-fast` | lint:fix → test（build なし） |
+| `/verify` | フル検証チェーン |
+| `/smart-commit` | スマートバッチコミット |
+| `/push-ci` | プッシュ + CI モニタリング |
+| `/create-pr` | GitHub PR を作成 |
+| `/codex-brainstorm` | 対立型ブレスト（ナッシュ均衡まで議論） |
+| `/tech-spec` | 技術仕様書の作成 |
+| `/pr-review` | PR セルフレビュー |
+| `/codex-security` | OWASP Top 10 監査 |
+
+<details>
+<summary>全 65 コマンド</summary>
 
 ### 開発
 
@@ -262,6 +315,8 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/op-session` | 1Password CLI セッションの初期化（繰り返しの生体認証を回避） |
 | `/obsidian-cli` | Obsidian vault 連携（公式 CLI 経由） |
 | `/zh-tw` | 繁体字中国語に書き換え |
+
+</details>
 
 ## ルール
 
