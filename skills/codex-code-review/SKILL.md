@@ -91,6 +91,7 @@ Launch **two reviewers in parallel** (single message, multiple tool calls):
    **Selection**: Try priority 1 first. If Task fails or times out (30s), try priority 2. If both unavailable, fall back to Codex-only (degraded mode — proceed with Codex results only, apply degradation matrix from `references/review-common.md`).
 
    **Task prompt** (provide changed file list + diff stats, request P0/P1/P2/Nit findings in standard output format):
+
    ```
    Review the code changes for correctness, security, performance, and maintainability issues.
 
@@ -134,6 +135,7 @@ Both reviewers run in parallel. Wait for both results. Apply degradation matrix 
 5. **Gate decision**: any P0/P1 → BLOCKED; else → READY
 
 Output format includes source tag:
+
 ```
 - [P0] file:line issue → fix [source: both]
 - [P1] file:line issue → fix [source: codex]
