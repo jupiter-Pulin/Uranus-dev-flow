@@ -2,6 +2,7 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   mkdtempSync,
+  mkdirSync,
   writeFileSync,
   chmodSync,
   rmSync,
@@ -39,9 +40,11 @@ const args = process.argv.slice(2);
 let query;
 let file;
 const vars = {};
+let hasExitFlag = false;
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === '-r') continue;
+  if (arg === '-e') { hasExitFlag = true; continue; }
   if (arg === '--arg') {
     vars[args[i + 1]] = args[i + 2];
     i += 2;
@@ -98,6 +101,29 @@ if (query && query.includes('aggregate_gate.executed = false') && query.includes
   }
   process.stdout.write(JSON.stringify(data));
   process.exit(0);
+}
+
+// Handle contains query (arbitration guard)
+if (query && query.includes('contains(')) {
+  const m = query.match(/contains\\("([^"]+)"\\)/);
+  if (m) {
+    const needle = m[1];
+    function findStrings(obj) {
+      if (typeof obj === 'string') return [obj];
+      if (Array.isArray(obj)) return obj.flatMap(findStrings);
+      if (obj && typeof obj === 'object') return Object.values(obj).flatMap(findStrings);
+      return [];
+    }
+    const allStrings = findStrings(data);
+    const matched = allStrings.filter(s => s.includes(needle));
+    if (matched.length > 0) {
+      process.stdout.write(matched.map(s => JSON.stringify(s)).join('\\n'));
+      process.exit(0);
+    }
+    if (hasExitFlag) process.exit(1);
+    process.stdout.write('null');
+    process.exit(0);
+  }
 }
 
 process.stdout.write('');
@@ -599,4 +625,131 @@ test('doc edit does NOT invalidate code_review', () => {
   const state = readState(workDir);
   assert.ok(state);
   assert.equal(state.code_review.passed, true, 'code_review.passed should NOT be affected by doc edit');
+});
+
+// =============================================================================
+// Arbitration guard (plugin-defers-to-local)
+// =============================================================================
+
+function setupLocalHook(dir, scriptName) {
+  const hooksDir = join(dir, '.claude', 'hooks');
+  mkdirSync(hooksDir, { recursive: true });
+  writeExecutable(join(hooksDir, scriptName), '#!/bin/bash\nexit 0');
+}
+
+function writeSettingsWithHook(dir, scriptName, fileName) {
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(
+    join(claudeDir, fileName || 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: 'Edit|Write',
+            hooks: [
+              {
+                type: 'command',
+                command: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/${scriptName}`,
+              },
+            ],
+          },
+        ],
+      },
+    })
+  );
+}
+
+test('arbitration: defers when local hook exists and registered in settings', () => {
+  const workDir = makeTempDir('sd0x-format-arb-defer-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'post-edit-format.sh');
+  writeSettingsWithHook(workDir, 'post-edit-format.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { CLAUDE_PROJECT_DIR: workDir, HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0, 'should defer to local hook');
+  // Deferred means no state file created
+  assert.equal(readState(workDir), null, 'should not create state when deferred');
+});
+
+test('arbitration: dev mode bypass when hooks/hooks.json exists', () => {
+  const workDir = makeTempDir('sd0x-format-arb-dev-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'hooks'), { recursive: true });
+  writeFileSync(join(workDir, 'hooks', 'hooks.json'), '{}');
+  setupLocalHook(workDir, 'post-edit-format.sh');
+  writeSettingsWithHook(workDir, 'post-edit-format.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { CLAUDE_PROJECT_DIR: workDir, HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'should run normally and create state in dev mode');
+  assert.equal(state.has_code_change, true);
+});
+
+test('arbitration: no local hook runs normally', () => {
+  const workDir = makeTempDir('sd0x-format-arb-nohook-');
+  const binDir = setupStubBin();
+  writeSettingsWithHook(workDir, 'post-edit-format.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { CLAUDE_PROJECT_DIR: workDir, HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state, 'should run normally when no local hook');
+  assert.equal(state.has_code_change, true);
+});
+
+test('arbitration: CLAUDE_PROJECT_DIR unset runs normally', () => {
+  const workDir = makeTempDir('sd0x-format-arb-noenv-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state, 'should run normally without CLAUDE_PROJECT_DIR');
+  assert.equal(state.has_code_change, true);
+});
+
+test('arbitration: local hook exists but not in settings runs normally', () => {
+  const workDir = makeTempDir('sd0x-format-arb-noreg-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'post-edit-format.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { CLAUDE_PROJECT_DIR: workDir, HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state, 'should run normally when not registered');
+  assert.equal(state.has_code_change, true);
+});
+
+test('arbitration: registered in settings.local.json defers', () => {
+  const workDir = makeTempDir('sd0x-format-arb-local-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'post-edit-format.sh');
+  writeSettingsWithHook(workDir, 'post-edit-format.sh', 'settings.local.json');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/src/app.ts',
+    env: { CLAUDE_PROJECT_DIR: workDir, HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0, 'should defer via settings.local.json');
+  assert.equal(readState(workDir), null, 'should not create state when deferred');
 });

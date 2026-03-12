@@ -2,6 +2,7 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   mkdtempSync,
+  mkdirSync,
   writeFileSync,
   chmodSync,
   rmSync,
@@ -32,9 +33,11 @@ const args = process.argv.slice(2);
 let query;
 let file;
 const vars = {};
+let hasExitFlag = false;
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === '-r') continue;
+  if (arg === '-e') { hasExitFlag = true; continue; }
   if (arg === '--arg') {
     vars[args[i + 1]] = args[i + 2];
     i += 2;
@@ -179,13 +182,43 @@ if (query && query.includes('.has_doc_change')) {
   process.exit(0);
 }
 
+// Handle contains query (arbitration guard): jq -e '.. | strings | select(contains("X"))'
+if (query && query.includes('contains(')) {
+  const m = query.match(/contains\\("([^"]+)"\\)/);
+  if (m) {
+    const needle = m[1];
+    function findStrings(obj) {
+      if (typeof obj === 'string') return [obj];
+      if (Array.isArray(obj)) return obj.flatMap(findStrings);
+      if (obj && typeof obj === 'object') return Object.values(obj).flatMap(findStrings);
+      return [];
+    }
+    const allStrings = findStrings(data);
+    const matched = allStrings.filter(s => s.includes(needle));
+    if (matched.length > 0) {
+      process.stdout.write(matched.map(s => JSON.stringify(s)).join('\\n'));
+      process.exit(0);
+    }
+    if (hasExitFlag) process.exit(1);
+    process.stdout.write('null');
+    process.exit(0);
+  }
+}
+
+// Handle hooks_config.stop_guard_mode (mode resolution)
+if (query && query.includes('hooks_config.stop_guard_mode')) {
+  const val = (data.hooks_config && data.hooks_config.stop_guard_mode) || '';
+  process.stdout.write(val);
+  process.exit(0);
+}
+
 process.stdout.write('');
 `;
   writeExecutable(join(binDir, 'jq'), stubJq);
   return binDir;
 }
 
-function runHook({ cwd, binDir, input, env }) {
+function runHook({ cwd, binDir, input, env = {} }) {
   return spawnSync('bash', [hookPath], {
     cwd,
     input: JSON.stringify(input),
@@ -1127,4 +1160,347 @@ test('backward compat: no review_mode field behaves as single mode', () => {
   assert.equal(result.status, 0, 'no review_mode should behave as single mode');
   const payload = parseJson(result.stdout);
   assert.equal(payload.ok, true);
+});
+
+// =============================================================================
+// Mode resolution priority (env > settings.local > settings > default)
+// =============================================================================
+
+test('mode resolution: env STOP_GUARD_MODE overrides settings', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-env-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  // Create settings.json with warn
+  mkdirSync(join(workDir, '.claude'), { recursive: true });
+  writeFileSync(
+    join(workDir, '.claude', 'settings.json'),
+    JSON.stringify({ hooks_config: { stop_guard_mode: 'warn' } })
+  );
+  // Env overrides to strict
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { STOP_GUARD_MODE: 'strict', CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'env strict should block');
+});
+
+test('mode resolution: settings.local overrides settings.json', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-local-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  mkdirSync(join(workDir, '.claude'), { recursive: true });
+  writeFileSync(
+    join(workDir, '.claude', 'settings.json'),
+    JSON.stringify({ hooks_config: { stop_guard_mode: 'warn' } })
+  );
+  writeFileSync(
+    join(workDir, '.claude', 'settings.local.json'),
+    JSON.stringify({ hooks_config: { stop_guard_mode: 'strict' } })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'settings.local strict should block');
+});
+
+test('mode resolution: settings.json fallback', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-settings-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  mkdirSync(join(workDir, '.claude'), { recursive: true });
+  writeFileSync(
+    join(workDir, '.claude', 'settings.json'),
+    JSON.stringify({ hooks_config: { stop_guard_mode: 'strict' } })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'settings.json strict should block');
+});
+
+test('mode resolution: default warn when no config', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-default-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.equal(result.status, 0, 'default should be warn (allow stop)');
+  const payload = parseJson(result.stdout);
+  assert.ok(payload.ok);
+});
+
+test('mode resolution: invalid value falls back to warn', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-invalid-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  mkdirSync(join(workDir, '.claude'), { recursive: true });
+  writeFileSync(
+    join(workDir, '.claude', 'settings.json'),
+    JSON.stringify({ hooks_config: { stop_guard_mode: 'invalid' } })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 0, 'invalid mode should fallback to warn');
+  assert.match(result.stderr, /Invalid GUARD_MODE/);
+});
+
+// =============================================================================
+// Arbitration guard (plugin-defers-to-local)
+// =============================================================================
+
+function setupLocalHook(dir, scriptName) {
+  const hooksDir = join(dir, '.claude', 'hooks');
+  mkdirSync(hooksDir, { recursive: true });
+  writeExecutable(join(hooksDir, scriptName), '#!/bin/bash\nexit 0');
+}
+
+function writeSettingsWithHook(dir, scriptName, fileName) {
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(
+    join(claudeDir, fileName || 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        Stop: [
+          {
+            matcher: '',
+            hooks: [
+              {
+                type: 'command',
+                command: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/${scriptName}`,
+              },
+            ],
+          },
+        ],
+      },
+    })
+  );
+}
+
+test('arbitration: defers when local hook exists and registered in settings', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-defer-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  setupLocalHook(workDir, 'stop-guard.sh');
+  writeSettingsWithHook(workDir, 'stop-guard.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  // Should exit 0 (defer) without producing stop-guard output
+  assert.equal(result.status, 0, 'should defer to local hook');
+  // Deferred exit produces no JSON output (silent exit 0)
+  assert.ok(
+    !result.stdout.includes('"ok"'),
+    'should not produce stop-guard JSON output'
+  );
+});
+
+test('arbitration: dev mode bypass when hooks/hooks.json exists', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-dev-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  // Create hooks/hooks.json (dev mode marker)
+  mkdirSync(join(workDir, 'hooks'), { recursive: true });
+  writeFileSync(join(workDir, 'hooks', 'hooks.json'), '{}');
+  setupLocalHook(workDir, 'stop-guard.sh');
+  writeSettingsWithHook(workDir, 'stop-guard.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  // Should run normally (not defer) — produces stop-guard output
+  assert.ok(
+    result.stdout.includes('"ok"'),
+    'should run normally in dev mode'
+  );
+});
+
+test('arbitration: no local hook runs normally', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-nohook-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  // Settings exist but no local hook file
+  writeSettingsWithHook(workDir, 'stop-guard.sh');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.ok(
+    result.stdout.includes('"ok"'),
+    'should run normally when no local hook'
+  );
+});
+
+test('arbitration: CLAUDE_PROJECT_DIR unset runs normally', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-noenv-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+  });
+  assert.ok(
+    result.stdout.includes('"ok"'),
+    'should run normally without CLAUDE_PROJECT_DIR'
+  );
+});
+
+test('arbitration: local hook exists but not in settings runs normally', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-noreg-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  setupLocalHook(workDir, 'stop-guard.sh');
+  // No settings file — fail-open
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.ok(
+    result.stdout.includes('"ok"'),
+    'should run normally when not registered in settings'
+  );
+});
+
+test('arbitration: defers via grep fallback when jq unavailable', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-nojq-');
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  setupLocalHook(workDir, 'stop-guard.sh');
+  writeSettingsWithHook(workDir, 'stop-guard.sh');
+  // Run with restricted PATH — no jq available (grep fallback)
+  const noJqBin = makeTempDir('sd0x-stop-guard-nojq-bin-');
+  const result = spawnSync('bash', [hookPath], {
+    cwd: workDir,
+    input: JSON.stringify({ transcript_path: transcriptPath }),
+    encoding: 'utf8',
+    env: {
+      PATH: `${noJqBin}:/usr/bin:/bin`,
+      CLAUDE_PROJECT_DIR: workDir,
+      HOME: process.env.HOME,
+    },
+  });
+  assert.equal(result.status, 0, 'should defer via grep fallback');
+  assert.ok(
+    !result.stdout.includes('"ok"'),
+    'should not produce stop-guard JSON output (deferred)'
+  );
+});
+
+test('arbitration: registered in settings.local.json defers', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-arb-local-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  setupLocalHook(workDir, 'stop-guard.sh');
+  writeSettingsWithHook(workDir, 'stop-guard.sh', 'settings.local.json');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 0, 'should defer via settings.local.json');
+  assert.ok(
+    !result.stdout.includes('"ok"'),
+    'should not produce stop-guard JSON output'
+  );
 });

@@ -2,6 +2,7 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   mkdtempSync,
+  mkdirSync,
   writeFileSync,
   chmodSync,
   rmSync,
@@ -25,28 +26,65 @@ function writeExecutable(filePath, content) {
 }
 
 /**
-* Create a stub jq that extracts .tool_input.file_path from JSON input
+ * Create a stub jq that handles:
+ * 1. -r '.tool_input.file_path // empty' (from stdin)
+ * 2. -e '.. | strings | select(contains("X"))' FILE (arbitration guard)
  */
 function setupStubBin() {
   const binDir = makeTempDir('sd0x-pre-edit-guard-bin-');
   const stubJq = `#!/usr/bin/env node
 const fs = require('fs');
 const args = process.argv.slice(2);
-
-// Read from stdin
+let query;
+let file;
+let hasExitFlag = false;
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '-r') continue;
+  if (arg === '-e') { hasExitFlag = true; continue; }
+  if (!query) { query = arg; continue; }
+  if (!file) { file = arg; continue; }
+}
 let input = '';
 try {
-  input = fs.readFileSync(0, 'utf8');
+  input = file ? fs.readFileSync(file, 'utf8') : fs.readFileSync(0, 'utf8');
 } catch {}
-
 let data = {};
 try {
   data = input ? JSON.parse(input) : {};
 } catch {}
 
-// Extract .tool_input.file_path
-const filePath = data.tool_input?.file_path ?? '';
-process.stdout.write(filePath);
+// Handle .tool_input.file_path
+if (query && query.includes('.tool_input.file_path')) {
+  const val = (data.tool_input && data.tool_input.file_path) || '';
+  process.stdout.write(val);
+  process.exit(0);
+}
+
+// Handle contains query (arbitration guard)
+if (query && query.includes('contains(')) {
+  const m = query.match(/contains\\("([^"]+)"\\)/);
+  if (m) {
+    const needle = m[1];
+    function findStrings(obj) {
+      if (typeof obj === 'string') return [obj];
+      if (Array.isArray(obj)) return obj.flatMap(findStrings);
+      if (obj && typeof obj === 'object') return Object.values(obj).flatMap(findStrings);
+      return [];
+    }
+    const allStrings = findStrings(data);
+    const matched = allStrings.filter(s => s.includes(needle));
+    if (matched.length > 0) {
+      process.stdout.write(matched.map(s => JSON.stringify(s)).join('\\n'));
+      process.exit(0);
+    }
+    if (hasExitFlag) process.exit(1);
+    process.stdout.write('null');
+    process.exit(0);
+  }
+}
+
+process.stdout.write('');
 `;
   writeExecutable(join(binDir, 'jq'), stubJq);
   return binDir;
@@ -235,4 +273,122 @@ test('gracefully allows when jq is not available', () => {
   const result = runHook({ binDir, filePath: '/path/to/file.js' });
   // When jq fails, hook should be a no-op (exit 0)
   assert.equal(result.status, 0);
+});
+
+// =============================================================================
+// Arbitration guard (plugin-defers-to-local)
+// =============================================================================
+
+function setupLocalHook(dir, scriptName) {
+  const hooksDir = join(dir, '.claude', 'hooks');
+  mkdirSync(hooksDir, { recursive: true });
+  writeExecutable(join(hooksDir, scriptName), '#!/bin/bash\nexit 0');
+}
+
+function writeSettingsWithHook(dir, scriptName, fileName) {
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(
+    join(claudeDir, fileName || 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: 'Edit|Write',
+            hooks: [
+              {
+                type: 'command',
+                command: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/${scriptName}`,
+              },
+            ],
+          },
+        ],
+      },
+    })
+  );
+}
+
+test('arbitration: defers when local hook exists and registered in settings', () => {
+  const workDir = makeTempDir('sd0x-pre-edit-arb-defer-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'pre-edit-guard.sh');
+  writeSettingsWithHook(workDir, 'pre-edit-guard.sh');
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  // Should exit 0 (defer) — NOT exit 2 (which it would if it ran)
+  assert.equal(result.status, 0, 'should defer to local hook');
+  assert.ok(
+    !result.stderr.includes('Blocked sensitive file'),
+    'should not produce guard output'
+  );
+});
+
+test('arbitration: dev mode bypass when hooks/hooks.json exists', () => {
+  const workDir = makeTempDir('sd0x-pre-edit-arb-dev-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'hooks'), { recursive: true });
+  writeFileSync(join(workDir, 'hooks', 'hooks.json'), '{}');
+  setupLocalHook(workDir, 'pre-edit-guard.sh');
+  writeSettingsWithHook(workDir, 'pre-edit-guard.sh');
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  // Should run normally (block .env) — exit 2
+  assert.equal(result.status, 2, 'should run normally in dev mode');
+});
+
+test('arbitration: no local hook runs normally', () => {
+  const workDir = makeTempDir('sd0x-pre-edit-arb-nohook-');
+  const binDir = setupStubBin();
+  writeSettingsWithHook(workDir, 'pre-edit-guard.sh');
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'should run normally and block .env');
+});
+
+test('arbitration: CLAUDE_PROJECT_DIR unset runs normally', () => {
+  const binDir = setupStubBin();
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+  });
+  assert.equal(result.status, 2, 'should run normally and block .env');
+});
+
+test('arbitration: local hook exists but not in settings runs normally', () => {
+  const workDir = makeTempDir('sd0x-pre-edit-arb-noreg-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'pre-edit-guard.sh');
+  // No settings file
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'should run normally when not registered');
+});
+
+test('arbitration: registered in settings.local.json defers', () => {
+  const workDir = makeTempDir('sd0x-pre-edit-arb-local-');
+  const binDir = setupStubBin();
+  setupLocalHook(workDir, 'pre-edit-guard.sh');
+  writeSettingsWithHook(workDir, 'pre-edit-guard.sh', 'settings.local.json');
+  const result = runHook({
+    binDir,
+    filePath: '/project/.env',
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 0, 'should defer via settings.local.json');
+  assert.ok(
+    !result.stderr.includes('Blocked sensitive file'),
+    'should not produce guard output'
+  );
 });
