@@ -37,15 +37,20 @@ $ARGUMENTS
 ### Workflow
 
 ```
-Collect branch info → Codex review (6 dimensions) → Rating table + Findings + Gate → Loop if Blocked
+emit PENDING → Collect branch info → Dual Review (Codex + Task background) → Await Codex → Reconcile → Emit Gate → Loop if Blocked
 ```
 
-1. **Collect branch metadata** (Codex reads full diffs itself via sandbox):
+1. **Emit PENDING**: `bash scripts/emit-review-gate.sh PENDING`
+2. **Collect branch metadata** (Codex reads full diffs itself via sandbox):
    - `git diff --name-only ${BASE_BRANCH}..HEAD`
    - `git diff --stat ${BASE_BRANCH}..HEAD`
    - `git log --oneline ${BASE_BRANCH}..HEAD`
-2. **Codex review**: New session (`mcp__codex__codex`) or continue (`mcp__codex__codex-reply`)
-3. **Output**: Branch overview + rating table (6 dimensions) + severity-grouped findings + Merge Gate
+3. **Dual Review** (parallel dispatch, single message):
+   - 3a. **Codex review** (primary, blocking): `mcp__codex__codex` or `mcp__codex__codex-reply`
+   - 3b. **Secondary reviewer** (background, non-blocking): `Task(pr-review-toolkit:code-reviewer)` with `run_in_background: true`
+4. **Await Codex result**, then reconcile: if Task completed, aggregate per SKILL.md Step 4
+5. **Emit gate**: `bash scripts/emit-review-gate.sh READY|BLOCKED`
+6. **Output**: Branch overview + rating table (6 dimensions) + severity-grouped findings + source attribution + Merge Gate
 
 ### Key Rules
 
@@ -84,9 +89,9 @@ Collect branch info → Codex review (6 dimensions) → Rating table + Findings 
 
 ### Findings
 #### P0 (Must Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 #### P1 (Should Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 
 ### Merge Gate
 ✅ Ready / ⛔ Blocked (need to fix N P0/P1 issues)

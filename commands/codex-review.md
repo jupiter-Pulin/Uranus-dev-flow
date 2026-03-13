@@ -38,13 +38,18 @@ $ARGUMENTS
 ### Workflow
 
 ```
-lint:fix → build → git diff → Codex review (full) → Findings + Gate → Loop if Blocked
+lint:fix → build → emit PENDING → git diff → Dual Review (Codex + Task background) → Await Codex → Reconcile → Emit Gate → Loop if Blocked
 ```
 
 1. **Local checks** (unless `--no-tests`): `{LINT_FIX_COMMAND}` then `{BUILD_COMMAND}` — record as `LOCAL_CHECKS`
-2. **Collect metadata**: `git diff --name-only HEAD` + `git diff --stat HEAD` (Codex reads full diffs itself)
-3. **Codex review**: New session (`mcp__codex__codex`) or continue (`mcp__codex__codex-reply`)
-4. **Output**: Local check results + severity-grouped findings + test recommendations + Merge Gate
+2. **Emit PENDING**: `bash scripts/emit-review-gate.sh PENDING`
+3. **Collect metadata**: `git diff --name-only HEAD` + `git diff --stat HEAD` (Codex reads full diffs itself)
+4. **Dual Review** (parallel dispatch, single message):
+   - 4a. **Codex review** (primary, blocking): `mcp__codex__codex` or `mcp__codex__codex-reply`
+   - 4b. **Secondary reviewer** (background, non-blocking): `Task(pr-review-toolkit:code-reviewer)` with `run_in_background: true`
+5. **Await Codex result**, then reconcile: if Task completed, aggregate per SKILL.md Step 4
+6. **Emit gate**: `bash scripts/emit-review-gate.sh READY|BLOCKED`
+7. **Output**: Local check results + severity-grouped findings + source attribution + test recommendations + Merge Gate
 
 ### Key Rules
 
@@ -69,12 +74,13 @@ lint:fix → build → git diff → Codex review (full) → Findings + Gate → 
 ### Review Scope
 - Change stats: <git diff --stat summary>
 - Focus area: <focus or "all">
+- Review mode: dual (Codex + secondary) | single (Codex-only)
 
 ### Findings
 #### P0 (Must Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 #### P1 (Should Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 
 ### Tests Recommendation
 - Suggested new test cases

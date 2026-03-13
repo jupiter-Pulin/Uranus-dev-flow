@@ -112,11 +112,18 @@ Launch **two reviewers in parallel** (single message, multiple tool calls):
 **Case B: Loop review (has `--continue`)**
 
 - **Codex**: Use `mcp__codex__codex-reply` with re-review template from `references/review-common.md`
-- **Secondary**: Launch fresh Task with latest diff (stateless — new instance each loop)
+- **Secondary**: Not used in loop — Codex-only `--continue` review (secondary runs once per review session, not per loop iteration)
 
-### Step 3.5: Await Dual Results
+### Step 3.5: Await Codex + Reconcile Secondary
 
-Both reviewers run in parallel. Wait for both results. Apply degradation matrix per `references/review-common.md § Dual Reviewer Aggregation`.
+Codex is the **blocking** reviewer — await its result for the initial gate. Secondary runs in background (`run_in_background: true`) and is **non-blocking**:
+
+| Secondary Status | Action |
+|-----------------|--------|
+| Completed before Codex | Include in aggregation (Step 4) |
+| Completed after Codex, before precommit | Reconcile at pre-precommit checkpoint |
+| Still running at precommit | Proceed with Codex gate (authoritative); late result is advisory log |
+| Failed/timed out | Apply degradation matrix per `references/review-common.md § Dual Reviewer Aggregation` |
 
 ### Step 4: Consolidate Output (Dual Mode)
 
@@ -175,9 +182,19 @@ Ready + P2/Nit → batch fix → 1 Codex `--continue` verify → evaluate (see `
 | Reviewer | Loop Behavior |
 |----------|---------------|
 | Codex MCP | Stateful → `mcp__codex__codex-reply(threadId)` continues context |
-| Secondary | Stateless → fresh Task each loop iteration with latest diff |
+| Secondary | First review only — not restarted in `--continue` loop iterations |
 
-Aggregation gate (Step 4 + 4.5) is recalculated and emitted at the end of each loop iteration.
+In loop iterations, gate comes from Codex-only review. Aggregation gate only applies to first-pass dual review.
+
+### Pre-precommit Checkpoint
+
+Before triggering `/precommit-fast`, reconcile any pending secondary result:
+
+| Condition | Action |
+|-----------|--------|
+| Task completed + has P0/P1 | Re-emit BLOCKED → fix → re-review (Codex `--continue` only) |
+| Task completed + no P0/P1 | Union aggregate → proceed to precommit |
+| Task still running | Proceed with Codex gate (authoritative); late result is advisory log |
 
 ## Verification
 

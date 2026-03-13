@@ -174,6 +174,6 @@ Output format: `- [P0] file:line issue → fix [source: both]`
 | Reviewer | Loop Behavior |
 |----------|---------------|
 | Codex MCP | Stateful → `mcp__codex__codex-reply(threadId)` continues context |
-| Secondary | Stateless → fresh Task each loop iteration with latest diff |
+| Secondary | First review only — not restarted in `--continue` loop iterations |
 
-Aggregation gate is recalculated and emitted at the end of each loop iteration.
+In loop iterations, gate comes from Codex-only review. Aggregation gate only applies to first-pass dual review.

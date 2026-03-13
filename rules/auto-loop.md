@@ -22,6 +22,18 @@
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |
 | `.md`       | review failure     | Fix -> re-run        |
 
+### Dual Review Mode
+
+Code review commands dispatch two reviewers in parallel. This section defines the interaction with auto-loop.
+
+| Rule | Description |
+|------|-------------|
+| First-pass dual | Code review command must dual-dispatch on first pass (Codex + secondary background) |
+| Non-blocking secondary | Secondary reviewer runs in background and does not block initial gate emission |
+| Late P0/P1 | Within same review session, late secondary P0/P1 re-opens fix→re-review loop |
+| Loop re-review | `--continue` loops use Codex stateful re-review only; do not restart secondary |
+| Pre-precommit checkpoint | Before `/precommit-fast`, reconcile any pending secondary result; if late P0/P1, re-enter review loop |
+
 ## P2/Nit Quality Sweep
 
 **Gate ✅ Ready + P2/Nit exists → batch fix → verify → precommit**

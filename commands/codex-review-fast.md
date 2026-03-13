@@ -37,12 +37,17 @@ $ARGUMENTS
 ### Workflow
 
 ```
-git diff → Codex review (diff only) → Findings + Gate → Loop if Blocked
+emit PENDING → git diff → Dual Review (Codex + Task background) → Await Codex → Reconcile → Emit Gate → Loop if Blocked
 ```
 
-1. **Collect metadata**: `git diff --name-only HEAD` + `git diff --stat HEAD` (Codex reads full diffs itself)
-2. **Codex review**: New session (`mcp__codex__codex`) or continue (`mcp__codex__codex-reply`)
-3. **Output**: Severity-grouped findings + Merge Gate
+1. **Emit PENDING**: `bash scripts/emit-review-gate.sh PENDING`
+2. **Collect metadata**: `git diff --name-only HEAD` + `git diff --stat HEAD` (Codex reads full diffs itself)
+3. **Dual Review** (parallel dispatch, single message):
+   - 3a. **Codex review** (primary, blocking): `mcp__codex__codex` or `mcp__codex__codex-reply`
+   - 3b. **Secondary reviewer** (background, non-blocking): `Task(pr-review-toolkit:code-reviewer)` with `run_in_background: true`
+4. **Await Codex result**, then reconcile: if Task completed, aggregate per SKILL.md Step 4
+5. **Emit gate**: `bash scripts/emit-review-gate.sh READY|BLOCKED`
+6. **Output**: Severity-grouped findings + source attribution + Merge Gate
 
 ### Key Rules
 
@@ -62,14 +67,15 @@ git diff → Codex review (diff only) → Findings + Gate → Loop if Blocked
 ### Review Scope
 - Change stats: <git diff --stat summary>
 - Focus area: <focus or "all">
+- Review mode: dual (Codex + secondary) | single (Codex-only)
 
 ### Findings
 #### P0 (Must Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 #### P1 (Should Fix)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 #### P2 (Suggested Improvement)
-- [file:line] Issue -> Fix recommendation
+- [file:line] Issue -> Fix recommendation [source: codex|toolkit|both]
 
 ### Merge Gate
 ✅ Ready / ⛔ Blocked (need to fix N P0/P1 issues)
