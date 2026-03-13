@@ -154,6 +154,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
 | `/pr-summary` | PR status summary (grouped by ticket) | Git |
 | `/contract-decode` | EVM contract error/calldata decoder | Blockchain |
+| `/jira` | Jira integration (view/branch/transition) | Jira workflow |
 | `/merge-prep` | Pre-merge analysis and preparation | Git |
 | `/obsidian-cli` | Obsidian vault integration via CLI | Tooling |
 | `/op-session` | Initialize 1Password CLI session | Tooling |
