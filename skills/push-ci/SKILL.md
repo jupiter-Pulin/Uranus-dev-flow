@@ -52,9 +52,9 @@ sequenceDiagram
     U->>C: Approve / Reject
     alt Approved
         C->>GH: Execute git push
-        C->>GH: Phase 2: gh run watch --exit-status
-        GH-->>C: CI result
-        C->>U: Phase 3: Verdict + failure logs
+        C->>C: Phase 2: Execute git push
+        C->>GH: Phase 3: Delegate to /watch-ci
+        GH-->>C: CI verdict
     else Rejected
         C->>U: Abort (no push)
     end
@@ -122,14 +122,14 @@ Command to execute: `git push origin <branch>`
 
 **If user rejects → stop immediately. Do NOT retry or persuade.**
 
-### Phase 2: Execute Push + Monitor CI
+### Phase 2: Execute Push
 
 After user approval:
 
 **Command assembly** (deterministic):
 
 ```bash
-# 1. Build and execute push command (ONLY after explicit approval)
+# Build and execute push command (ONLY after explicit approval)
 # ⚠️ Always unset ALLOW_PUSH_PROTECTED to prevent env inheritance bypassing the hook.
 # Only set ALLOW_FORCE_WITH_LEASE when --force-with-lease is explicitly requested.
 if [[ "$FORCE_WITH_LEASE" == "true" ]]; then
@@ -146,47 +146,19 @@ else
   fi
 fi
 # If push fails (non-zero exit) → stop immediately, report error, do NOT proceed to CI
-
-# 2. Find CI runs matching HEAD_SHA (only if push succeeded)
-RUNS=$(gh run list --branch "$BRANCH" --limit 10 --json databaseId,headSha,status,name \
-  --jq "[.[] | select(.headSha == \"$HEAD_SHA\")]")
-
-# 3. Monitor all matching runs (worst result = overall verdict)
-# For each run in RUNS:
-#   gh run watch <run-id> --exit-status
-#   Record pass/fail per run
-# If RUNS is empty after 30s retry (3 attempts, 10s interval) → report no CI
-# Overall verdict = worst individual result (any fail → overall fail)
-
-# 4. Timeout enforcement
-# Track START_TIME=$(date +%s) before watch loop.
-# After each poll, check: if (now - START_TIME) > TIMEOUT_MINUTES*60 → stop, report ⚠️ Timeout.
 ```
 
 **`--set-upstream` auto-detect**: If `git rev-parse --abbrev-ref --symbolic-full-name @{u}` fails (no upstream), add `-u` automatically.
 
-**CI Run Selection** — match by `headSha + branch`, not "latest" (see step 2 above).
+### Phase 3: Monitor CI (delegation)
 
-**Multiple CI runs**: If multiple workflow runs match the same SHA (e.g. CI + Auto Release), monitor all of them in parallel. Report verdict for each run individually. Overall verdict is the worst result across all runs.
+After successful push, invoke `/watch-ci` to monitor CI runs:
 
-If no run found after 30 seconds, retry up to 3 times (10s interval). If still not found:
+- Pass `--sha <HEAD_SHA>` and `--branch <BRANCH>` from Phase 0
+- Pass `--timeout` from arguments (default 10)
+- `/watch-ci` handles run discovery, monitoring, retry logic, and verdict reporting
 
-```
-⚠️ No CI run detected for SHA <sha>. Possible causes:
-- No workflow configured for this branch
-- Path-filtered workflow didn't trigger
-- Check: gh run list --branch <branch>
-```
-
-**Timeout**: Default 10 minutes. Configurable via `--timeout <minutes>`.
-
-### Phase 3: Verdict
-
-| CI Result | Action |
-|-----------|--------|
-| Pass | Output: "✅ CI passed — `<run-url>`" |
-| Fail | Output: failing jobs + `gh run view <id> --log-failed` summary |
-| Timeout | Output: "⚠️ CI still running after <N>min — `gh run watch <id>`" |
+This delegation keeps push authorization logic separate from read-only CI monitoring. See `@skills/watch-ci/SKILL.md` for CI monitoring details.
 
 ## Arguments
 
@@ -207,7 +179,7 @@ If no run found after 30 seconds, retry up to 3 times (10s interval). If still n
 - Setting ALLOW_PUSH_PROTECTED=1 (this skill must NEVER set this env var; it is reserved for manual developer use only)
 - Auto-triggering this skill (disable-model-invocation: true)
 - Skipping preflight checks
-- Monitoring wrong CI run (must match HEAD SHA)
+- Skipping `/watch-ci` delegation after successful push
 ```
 
 ## Verification
@@ -215,8 +187,7 @@ If no run found after 30 seconds, retry up to 3 times (10s interval). If still n
 - [ ] Preflight passed (branch + remote + commits)
 - [ ] User approved push via AskUserQuestion
 - [ ] Push executed successfully
-- [ ] CI run matched by HEAD SHA (not "latest")
-- [ ] Verdict reported (pass/fail/timeout)
+- [ ] CI monitoring delegated to `/watch-ci` with correct SHA + branch
 
 ## Examples
 
@@ -224,15 +195,15 @@ If no run found after 30 seconds, retry up to 3 times (10s interval). If still n
 Input: /push-ci
 Phase 0: Preflight — branch feat/auth, 3 commits ahead, remote OK
 Phase 1: Show plan → user approves
-Phase 2: git push origin feat/auth → gh run watch 12345 --exit-status
-Phase 3: ✅ CI passed — https://github.com/.../actions/runs/12345
+Phase 2: git push origin feat/auth
+Phase 3: /watch-ci --sha <HEAD> --branch feat/auth → ✅ CI passed
 ```
 
 ```
 Input: /push-ci --timeout 15
 Phase 0-1: Same as above
-Phase 2: Monitor with 15-minute timeout
-Phase 3: Verdict
+Phase 2: git push
+Phase 3: /watch-ci --timeout 15
 ```
 
 ```

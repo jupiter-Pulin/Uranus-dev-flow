@@ -19,7 +19,7 @@ allowed-tools: Bash(git:*), Bash(gh:*), Bash(bash:*), Read, Grep, Glob, AskUserQ
 
 ## Task
 
-Execute the push-ci workflow: preflight → user approval → push → CI monitor → verdict.
+Execute the push-ci workflow: preflight → user approval → push → delegate to `/watch-ci` for CI monitoring.
 
 ### Arguments
 

@@ -100,7 +100,8 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/pr-review` | PR self-review checklist | Before PR |
 | `/smart-commit` | Smart batch commit (identity/signing diagnostics + group + message + commands) | Git |
 | `/git-profile` | Git identity and GPG signing profile manager | Git |
-| `/push-ci` | Push (with approval) + CI monitor | Git |
+| `/push-ci` | Push (with approval) + delegate to /watch-ci | Git |
+| `/watch-ci` | Monitor GitHub Actions CI runs | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
 | `/git-worktree` | Manage git worktrees (auto-syncs .claude/) | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
