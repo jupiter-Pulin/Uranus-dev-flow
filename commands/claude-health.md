@@ -1,7 +1,7 @@
 ---
-description: Claude Code configuration health check for .claude/ directory
-argument-hint: [--fix]
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Bash(du:*), Bash(rm:*)
+description: Claude Code configuration health check + plugin sync for .claude/ directory
+argument-hint: [--scope hygiene|sync|all] [--fix] [--fix-safe]
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Bash(du:*), Bash(rm:*), Bash(git:*)
 ---
 
 ## Context
@@ -11,7 +11,7 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Bash(du:*
 
 ## Task
 
-Run a health check on the `.claude/` directory structure, reporting issues and suggesting fixes.
+Run a health check on the `.claude/` directory structure and plugin sync status, reporting issues and suggesting fixes.
 
 **⚠️ Must read and follow the skill below:**
 
@@ -26,11 +26,18 @@ $ARGUMENTS
 
 | Argument | Description |
 |----------|-------------|
-| `--fix` | Auto-fix P1 issues (delete junk files, create .gitignore) |
+| `--scope hygiene` | Only run C1-C7 hygiene checks |
+| `--scope sync` | Only run S1-S3 sync checks |
+| `--scope all` | Run both modules (**default**) |
+| `--fix` | Auto-fix P1 hygiene + guided sync remediation |
+| `--fix-safe` | Auto-fix P1 hygiene + safe sync fixes (rules OUTDATED auto-fix; hooks/scripts MISSING only) |
 
 ### Workflow
 
-Execute all 7 checks from the skill, then output a consolidated report.
+1. Select modules based on `--scope` (default: all)
+2. Execute selected checks from the skill
+3. Output consolidated report
+4. If `--fix` or `--fix-safe`: delegate fixes to `/install-rules`, `/install-hooks`, `/install-scripts`
 
 ## Output
 
@@ -39,9 +46,15 @@ See skill for output format.
 ## Examples
 
 ```bash
-# Run health check
+# Run full health check (hygiene + sync)
 /claude-health
 
-# Auto-fix P1 issues
+# Check plugin sync status only
+/claude-health --scope sync
+
+# Auto-fix safe items
+/claude-health --fix-safe
+
+# Guided remediation for all issues
 /claude-health --fix
 ```

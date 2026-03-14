@@ -13,11 +13,15 @@ test('namespace-hint.sh exists and is executable', () => {
   assert.ok((stat.mode & 0o100) !== 0, 'script should be executable');
 });
 
-test('each line of namespace-hint.sh output is under 100 chars', () => {
+test('each core line of namespace-hint.sh output is under 100 chars', () => {
   const output = execFileSync('bash', [scriptPath], { encoding: 'utf8' });
   const lines = output.trim().split('\n');
   assert.ok(lines.length >= 1, 'output should have at least 1 line');
   for (const line of lines) {
+    // Skip drift sentinel warning (SessionStart hook additional context) — this line
+    // is intentionally longer and follows Claude Code SessionStart output conventions
+    if (line.startsWith('SessionStart hook additional context:')) continue;
+    if (line === '') continue;
     assert.ok(line.length < 100, `line should be under 100 chars: "${line}" (${line.length})`);
   }
 });
