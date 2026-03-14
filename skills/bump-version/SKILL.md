@@ -21,6 +21,7 @@ grep '"version"' package.json .claude-plugin/plugin.json
 ```
 
 Also check manifest:
+
 ```bash
 grep '"plugin_version"' .claude/.sd0x-install-state.json 2>/dev/null || echo "(no manifest)"
 ```
