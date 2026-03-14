@@ -144,11 +144,12 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/install-scripts` | Install plugin scripts to .claude/scripts/ | Onboarding |
 | `/codex-setup` | Initialize Codex CLI infrastructure (AGENTS.md + hooks) | Onboarding |
 | `/project-setup` | Auto-detect and configure project | Onboarding |
-| `/claude-health` | Claude Code config health check | Onboarding |
+| `/claude-health` | Claude Code config health check + plugin sync | Onboarding / After update |
 | `/pr-review` | PR self-review checklist | Before PR |
 | `/smart-commit` | Smart batch commit (identity/signing diagnostics + group + message + commands) | Git |
 | `/git-profile` | Git identity and GPG signing profile manager | Git |
-| `/push-ci` | Push (with approval) + CI monitor | Git |
+| `/push-ci` | Push (with approval) + delegate to /watch-ci | Git |
+| `/watch-ci` | Monitor GitHub Actions CI runs | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
 | `/git-worktree` | Manage git worktrees | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
