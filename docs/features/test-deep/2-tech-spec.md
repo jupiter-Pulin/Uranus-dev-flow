@@ -218,13 +218,14 @@ unit → integration → e2e
 
 **Secret redaction（mandatory）**: 在 output 傳給 LLM 或寫入 artifacts 前，必須進行 secret scrubbing：
 
-| Pattern | Regex | Replacement |
-|---------|-------|-------------|
-| API keys | `/[A-Za-z0-9_-]{32,}/` (high entropy) | `[REDACTED_KEY]` |
-| Private keys | `/-----BEGIN.*PRIVATE KEY-----/` | `[REDACTED_PRIVATE_KEY]` |
-| Tokens | `/((?:Bearer\s+|token[=:]\s*))[A-Za-z0-9._-]+/i` | `[REDACTED_TOKEN]` |
-| Known env vars | `/(API_KEY|SECRET|PASSWORD|PRIVATE_KEY|MNEMONIC)[=:]\s*\S+/i` | `$1=[REDACTED]` |
-| URLs with credentials | `/https?:\/\/[^:]+:[^@]+@/` | `[REDACTED_URL]` |
+```
+Pattern              Regex                                                          Replacement
+API keys             /[A-Za-z0-9_-]{32,}/  (high entropy)                          [REDACTED_KEY]
+Private keys         /-----BEGIN.*PRIVATE KEY-----/                                 [REDACTED_PRIVATE_KEY]
+Tokens               /((?:Bearer\s+|token[=:]\s*))[A-Za-z0-9._-]+/i               [REDACTED_TOKEN]
+Known env vars       /(API_KEY|SECRET|PASSWORD|PRIVATE_KEY|MNEMONIC)[=:]\s*\S+/i   $1=[REDACTED]
+URLs with creds      /https?:\/\/[^:]+:[^@]+@/                                     [REDACTED_URL]
+```
 
 Redaction 遵循 `rules/logging.md` 的 "Never log" policy：private keys, mnemonics, API keys, passwords, full addresses。
 
