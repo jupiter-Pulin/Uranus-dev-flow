@@ -50,6 +50,7 @@ sequenceDiagram
     participant SK as SKILL.md (Orchestration)
     participant JS as load-pr-review.js (Data Plane)
     participant GH as GitHub (gh CLI)
+    participant CX as Codex (verdict triage)
     participant AL as Auto-Loop
 
     U->>Cmd: /load-pr-review [args]
@@ -64,10 +65,16 @@ sequenceDiagram
     SK->>JS: digest --budget 30
     JS-->>SK: Token-budgeted summary
 
+    alt plan/fix mode + verdict enabled
+        SK->>CX: Step 1.5: Batch triage (issue-analyze + seek-verdict)
+        Note over CX: Independent research (anti-anchoring)
+        CX-->>SK: Per-thread verdicts (ACTIONABLE / NON_ACTIONABLE / UNCERTAIN)
+    end
+
     SK->>U: Present digest (summary mode)
 
     alt --mode plan
-        SK->>U: Classify + suggest fix strategy
+        SK->>U: Classify + suggest fix strategy (with verdict columns)
     end
 
     alt --mode fix
@@ -198,6 +205,7 @@ bash scripts/run-skill.sh load-pr-review load-pr-review.js \
 | `--writeback` | 啟用回寫功能 | `false` |
 | `--execute` | 回寫直接執行（跳過 dry-run） | `false` |
 | `--budget <N>` | Max loaded comments | `30` |
+| `--no-verdict` | 停用 Step 1.5 verdict triage | `false`（預設啟用） |
 
 ### 3.4 Core Logic
 
@@ -224,6 +232,59 @@ Preflight checks:
 | PR is open | Warn: "PR is closed/merged, showing historical reviews" |
 
 > Note: "Has review threads" 檢查在 Step 2 fetch 完成後執行（metadata 不含 thread 資訊）。若無 threads → Inform: "No review comments on this PR"。
+
+#### Step 1.5: Issue Analysis Triage（verdict-enabled by default）
+
+在 **plan** 和 **fix** 模式下（非 summary），對 unresolved threads 進行批次 Codex verdict triage。
+
+**觸發條件**:
+
+| Mode | Verdict | 原因 |
+|------|---------|------|
+| summary | 跳過 | 輕量顯示，不需成本 |
+| plan | 執行（預設） | 在 plan 表格中補充 Codex 評估 |
+| fix | 執行（預設） | 預先篩選 actionable threads |
+
+**Flag**: `--no-verdict` 停用此步驟。
+
+**執行流程**:
+1. 收集 Step 1 中所有 unresolved threads（`--all` 時仍僅 triage unresolved）
+2. 呼叫 `mcp__codex__codex`（fresh thread, `sandbox: 'read-only'`, `approval-policy: 'never'`）
+3. 解析 JSON array 回應，將 `thread_id` 對應回載入的 threads
+4. 若 >60% threads 為 NON_ACTIONABLE，發出 `[VERDICT_TRIAGE_WARN]`（anti-abuse）
+5. Codex 呼叫失敗時，顯示警告並跳過 verdict（graceful degradation）
+
+**Anti-anchoring**: prompt 僅包含原始 thread 資料（reviewer comments、file、line），不包含 Claude 自身分類結果。
+
+**Verdict 分類對照**（依 `seek-verdict` policy-mapping 門檻）:
+
+| Codex Verdict | Confidence | Evidence Refs | Result | Grouping |
+|---------------|------------|---------------|--------|----------|
+| NON_ACTIONABLE | >= 0.80 (normal) / >= 0.85 (heightened) | >= 2 (normal) / >= 3 (heightened) | DISMISS_VERIFIED | Likely Non-Actionable |
+| ACTIONABLE | >= 0.70 | any | FIX_REQUIRED | ACTIONABLE |
+| UNCERTAIN / low | any | any | NEED_HUMAN | Needs Discussion |
+
+> **Note**: Heightened thresholds apply after `[DISMISS_PATTERN_WARN]` — see `@skills/seek-verdict/references/policy-mapping.md` Anti-Abuse Guard.
+
+**Cross-skill 整合**:
+- 分類模型參考 `/issue-analyze` 的 classification model
+- Verdict pattern 參考 `/seek-verdict` 的 blind verdict 機制
+
+**Plan 表格增強**（verdict 啟用時）:
+
+```markdown
+### ACTIONABLE (N threads)
+| # | File | Reviewer | Category | Verdict | Confidence | Summary | Effort |
+|---|------|----------|----------|---------|------------|---------|--------|
+
+### Likely Non-Actionable (N threads)
+| # | File | Reviewer | Category | Verdict | Confidence | Reason |
+|---|------|----------|----------|---------|------------|--------|
+
+### Needs Discussion (N threads)
+| # | File | Reviewer | Category | Verdict | Confidence |
+|---|------|----------|----------|---------|------------|
+```
 
 #### Step 2: Fetch Review Threads（GraphQL）
 
@@ -266,6 +327,8 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate
 ```
 
 **plan mode**:
+
+> **Note**: When verdict triage is enabled (default in plan/fix mode), the plan output uses the verdict-grouped format shown in Step 1.5. The priority-only format below is used when `--no-verdict` is specified.
 
 ```markdown
 ## Fix Strategy
@@ -351,6 +414,9 @@ gh api graphql -f query='mutation($id:ID!) { resolveReviewThread(input: {threadI
 | 9 | Verification: `/skill-health-check` + `/codex-review-doc` | S | #5, #6 |
 
 **Total estimated effort**: M-L（1 JS script ~200-300 LOC + 3 reference docs + SKILL.md）
+
+**Implementation status**:
+- Step 1.5 verdict triage: ✅ Implemented（SKILL.md + `references/verdict-triage-prompt.md`）
 
 ## 6. Testing Strategy
 

@@ -56,7 +56,18 @@ sequenceDiagram
     G-->>C: core.hooksPath + hook existence
     C->>C: Record guard status
 
-    Note over C: Step 2–4 unchanged
+    C->>C: Step 2: Pre-flight review check (3-tier)
+    alt Code files without precommit
+        C->>U: HALT + require /precommit-fast
+    else Structural .md without precommit-fast
+        C->>U: HALT + require /precommit-fast
+    else Other .md without doc review
+        C->>U: HALT + require /codex-review-doc
+    else All tiers passed (fresh)
+        C->>C: Continue
+    end
+
+    Note over C: Step 3–4 unchanged (grouping + message)
 
     C->>C: Step 5: Generate message
     C->>C: Behavioral sanitization (strip AI patterns)
@@ -167,7 +178,36 @@ test -x "$HOOK_FILE" && echo "guard:installed" || echo "guard:missing"
 
 **重要**：hook 安裝不是 `--execute` 模式的 blocker。runtime validation 提供獨立防線。
 
-### 3.5 Runtime Validation（Execute 模式增強）
+### 3.5 Step 2: Pre-flight Review Check（3-tier 策略）
+
+**位置**: Step 1e 之後、分組/訊息生成之前
+
+**目的**: `/smart-commit` 是 commit 前最後一道關卡，pre-flight 確認所有變更已通過對應的 review/precommit 檢查。
+
+**3-tier 分類**:
+
+| Tier | 檔案類型 | 必須通過的檢查 | 說明 |
+|------|---------|---------------|------|
+| 1 — Code | 程式碼檔案（`.js`, `.ts`, `.sh` 等） | `/precommit` 或 `/precommit-fast` | 包含 lint + test |
+| 2 — Structural `.md` | `skills/**/*.md`, `commands/**/*.md` | `/precommit-fast` | 結構性文件影響 skill 行為 |
+| 3 — Other `.md` | 其他 `.md`（docs, README 等） | `/codex-review-doc`（per CLAUDE.md） | 文件品質檢查 |
+| — | Comments / trivial | 跳過 | 無需檢查 |
+
+**Freshness 條件**: 檢查必須在**當前 session 中、最後一次編輯之後**通過。過期的檢查結果不計入。
+
+**決策邏輯**:
+
+| 情境 | 行為 |
+|------|------|
+| 所有 tier 對應檢查皆已通過（fresh） | 靜默繼續 |
+| Code 檔案未通過 precommit | **HALT**：要求先執行 `/precommit-fast` |
+| Structural `.md` 未通過 precommit-fast | **HALT**：要求先執行 `/precommit-fast` |
+| Other `.md` 未通過 doc review | **HALT**：要求先執行 `/codex-review-doc` |
+| 混合變更（code + docs） | 各 tier 獨立檢查，全部通過才繼續 |
+
+**Policy note**: 此策略刻意比 `auto-loop.md` baseline 更嚴格。`/smart-commit` 作為 commit 前最後關卡，不允許跳過任何 tier 的檢查。auto-loop 在開發迴圈中容許部分寬鬆（例如 Nit exemption），但 `/smart-commit` 不繼承這些豁免。
+
+### 3.6 Runtime Validation（Execute 模式增強）
 
 **位置**: Step 5c，在 `git commit` 之前
 
@@ -234,7 +274,7 @@ MSG=$(git log -1 --format='%B')
 # → 輸出 amend 指引
 ```
 
-### 3.6 Regex 正規化
+### 3.7 Regex 正規化
 
 **現況問題**: `SKILL.md` 用 PCRE-style（`(?:...)`），`commit-msg-guard.sh` 用 BRE-style（`\(...\)`），產生方言不一致。
 
@@ -250,7 +290,7 @@ MSG=$(git log -1 --format='%B')
 
 **Canonical source**: `scripts/commit-msg-guard.sh` 為正規化後的唯一真實來源，SKILL.md 引用之。
 
-### 3.7 Commit Plan 摘要（增強）
+### 3.8 Commit Plan 摘要（增強）
 
 現有 commit plan 格式擴充：
 
