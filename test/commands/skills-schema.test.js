@@ -59,14 +59,17 @@ test('SKILL.md local references point to existing files', () => {
 
     const content = readFileSync(skillPath, 'utf8');
 
-    // Match @references/xxx.md and references/xxx.md (backtick-quoted or plain)
-    const refPattern = /`?@?references\/([^`\s)]+\.md)`?/g;
+    // Match references/xxx.md patterns: plain, @-prefixed, ./-prefixed, backtick-quoted
+    // Group 1 captures cross-skill prefix (@skills/<name>/) — skip when present
+    const refPattern = /`?(@skills\/[^/]+\/)?@?(?:\.\/)?references\/([^`\s)]+\.md)`?/g;
     let match;
     while ((match = refPattern.exec(content)) !== null) {
-      const refFile = join(skillsDir, dir, 'references', match[1]);
+      if (match[1]) continue; // cross-skill reference — not local
+
+      const refFile = join(skillsDir, dir, 'references', match[2]);
       assert.ok(
         existsSync(refFile),
-        `skills/${dir}/SKILL.md references "references/${match[1]}" but file does not exist`
+        `skills/${dir}/SKILL.md references "references/${match[2]}" but file does not exist`
       );
     }
   }
