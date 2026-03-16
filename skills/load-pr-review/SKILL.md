@@ -35,6 +35,7 @@ sequenceDiagram
     participant SK as SKILL.md
     participant JS as load-pr-review.js
     participant GH as GitHub (gh CLI)
+    participant CX as Codex (fresh thread)
     participant AL as Auto-Loop
 
     U->>SK: /load-pr-review [args]
@@ -46,6 +47,12 @@ sequenceDiagram
         JS->>GH: gh api REST (fallback)
     end
     JS-->>SK: Normalized JSON
+
+    alt plan/fix mode + verdict enabled
+        SK->>CX: Batch triage (issue-analyze + seek-verdict pattern)
+        Note over CX: Independent research
+        CX-->>SK: Per-thread verdicts
+    end
 
     alt summary mode
         SK->>U: Table of threads
@@ -102,6 +109,37 @@ If `summary.total === 0`:
 
 > No review comments found on this PR.
 
+## Step 1.5: Issue Analysis Triage (verdict-enabled by default)
+
+In **plan** and **fix** modes (not summary), run a batch Codex assessment following `/issue-analyze`'s classification model and `/seek-verdict`'s blind verdict pattern.
+
+**When to execute**:
+
+| Mode | Verdict | Reason |
+|------|---------|--------|
+| summary | Skip | Lightweight display, cost not justified |
+| plan | Execute (default) | Enrich plan table with Codex assessment |
+| fix | Execute (default) | Pre-select actionable threads |
+
+**Flag**: `--no-verdict` disables this step.
+
+**Execution**: Use the batch prompt template in `references/verdict-triage-prompt.md`:
+1. Collect all unresolved threads from Step 1 output (when `--all` is used, scope remains unresolved-only for triage; resolved/outdated threads are excluded from verdict assessment)
+2. Call `mcp__codex__codex` with fresh thread, `sandbox: 'read-only'`, `approval-policy: 'never'`
+3. Parse JSON array response — match each entry's `thread_id` to loaded threads
+4. If >60% threads are NON_ACTIONABLE, emit `[VERDICT_TRIAGE_WARN]`
+5. If Codex call fails, warn user and proceed without verdict (graceful degradation)
+
+**Anti-anchoring**: The prompt contains only raw thread data (reviewer comments, file, line). Never include Claude's own classification.
+
+**Result mapping** (per `@skills/seek-verdict/references/policy-mapping.md`; normal state — heightened thresholds apply after `[DISMISS_PATTERN_WARN]`, see policy-mapping.md Anti-Abuse Guard):
+
+| Codex Verdict | Confidence | Evidence Refs | Result | Grouping |
+|---------------|------------|---------------|--------|----------|
+| NON_ACTIONABLE | >= 0.80 (normal) / >= 0.85 (heightened) | >= 2 (normal) / >= 3 (heightened) | DISMISS_VERIFIED | Likely Non-Actionable |
+| ACTIONABLE | >= 0.70 | any | FIX_REQUIRED | ACTIONABLE |
+| UNCERTAIN / low | any | any | NEED_HUMAN | Needs Discussion |
+
 ## Step 2: Present (mode-dependent)
 
 ### Summary Mode (default)
@@ -121,7 +159,7 @@ Use `--mode plan` to get fix strategy, or `--mode fix` to start fixing.
 
 ### Plan Mode
 
-Classify each thread using AI judgment (not script — requires semantic understanding):
+Classify each thread using verdict data from Step 1.5 (or AI judgment if verdict unavailable):
 
 | Category | Description | Priority |
 |----------|-------------|----------|
@@ -131,28 +169,30 @@ Classify each thread using AI judgment (not script — requires semantic underst
 | `disagree` | Design disagreement | 4 — Discuss |
 | `nit` | Style/naming nitpick | 5 — Optional |
 
-Present grouped by priority:
+Present grouped by verdict then priority:
 
 ```markdown
-## Fix Strategy
+## Fix Strategy (issue-analyzed)
 
-### Priority 1: Code Changes (N threads)
-| # | File | Reviewer | Summary | Effort |
-|---|------|----------|---------|--------|
+### ACTIONABLE (N threads)
+| # | File | Reviewer | Category | Summary | Confidence | Effort |
+|---|------|----------|----------|---------|------------|--------|
 
-### Priority 2: Documentation (N threads)
-...
-
-### Priority 3: Questions (N threads)
-...
+### Likely Non-Actionable (N threads) (DISMISS_VERIFIED per policy-mapping thresholds)
+| # | File | Reviewer | Category | Summary | Confidence | Reason |
+|---|------|----------|----------|---------|------------|--------|
 
 ### Needs Discussion (N threads)
-(disagree items — require user decision via AskUserQuestion)
+| # | File | Reviewer | Category | Summary | Confidence |
+|---|------|----------|----------|---------|------------|
+
+Use `--mode fix` to start fixing ACTIONABLE threads.
 ```
 
 ### Fix Mode
 
 1. Show plan first (as in plan mode)
+   - ACTIONABLE threads are pre-selected; NON_ACTIONABLE threads are listed with `(DISMISS_VERIFIED — skip suggested)` — user can override via AskUserQuestion
 2. AskUserQuestion: which threads to fix?
 3. For each selected thread:
    a. Read the file at `thread.path` around `thread.line`
@@ -172,7 +212,7 @@ bash scripts/run-skill.sh load-pr-review load-pr-review.js \
   writeback --plan --input <json-path> --threads <IDs>
 ```
 
-Show the plan table to user. Ask for approval via AskUserQuestion.
+Show the plan table to user (includes Verdict column from Step 1.5 when available). Ask for approval via AskUserQuestion.
 
 ### Execute (after approval)
 
@@ -228,9 +268,14 @@ Human-readable table for direct display.
 - [ ] Writeback dry-run shows plan without executing
 - [ ] Writeback execute posts reply + optional resolve
 - [ ] Auto-loop triggers after fix mode edits
+- [ ] Verdict triage executes in plan/fix mode (not summary)
+- [ ] `--no-verdict` skips triage
+- [ ] Codex prompt contains no Claude classifications (anti-anchoring)
+- [ ] >60% NON_ACTIONABLE triggers `[VERDICT_TRIAGE_WARN]`
 
 ## References
 
 - `references/api-contract.md` — GraphQL query + REST fallback specification
 - `references/token-budget.md` — Truncation strategy + budget rules
 - `references/writeback-guardrails.md` — Writeback safety rules + jq pattern
+- `references/verdict-triage-prompt.md` — Batch Codex verdict prompt for PR review triage

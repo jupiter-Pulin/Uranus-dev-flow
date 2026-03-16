@@ -4,7 +4,7 @@
 
 | Parameter | Default | `--all` | Hard Cap |
 |-----------|---------|---------|----------|
-| Max loaded threads | 30 | 200 | 200 |
+| Max loaded threads | 30 | 200 | 200 (post-fetch budget; GraphQL ceiling: 100) |
 | Per-comment body | 2000 chars | 2000 chars | 2000 chars |
 
 ## Truncation Priority
@@ -46,3 +46,21 @@ The `summary` object in output tracks truncation state:
 | `loaded` | Threads included in output (after budget) |
 | `truncated` | `total - loaded` |
 | `degraded` | `true` when using REST fallback |
+
+## Verdict Triage Cost
+
+The verdict triage phase (Step 1.5) adds 1 Codex MCP batch call when in plan/fix mode.
+
+| Parameter | Impact |
+|-----------|--------|
+| Codex calls | +1 (batch, all threads in single call) |
+| Per-thread body in prompt | 500 chars (truncated from 2000) |
+| Cost scaling | Proportional to loaded thread count |
+
+**Cost optimization**: Use `--no-verdict` to skip the triage phase for budget-sensitive runs or when thread count is large.
+
+| Threads | Recommendation |
+|---------|---------------|
+| 1-15 | Verdict on (default) |
+| 16-30 | Verdict on, but consider `--no-verdict` if cost-sensitive |
+| 30+ | Consider `--no-verdict` or reduce `--budget` |

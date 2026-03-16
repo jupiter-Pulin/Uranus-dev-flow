@@ -1,6 +1,6 @@
 ---
-description: GitHub Issue deep analysis. Read issue -> classify problem -> select investigation strategy -> integrate four investigation tools.
-argument-hint: <issue-number or issue-url>
+description: GitHub Issue and PR review thread deep analysis with Codex blind verdict. Read input -> classify -> verdict assessment -> investigate -> report.
+argument-hint: "<issue-number|issue-url|review-thread-desc> [--triage]"
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(gh:*), mcp__codex__codex
 ---
 
@@ -17,9 +17,14 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(gh:*), mcp__codex__codex
 
 ## Task
 
-Analyze a GitHub Issue and produce a root cause analysis report.
+Analyze a GitHub Issue or PR review thread and produce a root cause analysis report.
 
 ### Arguments
+
+| Arg | Description |
+|-----|-------------|
+| `<issue-number\|url\|description>` | GitHub Issue or review thread to analyze |
+| `--triage` | Lightweight mode: classification + verdict only (skip investigation) |
 
 ```
 $ARGUMENTS
@@ -28,18 +33,20 @@ $ARGUMENTS
 ### Execution Flow
 
 ```bash
-# Step 1: Read Issue
-gh issue view <number> --json title,body,labels,comments,author,createdAt
+# Step 1: Read Issue / Review Thread
+# GitHub Issue: gh issue view <number> --json title,body,labels,comments,author,createdAt
+# Review Thread: use provided file:line + comment data
 
 # Step 2: Problem Classification (see SKILL.md decision tree)
-# - Regression -> /git-investigate
-# - Feature misunderstanding -> /code-explore
-# - Complex root cause -> /code-investigate
-# - Multiple possibilities -> /codex-brainstorm
 
-# Step 3: Execute Investigation
+# Step 2.5: Verdict Assessment (Codex blind verification)
+# Uses @skills/seek-verdict/references/verdict-prompt.md pattern
+# Thresholds: @skills/seek-verdict/references/policy-mapping.md
+# --triage mode: stop here, output classification + verdict
 
-# Step 4: Produce Report
+# Step 3: Execute Investigation (skip if NON_ACTIONABLE + high confidence)
+
+# Step 4: Produce Report (includes verdict)
 ```
 
 ## When to Use
@@ -47,6 +54,7 @@ gh issue view <number> --json title,body,labels,comments,author,createdAt
 - ✅ Need deep analysis of a GitHub Issue
 - ✅ Root cause is uncertain
 - ✅ Systematic investigation needed
+- ✅ Triage PR review threads for actionability
 
 ## When NOT to Use
 
@@ -64,4 +72,7 @@ gh issue view <number> --json title,body,labels,comments,author,createdAt
 
 # Analyze by description (no issue)
 /issue-analyze "API returns 500 when token is empty"
+
+# Triage a review thread (lightweight verdict)
+/issue-analyze --triage "src/service.ts:42 — Use early return instead of nested if"
 ```

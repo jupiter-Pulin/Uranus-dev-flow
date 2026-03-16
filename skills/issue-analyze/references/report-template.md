@@ -1,5 +1,19 @@
 # Issue Analysis Report Template
 
+## Triage Report (`--triage` mode)
+
+```markdown
+## Triage: <file>:<line> (or <issue title>)
+
+| Field | Value |
+|-------|-------|
+| Category | code_change / doc_update / question / disagree / nit |
+| Verdict | ACTIONABLE / NON_ACTIONABLE / UNCERTAIN |
+| Confidence | 0.XX |
+| Reasoning | <brief justification citing specific code evidence> |
+| Evidence | <file:line references> |
+```
+
 ## Standard Report
 
 ```markdown
@@ -35,6 +49,16 @@
 ### Phase 2: <If second phase exists>
 
 <Investigation summary>
+
+## Verdict Assessment
+
+| Field | Value |
+|-------|-------|
+| Verdict | ACTIONABLE / NON_ACTIONABLE / UNCERTAIN |
+| Confidence | 0.XX |
+| Evidence | <file:line references> |
+| Mapping Result | FIX_REQUIRED / DISMISS_VERIFIED / NEED_HUMAN |
+| Reasoning | <brief justification> |
 
 ## Root Cause Analysis
 
