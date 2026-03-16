@@ -52,7 +52,7 @@ cache/
 | Review skill | ✅ Required | `codex-code-review`, etc. |
 | Domain KB | ❌ Not needed | `portfolio`, `aum` — referenced by other skills |
 | External | ❌ Not needed | `agent-browser` — not maintained here |
-| Tool skill | ✅ Recommended | `git-worktree`, `create-skill`, etc. |
+| Tool skill | ✅ Recommended | `git-worktree`, `skill-creator` (external), etc. |
 
 ## Governance Limits
 

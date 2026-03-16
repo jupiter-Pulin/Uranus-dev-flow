@@ -15,7 +15,7 @@ context: fork
 
 - Code review (use `/codex-review-fast`)
 - Document review (use `/codex-review-doc`)
-- Creating new skills (use `/create-skill`)
+- Creating new skills (use `/skill-creator`)
 - .claude directory structure check (use `/claude-health`)
 
 ## Core Principle
