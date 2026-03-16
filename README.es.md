@@ -305,7 +305,8 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/doc-refactor` | Simplificar documentación |
 | `/simplify` | Simplificar código |
 | `/de-ai-flavor` | Eliminar artefactos generados por IA de documentos |
-| `/create-skill` | Crear nuevos skills |
+| `/safe-remove` | Eliminación segura de activos del plugin |
+| `/skill-creator` | Crear nuevos skills (plugin externo) |
 | `/pr-review` | Self-review de PR |
 | `/pr-summary` | Resumen de estado de PRs (agrupados por ticket) |
 | `/contract-decode` | Decodificador de errores/calldata de contratos EVM |

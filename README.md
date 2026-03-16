@@ -305,7 +305,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/doc-refactor` | Simplify documents |
 | `/simplify` | Code simplification |
 | `/de-ai-flavor` | Remove AI-generated artifacts from documents |
-| `/create-skill` | Create new skills |
+| `/safe-remove` | Safely remove plugin assets |
+| `/skill-creator` | Create new skills (external plugin) |
 | `/pr-review` | PR self-review |
 | `/pr-summary` | PR status summary (grouped by ticket) |
 | `/contract-decode` | EVM contract error/calldata decoder |

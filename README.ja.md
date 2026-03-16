@@ -305,7 +305,8 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/doc-refactor` | ドキュメントの簡素化 |
 | `/simplify` | コードの簡素化 |
 | `/de-ai-flavor` | AI 生成の痕跡を除去 |
-| `/create-skill` | 新しいスキルの作成 |
+| `/safe-remove` | プラグインアセットの安全な削除 |
+| `/skill-creator` | 新しいスキルの作成（外部プラグイン） |
 | `/pr-review` | PR セルフレビュー |
 | `/pr-summary` | PR ステータスサマリー（チケット別グループ） |
 | `/contract-decode` | EVM コントラクトエラー/calldata デコーダー |

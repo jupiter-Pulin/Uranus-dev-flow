@@ -305,7 +305,8 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/doc-refactor` | 문서 간소화 |
 | `/simplify` | 코드 간소화 |
 | `/de-ai-flavor` | AI 생성 흔적 제거 |
-| `/create-skill` | 새 스킬 생성 |
+| `/safe-remove` | 플러그인 에셋 안전 제거 |
+| `/skill-creator` | 새 스킬 생성 (외부 플러그인) |
 | `/pr-review` | PR 셀프 리뷰 |
 | `/pr-summary` | PR 상태 요약 (티켓별 그룹) |
 | `/contract-decode` | EVM 컨트랙트 에러/calldata 디코더 |

@@ -305,7 +305,8 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/doc-refactor` | 精简文档 |
 | `/simplify` | 代码精简 |
 | `/de-ai-flavor` | 去除 AI 痕迹 |
-| `/create-skill` | 创建新技能 |
+| `/safe-remove` | 安全移除插件资产 |
+| `/skill-creator` | 创建新技能（外部 plugin） |
 | `/pr-review` | PR 自查 |
 | `/pr-summary` | PR 状态摘要（按 ticket 分组） |
 | `/contract-decode` | EVM 合约错误/calldata 解码器 |
