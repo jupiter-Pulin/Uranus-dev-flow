@@ -23,7 +23,7 @@ allowed-tools: Bash(git:*), Read, Grep, Glob, AskUserQuestion
 Follow the `smart-commit` skill workflow:
 
 1. **Detect mode**: Read CLAUDE.md / git-workflow rules → manual (default) or execute (`--execute` flag)
-2. **Pre-flight**: Verify `/precommit` passed for code changes
+2. **Pre-flight**: Verify checks passed (code → `/precommit`; structural `.md` → `/precommit-fast`; other `.md` → `/codex-review-doc`)
 3. **Collect**: `git status`, `git diff --stat`, exclude sensitive files
 4. **Group**: High-cohesion grouping (staged first, then by feature/type)
 5. **Generate**: Commit messages matching project style + git commands (or execute directly in `--execute` mode)
