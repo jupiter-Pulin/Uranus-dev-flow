@@ -87,7 +87,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/update-docs` | Sync docs with code | Doc changes |
 | `/doc-refactor` | Simplify documents | Doc changes |
 | `/create-request` | Create/update request docs | Planning |
-| `/create-skill` | Create new skills | Tooling |
+| `/safe-remove` | Safely remove plugin assets | Tooling |
 | `/simplify` | Code simplification | Refactoring |
 | `/de-ai-flavor` | Remove AI artifacts | Doc changes |
 | `/zh-tw` | Rewrite in Traditional Chinese | i18n |
