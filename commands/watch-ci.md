@@ -12,7 +12,7 @@ allowed-tools: Bash(gh:*), Bash(git:*)
 
 - Branch: !`git rev-parse --abbrev-ref HEAD`
 - HEAD SHA: !`git rev-parse --short HEAD`
-- Recent CI runs: !`gh run list --branch $(git rev-parse --abbrev-ref HEAD) --limit 3 --json databaseId,name,status,conclusion,headSha --template '{{range .}}{{.databaseId}} {{.name}} {{.status}} {{.conclusion}} {{.headSha | truncate 7}}{{"\n"}}{{end}}' 2>/dev/null || echo "gh CLI unavailable"`
+- Recent CI runs: !`gh run list --limit 3 --json databaseId,name,status,conclusion,headSha --template '{{range .}}{{.databaseId}} {{.name}} {{.status}} {{.conclusion}} {{.headSha | truncate 7}}{{"\n"}}{{end}}' 2>/dev/null || echo "gh CLI unavailable"`
 
 ## Task
 
