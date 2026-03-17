@@ -36,6 +36,6 @@
 |-------|--------|-------|
 | Feasibility | ✅ Done | `/best-practices` + `/codex-brainstorm` Nash equilibrium |
 | Tech Spec | ✅ Done | `docs/features/rule-override-pattern/2-tech-spec.md` |
-| Implementation | Pending | 7 tasks in WBS |
-| Testing | Pending | Unit + integration tests |
-| Review | Pending | `/codex-review-doc` |
+| Implementation | ✅ Done | v1: base+override separation (`10e3280`). v2: customize redesign (`3e201a8`) |
+| Testing | ✅ Done | 139 tests pass |
+| Review | ✅ Done | Multiple Codex review rounds passed |

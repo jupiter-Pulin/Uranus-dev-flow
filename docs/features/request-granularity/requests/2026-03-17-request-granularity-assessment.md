@@ -54,9 +54,9 @@
 |-------|--------|-------|
 | Feasibility | ✅ Done | `/best-practices` audit threadId: `019cfbde-68be-71b1-889a-135b19b4b69f` |
 | Tech Spec | ✅ Done | `2-tech-spec.md` — Codex review ✅ Mergeable |
-| Implementation | Pending | 1M + 5S |
-| Testing | Pending | Unit tests |
-| Review | Pending | `/codex-review-doc` + `/precommit-fast` |
+| Implementation | ✅ Done | 6/6 tasks: Phase 1.5 in SKILL.md, granularity guide + Depends On in template, command spec, AskUserQuestion allowed-tools, 9 tests |
+| Testing | ✅ Done | 139 tests pass (130 existing + 9 granularity) |
+| Review | ✅ Done | `/precommit-fast` ✅ All Pass. Commit: `b013b0e` |
 
 ## References
 
