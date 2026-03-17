@@ -86,9 +86,9 @@ Two-pass design: Phase 1.5a runs after Gather (quick AC count + keyword scan), P
 
 | Signal | Detection Method | Weight |
 |--------|-----------------|--------|
-| **AC count > 8** | Count `- [ ]` items. Exclude quality-gate ACs matching canonical pattern: `/codex-review-fast`, `/codex-review-doc`, `/codex-review`, `/precommit`, `/precommit-fast`, `/pr-review` (regex: `Pass /(?:codex-review(?:-fast|-doc)?|precommit(?:-fast)?|pr-review)`). | Primary |
+| **AC count > 8** | Count `- [ ]` items. Exclude quality-gate ACs matching canonical 6-command list (see §3.3.1 for full regex). | Primary |
 | **Layer mixing** | Pre-Explore fallback: detect layer keywords in Requirements text (`rules/`, `hooks/`, `scripts/`). Post-Explore refinement: check if Related Files span behavior-layer (`rules/`, `CLAUDE.md`, `commands/*.md`, `skills/**/*.md`) vs code-layer (`hooks/`, `scripts/`, `*.sh`, `*.js`). Phase 1.5 runs twice: quick check pre-Explore, refined check post-Explore. | Primary |
-| **Scope breadth** | Requirements list has 3+ functionally independent areas (heuristic: 3+ unrelated `## ` sections or requirement groups that don't share files) | Primary |
+| **Scope breadth** | Requirements list has 3+ functionally independent areas (heuristic: 3+ unrelated `##` sections or requirement groups that don't share files) | Primary |
 | **WBS groups ≥ 2** | If tech spec exists and has `Work Breakdown` or `工作分解` heading with 2+ independent task groups | Secondary |
 | **Effort > 3 days** | Tech spec WBS has multiple M/L effort items | Secondary |
 
