@@ -9,7 +9,7 @@
 ❌ Waiting for user instructions
 ❌ **Declaring as executing**: Saying "need to run X" without actually invoking the tool
 ❌ **Summary as completion**: Outputting a polished summary then stopping, without executing the next step
-❌ **Context/token excuse**: Citing context window limits, long session, or token budget as reason to skip or defer review. If context is genuinely exhausted, the model must still attempt the review — failure to invoke is a violation regardless of reason
+❌ **Context/token excuse**: Citing context window limits, long session, or token budget as reason to skip or defer review. If context is genuinely exhausted, the model must still attempt the review — failure to invoke is a violation regardless of reason. See @rules/context-management.md for measurement-based context policy.
 
 ## Auto-Trigger
 

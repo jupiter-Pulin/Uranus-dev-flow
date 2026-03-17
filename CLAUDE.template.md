@@ -310,3 +310,4 @@ Replace these placeholders with your project values:
 - @rules/git-workflow.md
 - @rules/logging.md
 - @rules/self-improvement.md -- Corrected → record → prevent recurrence
+- @rules/context-management.md -- Data-driven context monitoring (measure before deciding)
