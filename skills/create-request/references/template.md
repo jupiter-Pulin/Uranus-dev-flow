@@ -97,3 +97,23 @@ docs/features/{feature}/requests/YYYY-MM-DD-title.md
 | Track progress      | Progress section marks each phase status             |
 | Clear scope         | Scope section defines "what to do" and "what not to do" |
 | Verifiable          | Acceptance Criteria use checkboxes for verification  |
+
+## Granularity Guide
+
+| Metric | Target | Action if exceeded |
+|--------|--------|--------------------|
+| Acceptance Criteria | ≤ 8 per request | Consider splitting by layer or functional area |
+| Related Files layers | 1 concern layer | Split behavior-layer (.md rules/skills) from code-layer (.sh/.js hooks/scripts) |
+| Estimated effort | ≤ 3 days | Split by deliverable |
+
+Quality-gate ACs matching `Pass /<review-or-precommit-command>` don't count toward the ≤8 target. Canonical list: `/codex-review-fast`, `/codex-review-doc`, `/codex-review`, `/precommit`, `/precommit-fast`, `/pr-review`.
+
+## Dependencies (conditional)
+
+Add to request header metadata when splitting creates dependencies between sibling requests:
+
+```markdown
+> **Depends On**: [Request Title](./YYYY-MM-DD-xxx.md)
+```
+
+Place after `> **Tech Spec**:` line. Only include when this request requires another to complete first.

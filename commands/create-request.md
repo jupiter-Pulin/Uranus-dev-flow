@@ -1,7 +1,7 @@
 ---
 description: Create or update a request document. Auto-fill template on creation, sync with implementation progress on update.
 argument-hint: [--update <file-path>] [--feature <name>]
-allowed-tools: Read, Grep, Glob, Write, Bash
+allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -45,9 +45,11 @@ Other               -> Create Mode (ask for info)
 Follow the Create Mode Workflow in the skill:
 
 1. **Gather**: Collect feature, title, priority, requirements
-2. **Explore**: Search related code + tech spec
-3. **Generate**: Fill template + create file
-4. **Confirm**: Show result + suggest next steps
+2. **Quick Granularity Check (1.5a)**: AC count + layer keyword scan
+3. **Explore**: Search related code + tech spec
+4. **Refined Granularity Check (1.5b)**: Layer mixing (Related Files) + scope breadth
+5. **Generate**: Fill template + create file(s)
+6. **Confirm**: Show result + suggest next steps
 
 ### Update Mode
 
