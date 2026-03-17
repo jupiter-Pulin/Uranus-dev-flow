@@ -1,0 +1,34 @@
+# Auto-Loop Project Overrides
+
+<!-- Precedence: When this file conflicts with auto-loop.md, this file takes precedence. -->
+<!-- Based on: auto-loop.md @ a17d1b3 (2026-03-13) -->
+
+<!--
+This file is user-owned and NOT managed by the plugin's smart merge.
+Plugin updates to auto-loop.md will not affect this file.
+
+To override a section from auto-loop.md:
+1. Copy the exact ## heading from auto-loop.md
+2. Restate the FULL section content here
+3. Your version takes precedence
+
+Example: To customize the Auto-Trigger table, uncomment and edit the section below.
+-->
+
+<!-- ## Auto-Trigger
+
+| Change Type | Event              | Execute Immediately  |
+| ----------- | ------------------ | -------------------- |
+| code files  | Fix P0/P1/P2       | `/codex-review-fast` |
+| code files  | review Ready       | `/precommit-fast`    |
+| `.md`       | Fix doc issues     | `/codex-review-doc`  |
+
+-->
+
+<!-- ## Exit Conditions (Only)
+
+- ✅ All Pass
+- ⛔ Need Human — Architecture changes, feature removal, user requests stop
+- 🔄 3 rounds on same issue — Report blocker, request intervention
+
+-->

@@ -8,7 +8,7 @@
 - **Arquitectura dual-reviewer** — Codex MCP + reviewer secundario en paralelo, fail-closed
 - **~4% de context footprint** — el 96% de la ventana de 200k de Claude queda para tu código
 
-65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
 
 ## Inicio rápido
 
@@ -21,7 +21,7 @@
 /project-setup
 ```
 
-Un solo comando autodetecta framework, package manager, base de datos, entry points y scripts. Instala 11 rules + 5 hooks.
+Un solo comando autodetecta framework, package manager, base de datos, entry points y scripts. Instala 12 rules + 5 hooks.
 
 Usa `--lite` para solo configurar CLAUDE.md (sin rules/hooks).
 
@@ -187,7 +187,7 @@ flowchart TD
 | Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
+| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
 | Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### Mínimo consumo de context
@@ -324,6 +324,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | Rule | Descripción |
 |------|-------------|
 | `auto-loop` | Fix -> re-review -> fix -> ... -> Pass (ciclo automático) |
+| `auto-loop-project` | Overrides de auto-loop específicos del proyecto (propiedad del usuario, no gestionado por plugin) |
 | `codex-invocation` | Codex debe investigar independientemente, nunca alimentar conclusiones |
 | `fix-all-issues` | Tolerancia cero: corregir todos los issues encontrados |
 | `self-improvement` | Corrección → registrar lección → prevenir recurrencia |
@@ -334,6 +335,8 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `docs-writing` | Tablas > párrafos, Mermaid > texto |
 | `docs-numbering` | Prefijos de documentos (0-feasibility, 2-spec) |
 | `logging` | JSON estructurado, sin secrets |
+
+> **Personalización**: Edita `auto-loop-project.md` para sobrescribir el comportamiento de auto-loop por proyecto. Las actualizaciones del plugin no conflictuarán — ver [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 
 ## Hooks
 

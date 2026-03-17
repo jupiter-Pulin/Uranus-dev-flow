@@ -8,7 +8,7 @@
 - **デュアルレビューアーキテクチャ** — Codex MCP + セカンダリレビューアーを並列実行、fail-closed
 - **~4% のコンテキスト使用量** — Claude の 200k ウィンドウの 96% はコードに使えます
 
-65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
 
 ## クイックスタート
 
@@ -21,7 +21,7 @@
 /project-setup
 ```
 
-1つのコマンドでフレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを自動検出します。11個のルール + 5個のフックをインストールします。
+1つのコマンドでフレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを自動検出します。12個のルール + 5個のフックをインストールします。
 
 `--lite` で CLAUDE.md のみ設定（ルール/フックをスキップ）。
 
@@ -187,7 +187,7 @@ flowchart TD
 | スキル | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
 | フック | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| ルール | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
+| ルール | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
 | スクリプト | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 極小の Context 使用量
@@ -324,6 +324,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | ルール | 説明 |
 |--------|------|
 | `auto-loop` | 修正 -> 再レビュー -> 修正 -> ... -> Pass（自動サイクル） |
+| `auto-loop-project` | プロジェクト固有の auto-loop オーバーライド（ユーザー所有、プラグイン管理外） |
 | `codex-invocation` | Codex は独立調査必須、結論の注入禁止 |
 | `fix-all-issues` | ゼロトレランス：見つけた問題はすべて修正 |
 | `self-improvement` | 修正された → 教訓を記録 → 再発防止 |
@@ -334,6 +335,8 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `docs-writing` | テーブル > 段落、Mermaid > テキスト |
 | `docs-numbering` | ドキュメント接頭辞規約（0-feasibility, 2-spec） |
 | `logging` | 構造化 JSON、シークレット禁止 |
+
+> **カスタマイズ**：`auto-loop-project.md` を編集してプロジェクトの auto-loop 動作をオーバーライドできます。プラグイン更新と競合しません — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 参照。
 
 ## フック
 

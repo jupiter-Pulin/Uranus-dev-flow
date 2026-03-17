@@ -9,6 +9,7 @@
 ❌ Waiting for user instructions
 ❌ **Declaring as executing**: Saying "need to run X" without actually invoking the tool
 ❌ **Summary as completion**: Outputting a polished summary then stopping, without executing the next step
+❌ **Context/token excuse**: Citing context window limits, long session, or token budget as reason to skip or defer review. If context is genuinely exhausted, the model must still attempt the review — failure to invoke is a violation regardless of reason
 
 ## Auto-Trigger
 
@@ -203,3 +204,8 @@ Doc Sync is a **behavior-layer rule** (not hook-enforced). After precommit Pass,
 **Target detection**: 3-level fallback (context → git diff → ⚠️ Need Human). See `/update-docs` for algorithm details.
 
 **Safety valve**: After doc sync, compare code diff against pre-sync baseline; if new code changes exist, return to review loop. See `/update-docs` Safety Valve section.
+
+## Project Customization
+
+Project-specific overrides belong in `auto-loop-project.md` (not this file).
+See `@rules/auto-loop-project.md` for your project's custom auto-loop behavior.

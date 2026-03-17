@@ -8,7 +8,7 @@
 - **Dual-reviewer architecture** — Codex MCP + secondary reviewer in parallel, fail-closed
 - **~4% context footprint** — 96% of Claude's 200k window stays for your code
 
-65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
 
 ## Quick Start
 
@@ -21,7 +21,7 @@
 /project-setup
 ```
 
-One command auto-detects framework, package manager, database, entrypoints, and scripts. Installs 11 rules + 5 hooks.
+One command auto-detects framework, package manager, database, entrypoints, and scripts. Installs 12 rules + 5 hooks.
 
 Use `--lite` to only configure CLAUDE.md (skip rules/hooks).
 
@@ -187,7 +187,7 @@ flowchart TD
 | Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
+| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
 | Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### Minimal Context Footprint
@@ -324,6 +324,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | Rule | Description |
 |------|-------------|
 | `auto-loop` | Fix -> re-review -> fix -> ... -> Pass (auto cycle) |
+| `auto-loop-project` | Project-specific auto-loop overrides (user-owned, not plugin-managed) |
 | `codex-invocation` | Codex must independently research, never feed conclusions |
 | `fix-all-issues` | Zero tolerance: fix every issue found |
 | `self-improvement` | Corrected → record lesson → prevent recurrence |
@@ -334,6 +335,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `docs-writing` | Tables > paragraphs, Mermaid > text |
 | `docs-numbering` | Document prefix convention (0-feasibility, 2-spec) |
 | `logging` | Structured JSON, no secrets |
+
+> **Customization**: Edit `auto-loop-project.md` to override auto-loop behavior per project. Plugin updates won't conflict — see [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 
 ## Hooks
 

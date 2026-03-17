@@ -111,6 +111,8 @@ Read all `.md` files from the discovered rules directory. The expected rules are
 | `docs-numbering.md` | Document numbering scheme |
 | `self-improvement.md` | Self-improvement loop (corrected → record → prevent) |
 
+> **Exclusion**: `*-project.md` files (e.g., `auto-loop-project.md`) are NOT managed rules. They are user-owned override templates — see Phase 3.6.
+
 If `--list` is specified, output this table and **stop**.
 
 ### Phase 3: Determine Installation Set
@@ -158,6 +160,36 @@ If `--list` is specified, output this table and **stop**.
    - plugin unchanged → keep deleted silently + write tombstone
 
 6. Store classifications in memory for Phase 4.
+
+### Phase 3.6: Override Template Creation
+
+After processing managed rules, create unmanaged override templates:
+
+```
+# Override templates are NOT part of the managed install set
+override_templates = { "auto-loop.md": "auto-loop-project.md" }
+
+For each (base_rule, project_file) in override_templates:
+  if project_file NOT exists in .claude/rules/:
+    Copy from rules/{project_file} as template
+    Do NOT write manifest entry for project_file
+    Log: "Created project override template: {project_file}"
+  else:
+    Skip (user already has it)
+```
+
+> **Important**: `*-project.md` files must be explicitly excluded from the managed rule enumeration (`rules/*.md`). They are template sources only, never manifest-tracked.
+
+### Phase 3.7: CLAUDE.md Reference Backfill
+
+After override template creation, perform idempotent reference check:
+
+```
+If @rules/auto-loop.md reference exists in CLAUDE.md ## Rules
+  AND @rules/auto-loop-project.md is absent:
+    Insert @rules/auto-loop-project.md line after @rules/auto-loop.md
+    Log: "Added project override reference to CLAUDE.md"
+```
 
 ### Phase 4: Smart Merge and Install
 
@@ -230,13 +262,16 @@ mkdir -p ${REPO_ROOT}/.claude/rules
 Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine can activate. This guarantees a closed loop even when `/install-rules` is run standalone (without `/project-setup`).
 
 1. Grep `.claude/CLAUDE.md` for `@rules/auto-loop.md`
-2. **Found** → skip (already configured)
+2. **Found** → check if `@rules/auto-loop-project.md` also present:
+   - **Both present** → skip (fully configured)
+   - **`auto-loop.md` present, `auto-loop-project.md` missing** → insert `- @rules/auto-loop-project.md -- Project-specific auto-loop overrides (user-owned)` after the `auto-loop.md` line
 3. **Not found but file exists** → append the following `## Rules` block at end of file:
 
    ```markdown
    ## Rules
 
    - @rules/auto-loop.md -- Auto review loop (highest priority)
+   - @rules/auto-loop-project.md -- Project-specific auto-loop overrides (user-owned)
    - @rules/codex-invocation.md -- Codex must independently research (critical)
    - @rules/fix-all-issues.md -- Zero tolerance
    - @rules/testing.md

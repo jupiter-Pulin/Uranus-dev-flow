@@ -8,7 +8,7 @@
 - **雙 Reviewer 架構** — Codex MCP + 次要 reviewer 並行審查，fail-closed
 - **~4% context 佔用** — Claude 200k window 的 96% 留給你的程式碼
 
-65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
 
 ## 快速開始
 
@@ -21,7 +21,7 @@
 /project-setup
 ```
 
-一個指令自動偵測 framework、package manager、資料庫、entry point 和 script 指令。安裝 11 條 rules + 5 個 hooks。
+一個指令自動偵測 framework、package manager、資料庫、entry point 和 script 指令。安裝 12 條 rules + 5 個 hooks。
 
 使用 `--lite` 僅設定 CLAUDE.md（跳過 rules/hooks）。
 
@@ -187,7 +187,7 @@ flowchart TD
 | Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
+| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
 | Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 極小的 Context 佔用
@@ -324,6 +324,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | Rule | 說明 |
 |------|------|
 | `auto-loop` | 修正 -> 重新 review -> 修正 -> ... -> Pass（自動循環） |
+| `auto-loop-project` | 專案客製化的 auto-loop 覆寫規則（使用者擁有，不受 plugin 管理） |
 | `codex-invocation` | Codex 必須自主調研，禁止餵結論 |
 | `fix-all-issues` | 零容忍：修正所有發現的問題 |
 | `self-improvement` | 被修正 → 記錄教訓 → 防止再犯 |
@@ -334,6 +335,8 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `docs-writing` | 表格 > 段落，Mermaid > 文字 |
 | `docs-numbering` | 文件前綴慣例（0-feasibility, 2-spec） |
 | `logging` | 結構化 JSON，禁止 secrets |
+
+> **客製化**：編輯 `auto-loop-project.md` 可覆寫專案的 auto-loop 行為。Plugin 更新不會衝突 — 詳見 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 
 ## Hooks
 

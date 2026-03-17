@@ -8,7 +8,7 @@
 - **듀얼 리뷰어 아키텍처** — Codex MCP + 보조 리뷰어 병렬 실행, fail-closed
 - **~4% 컨텍스트 사용량** — Claude 200k 윈도우의 96%를 코드에 활용
 
-65 commands | 49 skills | 14 agents | 5 hooks | 11 rules | 11 scripts
+65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
 
 ## 빠른 시작
 
@@ -21,7 +21,7 @@
 /project-setup
 ```
 
-하나의 명령어로 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트를 자동 감지합니다. 11개 Rules + 5개 Hooks를 설치합니다.
+하나의 명령어로 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트를 자동 감지합니다. 12개 Rules + 5개 Hooks를 설치합니다.
 
 `--lite`로 CLAUDE.md만 설정 (Rules/Hooks 스킵).
 
@@ -187,7 +187,7 @@ flowchart TD
 | Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
 | Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 11 | auto-loop, codex-invocation, security, testing, git-workflow, self-improvement |
+| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
 | Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
 
 ### 최소한의 Context 사용량
@@ -324,6 +324,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | Rule | 설명 |
 |------|------|
 | `auto-loop` | 수정 -> 재리뷰 -> 수정 -> ... -> Pass (자동 순환) |
+| `auto-loop-project` | 프로젝트별 auto-loop 오버라이드 (사용자 소유, 플러그인 미관리) |
 | `codex-invocation` | Codex는 독립적으로 조사해야 하며, 결론 주입 금지 |
 | `fix-all-issues` | 제로 톨러런스: 발견된 이슈 전부 수정 |
 | `self-improvement` | 수정 사항 → 교훈 기록 → 재발 방지 |
@@ -334,6 +335,8 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `docs-writing` | 테이블 > 문단, Mermaid > 텍스트 |
 | `docs-numbering` | 문서 접두사 컨벤션 (0-feasibility, 2-spec) |
 | `logging` | 구조화된 JSON, 시크릿 금지 |
+
+> **커스터마이징**: `auto-loop-project.md`를 편집하여 프로젝트별 auto-loop 동작을 오버라이드할 수 있습니다. 플러그인 업데이트와 충돌하지 않습니다 — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 참조.
 
 ## Hooks
 
