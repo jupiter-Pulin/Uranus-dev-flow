@@ -4,6 +4,8 @@
 
 ## Prohibited Behaviors
 
+❌ **Fixing ≠ Verifying**: Claiming "issue fixed" or "already addressed" without running re-review is a violation. Every fix must be verified by invoking the review command — self-assessment does not count.
+❌ **Skipping dual dispatch**: Code review commands must launch both Codex + secondary reviewer in parallel on every iteration (first pass AND loop re-reviews). Secondary is always dispatched in v1.
 ❌ Asking "Should I re-review?" or "Continue?" after fixing
 ❌ Stopping after outputting a summary without executing review
 ❌ Waiting for user instructions
@@ -32,8 +34,9 @@ Code review commands dispatch two reviewers in parallel. This section defines th
 | First-pass dual | Code review command must dual-dispatch on first pass (Codex + secondary background) |
 | Non-blocking secondary | Secondary reviewer runs in background and does not block initial gate emission |
 | Late P0/P1 | Within same review session, late secondary P0/P1 re-opens fix→re-review loop |
-| Loop re-review | `--continue` loops use Codex stateful re-review only; do not restart secondary |
+| Loop re-review | `--continue` loops re-dispatch both reviewers (Codex `--continue` + secondary fresh). Secondary is always dispatched in v1 (no skip exception). |
 | Pre-precommit checkpoint | Before `/precommit-fast`, reconcile any pending secondary result; if late P0/P1, re-enter review loop |
+| Cycle reset | Any code edit resets the review cycle — both reviewers must re-run regardless of prior pass status |
 
 ## P2/Nit Quality Sweep
 
@@ -81,8 +84,8 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit-fast` (unchanged behavior).
 
 ```
 "Fixed 3 issues, running /codex-review-fast..."
-[Execute]
-"Passed, running /precommit-fast..."
+[Execute: Codex --continue + Secondary fresh — parallel dispatch]
+"Codex: ✅ Ready. Secondary: ✅ Ready. Running /precommit-fast..."
 [Execute]
 "All passed ✅"
 ```

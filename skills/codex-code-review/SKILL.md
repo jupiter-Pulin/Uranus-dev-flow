@@ -112,7 +112,7 @@ Launch **two reviewers in parallel** (single message, multiple tool calls):
 **Case B: Loop review (has `--continue`)**
 
 - **Codex**: Use `mcp__codex__codex-reply` with re-review template from `references/review-common.md`
-- **Secondary**: Not used in loop — Codex-only `--continue` review (secondary runs once per review session, not per loop iteration)
+- **Secondary**: Re-dispatch in parallel (same mechanism as first pass, fresh context). Always dispatched in v1 — no skip exception. Cycle resets on any code edit.
 
 ### Step 3.5: Await Codex + Reconcile Secondary
 
@@ -122,7 +122,7 @@ Codex is the **blocking** reviewer — await its result for the initial gate. Se
 |-----------------|--------|
 | Completed before Codex | Include in aggregation (Step 4) |
 | Completed after Codex, before precommit | Reconcile at pre-precommit checkpoint |
-| Still running at precommit | Proceed with Codex gate (authoritative); late result is advisory log |
+| Still running at precommit | Proceed with Codex gate (authoritative); if late result has P0/P1, re-open fix→re-review loop |
 | Failed/timed out | Apply degradation matrix per `references/review-common.md § Dual Reviewer Aggregation` |
 
 ### Step 4: Consolidate Output (Dual Mode)
@@ -182,9 +182,9 @@ Ready + P2/Nit → batch fix → 1 Codex `--continue` verify → evaluate (see `
 | Reviewer | Loop Behavior |
 |----------|---------------|
 | Codex MCP | Stateful → `mcp__codex__codex-reply(threadId)` continues context |
-| Secondary | First review only — not restarted in `--continue` loop iterations |
+| Secondary | Re-dispatched every iteration (fresh context). Always dispatched in v1 (no skip exception). |
 
-In loop iterations, gate comes from Codex-only review. Aggregation gate only applies to first-pass dual review.
+Codex gate is authoritative for timing. Secondary runs non-blocking in background. Aggregation reconciled at pre-precommit checkpoint. Any code edit resets the review cycle — both reviewers must re-run.
 
 ### Pre-precommit Checkpoint
 
@@ -192,9 +192,9 @@ Before triggering `/precommit-fast`, reconcile any pending secondary result:
 
 | Condition | Action |
 |-----------|--------|
-| Task completed + has P0/P1 | Re-emit BLOCKED → fix → re-review (Codex `--continue` only) |
+| Task completed + has P0/P1 | Re-emit BLOCKED → fix → re-review (Codex `--continue` + Secondary fresh) |
 | Task completed + no P0/P1 | Union aggregate → proceed to precommit |
-| Task still running | Proceed with Codex gate (authoritative); late result is advisory log |
+| Task still running | Proceed with Codex gate (authoritative); if late result has P0/P1, re-open fix→re-review loop |
 
 ## Verification
 

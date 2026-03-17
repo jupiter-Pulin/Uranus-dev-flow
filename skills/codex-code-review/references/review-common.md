@@ -174,6 +174,6 @@ Output format: `- [P0] file:line issue → fix [source: both]`
 | Reviewer | Loop Behavior |
 |----------|---------------|
 | Codex MCP | Stateful → `mcp__codex__codex-reply(threadId)` continues context |
-| Secondary | First review only — not restarted in `--continue` loop iterations |
+| Secondary | Re-dispatched every iteration (fresh context). Always dispatched in v1 (no skip exception). |
 
-In loop iterations, gate comes from Codex-only review. Aggregation gate only applies to first-pass dual review.
+Codex gate is authoritative for timing. Secondary runs non-blocking in background. Aggregation reconciled at pre-precommit checkpoint. Any code edit resets the review cycle — both reviewers must re-run.
