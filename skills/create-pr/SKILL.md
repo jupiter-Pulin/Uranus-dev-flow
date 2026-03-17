@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: "Create GitHub PR with gh CLI. Auto-extracts ticket ID from branch name, generates title/summary from commits. Default: --dry-run (show command, don't execute). Use when: user asks to open/create a PR, or says /create-pr"
+description: "Create or update GitHub PR with gh CLI. Auto-extracts ticket ID from branch name, generates title/summary from commits. Auto-detects existing PR and switches to update mode. Default: --dry-run (show command, don't execute). Use when: user asks to open/create/update a PR, says /create-pr, wants to refresh PR description after new commits, or says 'update pr', 'update PR title', 'refresh PR body'."
 allowed-tools: Bash(git:*), Bash(gh:*), Read, Grep, Glob
 ---
 
@@ -8,14 +8,15 @@ allowed-tools: Bash(git:*), Bash(gh:*), Read, Grep, Glob
 
 ## Input
 
-`/create-pr [--head <branch>] [--base <branch>] [--title <title>] [--execute] [--dry-run]`
+`/create-pr [--head <branch>] [--base <branch>] [--title <title>] [--update] [--execute] [--dry-run]`
 
 - `--head`: Source branch (default: current branch)
 - `--base`: Target branch (default: `{TARGET_BRANCH}` or `main`)
 - `--title`: Override auto-generated title
-- `--dry-run`: Show `gh pr create` command without executing (default)
-- `--execute`: Actually create the PR (requires user confirmation)
-- No args: use current branch → default target, dry-run mode
+- `--update`: Force update mode (re-generate title/body for existing PR)
+- `--dry-run`: Show command without executing (default)
+- `--execute`: Actually create/update the PR (requires user confirmation)
+- No args: use current branch → default target, dry-run mode. Auto-detects existing PR → update mode
 
 ## Workflow
 
@@ -85,15 +86,84 @@ Format: `<type>: [<TICKET>] <concise summary>`
 - Use imperative mood in bullet points
 - Omit Ticket section if no ticket ID or `{ISSUE_TRACKER_URL}` not configured
 
-### 5. Pre-flight Checks
+### 5. Pre-flight Checks + Mode Detection
 
 | Check | Action if fails |
 |-------|-----------------|
 | Head branch not pushed | Warn: "branch not pushed to remote, push first" and STOP |
-| PR already exists | Show existing PR URL, ask if user wants to edit title/body |
-| No commits between base..head | Warn: "no diff between branches" and STOP |
+| PR already exists | → **Enter Update Mode** (see section below) |
+| `--update` flag + no existing PR | Warn: "no PR found for this branch" and STOP |
+| No commits between base..head (create mode) | Warn: "no diff between branches" and STOP |
+| No commits between base..head (update mode) | Continue — PR may need title/body refresh from `--title` override |
 
-### 6. Output (dry-run, default)
+**Mode detection logic**:
+
+| Condition | Mode |
+|-----------|------|
+| `--update` flag passed | Force update mode (error if no PR exists) |
+| Existing PR detected (auto) | Update mode (auto-switch) |
+| No existing PR, no `--update` | Create mode (original workflow) |
+
+### 5a. Update Mode
+
+When an existing PR is detected (or `--update` is passed):
+
+**Step 1**: Fetch current PR state (use PR number from pre-flight `gh pr list` result):
+
+```bash
+gh pr view <PR-number> --json number,title,body,url,baseRefName
+```
+
+**Step 2**: Re-generate title and body from latest commits (same logic as Steps 2-4 above, using full commit range `base..head`).
+
+**Step 3**: Smart diff — compare current vs newly generated:
+
+| Field | Current | New | Action |
+|-------|---------|-----|--------|
+| Title | same | same | Skip (no change needed) |
+| Title | differs | differs | Show before/after |
+| Body | same | same | Skip |
+| Body | differs | differs | Show before/after |
+
+**Step 4**: Decision — if both title and body are unchanged → report "PR is already up to date" and STOP.
+
+If changes detected, show the diff and decide what to update:
+
+- **Title changed significantly**: update title automatically. Criteria: type prefix changed (`fix:` → `feat:`) or ticket ID changed.
+- **Title changed trivially**: AskUserQuestion — "Title changed slightly. Update?" (show before/after). Criteria: only the summary text after `<type>: [<TICKET>]` differs.
+- **Body changed**: always update (body reflects commit history, should stay current)
+- When `--title` is passed: override title regardless of diff
+
+**Step 5**: Output (respects `--dry-run` / `--execute`):
+
+Dry-run (default) — show the `gh pr edit` command with **only changed fields** included:
+
+```bash
+# Title-only update (use printf for safe escaping):
+gh pr edit <number> --title "$(printf '%s' '<new-title>')"
+
+# Body-only update (use --body-file for safe escaping):
+gh pr edit <number> --body-file /dev/stdin <<'EOF'
+<new-body>
+EOF
+
+# Both title + body:
+gh pr edit <number> --title "$(printf '%s' '<new-title>')" --body-file /dev/stdin <<'EOF'
+<new-body>
+EOF
+```
+
+Use `--body-file` instead of `--body` to avoid shell escaping issues with quotes and newlines in the body content.
+
+Execute (`--execute`) — ask user for confirmation via AskUserQuestion, then run `gh pr edit`. Output:
+
+```
+PR updated: <URL>
+Title: <old-title> → <new-title>
+Changes: title updated, body updated
+```
+
+### 6. Output (dry-run, default) — Create Mode
 
 Show the full `gh pr create` command:
 
@@ -132,11 +202,25 @@ When user specifies multiple branch pairs (e.g. "A → main, B → A"), create t
 | Branch suffix like `-2`, `-3` | Strip suffix when extracting ticket ID |
 | User provides `--title` | Use as-is, skip auto-generation |
 | Stacked PRs (B → A → main) | Note dependency in body: "Stacked on #<PR-number>" |
+| `--update` but no existing PR | Error: "No PR found for branch `<head>` → `<base>`" |
+| Auto-detect existing PR | Switch to update mode, show "Existing PR #N detected, switching to update mode" |
+| PR body has manual edits | Re-generate from commits; user reviews before/after diff |
+| Title unchanged after new commits | Skip title update, only update body |
 
 ## Verification
+
+### Create mode
 
 - [ ] Branch exists and is pushed to remote
 - [ ] No existing PR for the same head/base
 - [ ] Title follows project convention
 - [ ] Body includes summary and test plan
+- [ ] Dry-run command is valid (copy-pasteable)
+
+### Update mode
+
+- [ ] Existing PR fetched successfully (`gh pr view`)
+- [ ] New title/body generated from latest commits
+- [ ] Before/after diff shown to user
+- [ ] Only changed fields included in `gh pr edit` command
 - [ ] Dry-run command is valid (copy-pasteable)

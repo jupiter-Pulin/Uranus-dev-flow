@@ -1,6 +1,6 @@
 ---
-description: Create GitHub PR from branch — auto-extract ticket, generate title/body, dry-run by default
-argument-hint: [--head <branch>] [--base <branch>] [--title <text>] [--execute] [--dry-run]
+description: Create or update GitHub PR from branch — auto-extract ticket, generate title/body, auto-detect existing PR for update, dry-run by default
+argument-hint: [--head <branch>] [--base <branch>] [--title <title>] [--update] [--execute] [--dry-run]
 allowed-tools: Bash(git:*), Bash(gh:*), Read, Grep, Glob
 ---
 
@@ -18,17 +18,18 @@ Follow the `create-pr` skill workflow:
 2. **Extract ticket**: from branch name using `{TICKET_PATTERN}` (default: `[A-Z]+-\d+`)
 3. **Generate title**: `<type>: [<TICKET>] <summary>`
 4. **Generate body**: Summary bullets + Ticket link + Test plan
-5. **Pre-flight**: verify branch pushed, no existing PR, has diff
-6. **Output**: `gh pr create` command (dry-run default)
+5. **Pre-flight + mode detect**: verify branch pushed, check existing PR → auto-switch to update mode if PR exists
+6. **Output**: `gh pr create` or `gh pr edit` command (dry-run default)
 
 Arguments:
 - `--head <branch>`: Source branch (default: current)
 - `--base <branch>`: Target branch (default: `{TARGET_BRANCH}` or `main`)
 - `--title <text>`: Override title
-- `--execute`: Actually create the PR (asks confirmation first)
+- `--update`: Force update mode (re-generate title/body for existing PR)
+- `--execute`: Actually create/update the PR (asks confirmation first)
 - `--dry-run`: Show command only (default)
 
 ## Output
 
-Dry-run: a copy-pasteable `gh pr create` command block.
-Execute: the created PR URL.
+**Create mode** — Dry-run: `gh pr create` command. Execute: created PR URL.
+**Update mode** — Before/after diff of title/body + `gh pr edit` command (dry-run) or updated PR URL (execute).
