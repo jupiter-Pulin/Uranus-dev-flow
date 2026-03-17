@@ -1,6 +1,6 @@
 ---
 description: Install plugin rules into project .claude/rules/ for persistent use without plugin loaded
-argument-hint: [--all] [--list] [--dry-run] [--force] [--legacy-strategy <strategy>] [--customize <rule>] [rule-names...]
+argument-hint: [--all] [--list] [--dry-run] [--force] [--legacy-strategy <strategy>] [--customize <rule> [--add-section|--update-section <name>|--reset]] [rule-names...]
 allowed-tools: Read, Grep, Glob, Write, AskUserQuestion, Bash(mkdir:*), Bash(diff:*), Bash(git:*), Bash(ls:*)
 ---
 
@@ -25,10 +25,20 @@ sequenceDiagram
     participant T as .claude/rules/
     participant U as User (AskUserQuestion)
 
-    alt --customize
-        C->>U: Customize wizard (Steps 0-6)
-        C->>T: Write *-project.md
-        Note over C: Stop (skip Phases 1-5)
+    alt --customize (uses Phase 1 via Shared Step 0, then stops)
+        C->>S: Shared Step 0: Locate + hash
+        alt Status mode (no sub-flag)
+            C->>U: Output section status table (read-only)
+        else --add-section
+            C->>U: AskUserQuestion pick section
+            C->>T: Append section to *-project.md
+        else --update-section
+            C->>T: Replace target section only
+        else --reset
+            C->>U: AskUserQuestion confirm
+            C->>T: Full regenerate *-project.md
+        end
+        Note over C: Stop (do not continue to Phases 2-5)
     end
     C->>S: Phase 1: Locate plugin rules dir
     C->>S: Phase 2: Enumerate *.md
@@ -80,7 +90,10 @@ $ARGUMENTS
 | `--dry-run` | Show what would be installed, no changes |
 | `--force` | Overwrite all rules with plugin source + update manifest |
 | `--legacy-strategy prompt\|keep-local\|use-plugin\|unmanaged` | Strategy for legacy migration (no manifest, files exist). Default: `prompt` |
-| `--customize <rule>` | Enter interactive wizard to configure a project override file (e.g., `auto-loop`). Mutually exclusive with `--all`, `--list`, `--force`, `--dry-run`, `--legacy-strategy`, and `rule-names` |
+| `--customize <rule>` | Configure project override file incrementally (e.g., `auto-loop`). Default: show override status. Sub-flags: `--add-section`, `--update-section`, `--reset`. Mutually exclusive with `--all`, `--list`, `--force`, `--dry-run`, `--legacy-strategy`, and `rule-names` |
+| `--add-section` | (Under `--customize`) Append a new section from base or custom heading |
+| `--update-section <name>` | (Under `--customize`) Replace only the named `##` section in override file |
+| `--reset` | (Under `--customize`) Full regenerate from template with AskUserQuestion confirmation |
 | `rule-names...` | Space-separated rule names (without .md extension) |
 
 ### Customize Mode (`--customize`)
@@ -91,8 +104,18 @@ When `--customize` is present in `$ARGUMENTS`:
 
 ```
 Error: --customize cannot be combined with --all, --list, --force, --dry-run, --legacy-strategy, or rule-names.
-Usage: /install-rules --customize <rule>
+Usage: /install-rules --customize <rule> [--add-section|--update-section <name>|--reset]
 ```
+
+**Sub-flag mutual exclusion** — `--add-section`, `--update-section`, `--reset` are mutually exclusive:
+
+| Combination | Result |
+|-------------|--------|
+| No sub-flag | Status mode (read-only) |
+| `--add-section` alone | Add mode |
+| `--update-section "X"` alone | Update mode |
+| `--reset` alone | Reset mode |
+| Any two sub-flags together | Error: `--add-section, --update-section, and --reset are mutually exclusive` |
 
 **Supported Rules**:
 
@@ -106,125 +129,166 @@ If the rule name is not in the table above, output error and stop:
 Error: --customize does not support rule "<name>". Supported: auto-loop
 ```
 
-#### Customize Flow: `auto-loop`
+#### Shared Step 0: Locate + Hash
 
-**Step 0**: Locate plugin rules directory using Phase 1 logic, then compute `based_on` blob hash for traceability:
+Locate plugin rules directory using Phase 1 logic, then compute `based_on` blob hash:
 
 ```bash
-# Use PLUGIN_RULES_DIR discovered via Phase 1 logic (Glob search → plugin-relative fallback)
 git hash-object --no-filters <PLUGIN_RULES_DIR>/auto-loop.md
 ```
 
-Store the short blob hash (first 7 chars) and current date for the `Based on` comment. This uses blob hash (not commit hash) for content-level drift detection, consistent with Phase 3.5 hash semantics.
+Store the short blob hash (first 7 chars) and current date. Uses blob hash (not commit hash) for content-level drift detection, consistent with Phase 3.5 hash semantics.
 
-**Step 1**: AskUserQuestion — Code review command
+#### Status Mode (default — no sub-flag)
 
-> Which code review command should the auto-loop trigger after code changes?
-
-Options:
-- `/codex-review-fast` — Quick diff-only review (default)
-- `/codex-review` — Full review with lint+build
-- Skip code review entirely (**Warning**: this overrides behavior-layer only. If stop-guard hook is installed, it enforces independently — user must also adjust or uninstall the hook via `/install-hooks` to avoid contradictions.)
-
-**Step 2**: AskUserQuestion — Doc review command
-
-> Which doc review command should the auto-loop trigger after `.md` changes?
-
-Options:
-- `/codex-review-doc` — Standard doc review (default)
-- Skip doc review entirely
-
-**Step 3**: AskUserQuestion — Precommit command
-
-> Which precommit command should run after review passes?
-
-Options:
-- `/precommit-fast` — Quick lint+test (default)
-- `/precommit` — Full lint+build+test
-- Skip precommit entirely (**Warning**: same behavior-layer vs hook-layer caveat as code review skip)
-
-**Step 4**: AskUserQuestion — P2/Nit Quality Sweep
-
-> Should the auto-loop batch-fix P2/Nit findings before precommit?
-
-Options:
-- Enable P2/Nit Quality Sweep (default)
-- Disable — skip straight to precommit when review passes
-
-**Step 5**: Generate `auto-loop-project.md` content
-
-Based on the answers collected, generate the file with this structure:
-
-```markdown
-# Auto-Loop Project Overrides
-
-<!-- Precedence: When this file conflicts with auto-loop.md, this file takes precedence. -->
-<!-- Based on: auto-loop.md @ {SHORT_HASH} ({DATE}) -->
-<!-- Generated by: /install-rules --customize auto-loop -->
-
-## Auto-Trigger
-
-| Change Type | Event              | Execute Immediately  |
-| ----------- | ------------------ | -------------------- |
-| code files  | Fix P0/P1/P2       | `{CODE_REVIEW_CMD}`  |
-| code files  | review Ready + P2/Nit | {P2_NIT_ACTION}    |
-| code files  | review Ready (no P2/Nit) | `{PRECOMMIT_CMD}` |
-| code files  | precommit Pass     | Doc Sync (see Note)  |
-| code files  | precommit failure  | Fix -> re-run        |
-| `.md`       | Fix doc issues     | `{DOC_REVIEW_CMD}`   |
-| `.md`       | review failure     | Fix -> re-run        |
+```
+/install-rules --customize auto-loop
 ```
 
-Substitution rules:
+1. Run Shared Step 0
+2. Parse base `auto-loop.md` → extract all `##` headings
+3. Read existing `.claude/rules/auto-loop-project.md` (if exists)
+4. Classify each section:
 
-| Variable | Condition | Value |
-|----------|-----------|-------|
-| `{CODE_REVIEW_CMD}` | User chose `/codex-review-fast` | `/codex-review-fast` |
-| `{CODE_REVIEW_CMD}` | User chose `/codex-review` | `/codex-review` |
-| `{CODE_REVIEW_CMD}` | User chose skip | Remove code review rows entirely |
-| `{DOC_REVIEW_CMD}` | User chose `/codex-review-doc` | `/codex-review-doc` |
-| `{DOC_REVIEW_CMD}` | User chose skip | Remove `.md` rows entirely |
-| `{PRECOMMIT_CMD}` | User chose `/precommit-fast` | `/precommit-fast` |
-| `{PRECOMMIT_CMD}` | User chose `/precommit` | `/precommit` |
-| `{PRECOMMIT_CMD}` | User chose skip | Remove precommit-related rows |
-| `{P2_NIT_ACTION}` | Enabled | `P2/Nit Quality Sweep` |
-| `{P2_NIT_ACTION}` | Disabled | `{PRECOMMIT_CMD}` (skip sweep, go direct) |
+| Classification | Condition | Display |
+|---------------|-----------|---------|
+| `active` | Override file has uncommented `## <heading>` | `[ACTIVE]` |
+| `commented` | Override file has `<!-- ## <heading>` | `[COMMENTED]` |
+| `missing` | Section exists in base but not in override | `[BASE ONLY]` |
+| `custom` | Section exists in override but not in base | `[CUSTOM]` |
 
-If P2/Nit Quality Sweep is disabled, also append:
+1. Output status table:
 
 ```markdown
+## Override Status: auto-loop
 
-## P2/Nit Quality Sweep
+**Base**: auto-loop.md @ {SHORT_HASH}
+**Override**: .claude/rules/auto-loop-project.md
 
-Disabled. When review returns ✅ Ready with P2/Nit findings, proceed directly to precommit without batch-fixing.
+| # | Section | Status | Source |
+|---|---------|--------|--------|
+| 1 | Auto-Trigger | [COMMENTED] | base |
+| 2 | Dual Review Mode | [BASE ONLY] | base |
+| 3 | P2/Nit Quality Sweep | [BASE ONLY] | base |
+| 4 | Exit Conditions (Only) | [COMMENTED] | base |
+| 5 | My Custom Integration Tests | [ACTIVE] | custom |
+
+Use `--add-section` to add a new override, `--update-section "<heading>"` to update existing.
 ```
 
-**Step 6**: Write file + confirm
+**Stop** — status mode is read-only, do not modify any files.
 
-1. Check if `.claude/rules/auto-loop-project.md` already exists and has non-template content:
-   - **Detection**: file has uncommented lines containing `## ` headings (i.e., active override sections not wrapped in `<!-- -->`)
-   - If yes → AskUserQuestion: "`.claude/rules/auto-loop-project.md` already has custom overrides. Overwrite?" (Yes / No)
-   - If user says No → stop, output "Cancelled. Existing overrides preserved."
-2. Write the generated content to `.claude/rules/auto-loop-project.md`
-3. Ensure `.claude/CLAUDE.md` has `@rules/auto-loop-project.md` reference (reuse Phase 3.7 / Phase 4.6 backfill logic)
-4. Output summary:
+#### Add Section Mode (`--add-section`)
+
+```
+/install-rules --customize auto-loop --add-section
+```
+
+1. Run Shared Step 0 + show status table (same as Status Mode)
+2. AskUserQuestion:
+
+> Which section to add?
+
+Options (dynamic, based on status):
+- Each `[BASE ONLY]` or `[COMMENTED]` section → "Override: `## <heading>` (from base)"
+- "Custom: Enter your own section heading"
+
+3a. **Base section selected**: Copy section content from base `auto-loop.md`, append to override file after last section.
+
+3b. **Custom section selected**: AskUserQuestion for heading text (raw text without `##` prefix, e.g. `My Integration Tests` → tool writes `## My Integration Tests`), then generate stub:
 
 ```markdown
-## Customize Complete
+## {heading}
 
-**Rule**: auto-loop
-**Target**: .claude/rules/auto-loop-project.md
-**Based on**: auto-loop.md @ {SHORT_HASH}
-
-| Setting | Value |
-|---------|-------|
-| Code review | {choice} |
-| Doc review | {choice} |
-| Precommit | {choice} |
-| P2/Nit Sweep | {enabled/disabled} |
-
-Project overrides are now active. Edit `.claude/rules/auto-loop-project.md` to further customize.
+<!-- TODO: Add your custom rules here -->
 ```
+
+**Input validation for custom heading**:
+
+| Check | Rule | Error |
+|-------|------|-------|
+| Heading level | Must be `##` (not `#`, `###`) | "Custom sections must use `##` level headings" |
+| Length | 3-80 characters (excluding `##` prefix) | "Heading too short/long" |
+| Characters | Alphanumeric + spaces + hyphens + parentheses | "Heading contains invalid characters" |
+| Duplicate | Must not match existing active heading in override | Redirect to `--update-section` |
+
+1. **Duplicate check**: If `## <heading>` already exists as active section in override → error:
+
+```
+Error: Section "## <heading>" already exists in override file.
+Use `--update-section "<heading>"` to replace it.
+```
+
+1. Update `<!-- Based on -->` hash **only when content was copied from base** (custom sections do not change the base reference).
+2. Ensure `.claude/CLAUDE.md` has `@rules/auto-loop-project.md` reference (reuse Phase 4.6 backfill logic).
+3. Output:
+
+```markdown
+## Section Added
+
+**Section**: ## <heading>
+**Source**: base / custom
+**File**: .claude/rules/auto-loop-project.md
+
+Edit the section content to customize your project's behavior.
+```
+
+**Stop** — do not continue to install phases.
+
+#### Update Section Mode (`--update-section`)
+
+```
+/install-rules --customize auto-loop --update-section "Auto-Trigger"
+```
+
+1. Run Shared Step 0
+2. Read override file, locate target `## <heading>` section
+3. If not found → error: `Section "## <heading>" not found in override file. Use --add-section first.`
+4. AskUserQuestion: Show current section content, offer options:
+   - "Re-copy from base (latest version)"
+   - "Keep current and edit manually"
+5. If re-copy: replace only the target section content, preserve all other sections
+6. Update `<!-- Based on -->` hash
+7. Output: `Section "## <heading>" updated in .claude/rules/auto-loop-project.md`
+
+**Stop** — do not continue to install phases.
+
+#### Reset Mode (`--reset`)
+
+```
+/install-rules --customize auto-loop --reset
+```
+
+1. Run Shared Step 0
+2. **Sentinel-based content detection** to check if file has active content:
+
+```
+in_comment = false
+for each line in file:
+  stripped = line.trim()
+  if "<!--" in stripped and "-->" in stripped:
+    // Single-line comment: if text exists BEFORE "<!--", treat as active content
+    prefix = stripped.split("<!--")[0].trim()
+    if prefix != "":
+      has_active_content = true; break
+    continue  // pure single-line comment, skip
+  if "<!--" in stripped and "-->" not in stripped:
+    in_comment = true; continue
+  if in_comment:
+    if "-->" in stripped: in_comment = false
+    continue
+  if stripped starts with "#": continue
+  if stripped is empty: continue
+  // Non-empty, non-comment, non-heading = active content
+  has_active_content = true; break
+```
+
+1. If has active content → AskUserQuestion: "This will regenerate `auto-loop-project.md` from template, replacing ALL current content including custom sections. Continue?"
+   - "Yes, reset to template"
+   - "No, cancel"
+2. If no active content or user confirms: copy from plugin template source `rules/auto-loop-project.md`
+3. Update `<!-- Based on -->` hash + `<!-- Generated by: /install-rules -->` sentinel
+4. Ensure CLAUDE.md reference (Phase 4.6 backfill)
 
 **Stop** — do not continue to install phases.
 
@@ -261,6 +325,7 @@ Read all `.md` files from the discovered rules directory. The expected rules are
 | `docs-writing.md` | Documentation writing conventions |
 | `docs-numbering.md` | Document numbering scheme |
 | `self-improvement.md` | Self-improvement loop (corrected → record → prevent) |
+| `context-management.md` | Data-driven context monitoring (measure before deciding) |
 
 > **Exclusion**: `*-project.md` files (e.g., `auto-loop-project.md`) are NOT managed rules. They are user-owned override templates — see Phase 3.6.
 
@@ -433,6 +498,7 @@ Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine
    - @rules/git-workflow.md
    - @rules/logging.md
    - @rules/self-improvement.md -- Corrected → record → prevent recurrence
+   - @rules/context-management.md -- Data-driven context monitoring (measure before deciding)
    ```
 
 4. **File does not exist** → extract from plugin's `CLAUDE.template.md`: `## Required Checks` through `### Auto-Loop Rule` sections + `## Rules` section → create minimal `.claude/CLAUDE.md`. Remove ecosystem block markers and leave unresolved placeholders as `{PLACEHOLDER}`.
@@ -513,6 +579,15 @@ Status icons: ✅=Installed/Auto-updated/Merged/Adopted, ⏭️=Kept/Skipped/Enr
 # Smart merge with legacy migration (keep all local)
 /install-rules --all --legacy-strategy keep-local
 
-# Interactive wizard to customize auto-loop project overrides
+# Show override status for auto-loop
 /install-rules --customize auto-loop
+
+# Add a section to auto-loop project overrides
+/install-rules --customize auto-loop --add-section
+
+# Update a specific section in auto-loop project overrides
+/install-rules --customize auto-loop --update-section "Auto-Trigger"
+
+# Reset auto-loop project overrides to template
+/install-rules --customize auto-loop --reset
 ```

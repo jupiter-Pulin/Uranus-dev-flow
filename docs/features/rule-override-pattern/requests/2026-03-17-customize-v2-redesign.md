@@ -62,9 +62,9 @@ v1 `--customize` wizard 只支援 4 個 preset 維度（code review / doc review
 |-------|--------|-------|
 | Feasibility | ✅ Done | `/best-practices` audit threadId: `019cfa99-3cba-7601-887e-c9b1f9e8adf8` |
 | Tech Spec | ✅ Done | `3-customize-v2.md` — Codex review ✅ Mergeable |
-| Implementation | Pending | 7 tasks per WBS (2M + 5S): rewrite customize, sentinel, health check, hash, args, tests, READMEs |
-| Testing | Pending | Unit + integration tests |
-| Review | Pending | `/codex-review-doc` + `/precommit-fast` |
+| Implementation | ✅ Done | 7/7 tasks complete: customize rewrite, sentinel, health check #5, hash unification, args+examples, 21 tests, READMEs (no change needed) |
+| Testing | ✅ Done | 120 tests pass (99 existing + 21 new) |
+| Review | ✅ Done | `/codex-review-doc` ✅ Mergeable (threadId: `019cfb04-b6dd-7a10-8f3f-e06669fc7c75`) + `/precommit-fast` ✅ All Pass |
 
 ## References
 
