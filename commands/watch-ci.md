@@ -1,6 +1,6 @@
 ---
 description: Monitor GitHub Actions CI runs for current HEAD or specified SHA
-argument-hint: [--sha <sha>] [--branch <branch>] [--timeout <min>] [--run-id <id>]
+argument-hint: [--sha <sha>] [--branch <branch>] [--timeout <min>] [--run-id <id>] [--foreground]
 allowed-tools: Bash(gh:*), Bash(git:*)
 ---
 
@@ -30,6 +30,7 @@ $ARGUMENTS
 | `--branch <branch>` | Branch to filter runs | current branch |
 | `--timeout <min>` | Watch timeout in minutes | 10 |
 | `--run-id <id>` | Monitor a specific run ID directly | auto-detect |
+| `--foreground` | Run `gh run watch` in foreground (blocking) | background |
 
 ## Examples
 

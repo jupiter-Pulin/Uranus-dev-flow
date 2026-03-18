@@ -61,7 +61,16 @@ For each matching run, monitor with `gh run watch`:
 gh run watch <run-id> --exit-status
 ```
 
-**Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), monitor all. Report verdict for each individually.
+**Execution mode**: `gh run watch` is a long-running blocking command. To avoid locking Claude while CI runs:
+
+| Mode | When | Behavior |
+|------|------|----------|
+| Background (default) | No `--foreground` flag | Use Bash `run_in_background: true`. Claude notifies user that monitoring started, then continues. On task completion notification, read output via `TaskOutput` and report verdict. |
+| Foreground | `--foreground` flag passed | Execute inline (blocking). Claude waits for completion before responding. |
+
+**Background mode details**: After launching `gh run watch` in background, immediately inform the user (e.g. "CI monitoring started for run `<id>`, I'll report when it completes"). When the background task notification arrives, use `TaskOutput` to read the result and emit the verdict.
+
+**Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), monitor all. In background mode, launch each as a separate background task. Report verdict for each individually.
 
 **Timeout enforcement**: Default 10 minutes (configurable via `--timeout`). If any run exceeds timeout, stop monitoring and report as timeout.
 
@@ -83,6 +92,7 @@ Overall verdict = worst individual result (any fail → overall fail).
 | `--branch <branch>` | Branch to filter runs | `git rev-parse --abbrev-ref HEAD` |
 | `--timeout <min>` | Watch timeout in minutes | 10 |
 | `--run-id <id>` | Monitor a specific run ID directly | auto-detect |
+| `--foreground` | Run `gh run watch` in foreground (blocking) | background |
 
 ## Output
 

@@ -156,6 +156,7 @@ After successful push, invoke `/watch-ci` to monitor CI runs:
 
 - Pass `--sha <HEAD_SHA>` and `--branch <BRANCH>` from Phase 0
 - Pass `--timeout` from arguments (default 10)
+- Pass `--foreground` to ensure blocking execution (push-ci needs the verdict before completing)
 - `/watch-ci` handles run discovery, monitoring, retry logic, and verdict reporting
 
 This delegation keeps push authorization logic separate from read-only CI monitoring. See `@skills/watch-ci/SKILL.md` for CI monitoring details.
