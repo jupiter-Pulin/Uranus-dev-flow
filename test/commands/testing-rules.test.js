@@ -85,3 +85,54 @@ test('.claude/CLAUDE.md references testing-project.md', {
   const content = readFileSync(resolve(root, '.claude/CLAUDE.md'), 'utf8');
   assert.match(content, /@rules\/testing-project\.md/, 'should reference testing-project.md');
 });
+
+// --- Phase B: --ac-trace mode ---
+
+test('SKILL.md has --ac-trace workflow section', () => {
+  const content = readFileSync(resolve(root, 'skills/test-review/SKILL.md'), 'utf8');
+  assert.match(content, /## Workflow:.*--ac-trace/, 'should have --ac-trace workflow section');
+  assert.match(content, /quality-gate/i, 'should mention quality-gate AC filtering');
+  assert.match(content, /VALID_EXCEPTION/, 'should reference VALID_EXCEPTION emit');
+});
+
+test('SKILL.md --ac-trace references codex-prompt-ac-trace.md', () => {
+  const content = readFileSync(resolve(root, 'skills/test-review/SKILL.md'), 'utf8');
+  assert.match(content, /codex-prompt-ac-trace\.md/, 'should reference ac-trace prompt');
+});
+
+test('codex-test-review.md has --ac-trace argument', () => {
+  const content = readFileSync(resolve(root, 'commands/codex-test-review.md'), 'utf8');
+  assert.match(content, /--ac-trace/, 'should have --ac-trace in argument-hint');
+  assert.match(content, /AC Traceability/, 'should have AC Traceability output section');
+});
+
+test('codex-prompt-ac-trace.md exists with required elements', () => {
+  const path = resolve(root, 'skills/test-review/references/codex-prompt-ac-trace.md');
+  assert.ok(existsSync(path), 'codex-prompt-ac-trace.md should exist');
+  const content = readFileSync(path, 'utf8');
+  assert.match(content, /independently research/, 'should have independent research block');
+  assert.match(content, /mcp__codex__codex/, 'should use fresh codex thread');
+  assert.match(content, /VALID_EXCEPTION/, 'should include VALID_EXCEPTION in output schema');
+  assert.match(content, /sandbox.*read-only/i, 'should set read-only sandbox');
+});
+
+// --- Phase C: Adequacy Gate in auto-loop ---
+
+test('auto-loop.md has Adequacy Gate section', () => {
+  const content = readFileSync(resolve(root, 'rules/auto-loop.md'), 'utf8');
+  assert.match(content, /Adequacy Gate/, 'should have Adequacy Gate section');
+  assert.match(content, /--ac-trace/, 'should reference --ac-trace command');
+  assert.match(content, /advisory.*default/i, 'should mention advisory as default');
+});
+
+test('auto-loop.md trigger table includes Adequacy Gate', () => {
+  const content = readFileSync(resolve(root, 'rules/auto-loop.md'), 'utf8');
+  assert.match(content, /precommit Pass.*Adequacy Gate/i, 'trigger table should include Adequacy Gate');
+});
+
+test('.claude/rules/auto-loop.md synced with Adequacy Gate', {
+  skip: !existsSync(resolve(root, '.claude/rules/auto-loop.md')),
+}, () => {
+  const content = readFileSync(resolve(root, '.claude/rules/auto-loop.md'), 'utf8');
+  assert.match(content, /Adequacy Gate/, 'installed copy should have Adequacy Gate');
+});

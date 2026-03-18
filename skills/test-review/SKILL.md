@@ -57,6 +57,74 @@ Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
 
 **Save the returned `threadId`.**
 
+## Workflow: `/codex-test-review --ac-trace`
+
+AC traceability mode — maps Acceptance Criteria from request docs to test evidence.
+
+```
+--ac-trace input → Read request doc → Parse ACs → Filter quality-gate → Search evidence → Codex verify → Matrix + Gate
+```
+
+### Step 1: Input Resolution
+
+| Input | Behavior |
+|-------|----------|
+| `--ac-trace <request-path>` | Read specified request doc |
+| `--ac-trace` (no path) | Auto-detect from `docs/features/*/requests/*.md` via git diff context |
+| No `--ac-trace` | Existing behavior (5-dimension coverage review) |
+
+### Step 2: Parse & Filter ACs
+
+1. Locate `## Acceptance Criteria` section in request doc
+2. Parse `- [ ]` / `- [x]` items
+3. Filter out quality-gate ACs matching: `/codex-review-fast`, `/codex-review-doc`, `/codex-review`, `/precommit`, `/precommit-fast`, `/pr-review`
+
+### Step 3: Search Evidence
+
+For each non-quality-gate AC:
+
+| Evidence Type | Priority | How to Find |
+|--------------|----------|-------------|
+| Automated test | 1 (preferred) | Search Related Files test paths; match AC text → test assertions |
+| Runtime verification | 2 | Search `/feature-verify` results at L3+ confidence |
+| Manual exception | 3 (verified only) | Check AC annotation `<!-- exception: REASON, expires: DATE -->` |
+
+### Step 4: Codex Verify (independent)
+
+Fresh thread (`mcp__codex__codex`). See `references/codex-prompt-ac-trace.md`.
+
+| Rule | Detail |
+|------|--------|
+| Cache | `request-path + git diff hash` key; same session reuse |
+| Timeout | 30s → fallback to Claude-only + `⚠️ Inconclusive` |
+| Unavailable | All items `⚠️ Inconclusive`; advisory → `⚠️ Adequate with exceptions`; strict → `⚠️ Need Human` |
+
+Config: `sandbox: 'read-only'`, `approval-policy: 'never'`
+
+**Save the returned `threadId`.**
+
+### Step 5: Exception Validation (3-gate)
+
+| Gate | Check |
+|------|-------|
+| Reason class | Closed enum: `ENV_UNAVAILABLE` / `UNSAFE_TO_AUTOMATE` / `ONE_TIME_MIGRATION` |
+| Codex verification | Must emit `VALID_EXCEPTION` |
+| Expiry | ISO 8601; expired = ⛔ (strict) or ⚠️ (advisory) |
+
+**Exception caps** (from @rules/testing.md): 1-8 AC = max 1; 9-12 = max 2; 13+ = hard cap 2.
+**Prohibited domains**: Security AC, Data-integrity AC, Regression AC = no exceptions allowed.
+
+### Step 6: Output + Gate
+
+Gate sentinels (from @rules/testing.md):
+
+| Sentinel | Meaning |
+|----------|---------|
+| `✅ Adequate` | All ACs covered by evidence |
+| `⚠️ Adequate with exceptions` | Validated exceptions within cap |
+| `⚠️ Need Human` | Codex unavailable or inconclusive |
+| `⛔ Inadequate` | Unverified exception, cap breach, or prohibited domain |
+
 ## Workflow: `/codex-test-gen`
 
 ```
@@ -127,6 +195,7 @@ Max 3 rounds. Still failing → report blocker.
 
 - Test review prompt: `references/codex-prompt-test-review.md`
 - Test gen prompt: `references/codex-prompt-test-gen.md`
+- AC trace prompt: `references/codex-prompt-ac-trace.md`
 - Standards: @rules/testing.md
 
 ## Examples
@@ -140,4 +209,7 @@ Action: Read source → Codex generate → Save test → Suggest review
 
 Input: Are this service's tests sufficient?
 Action: /codex-test-review → Assess coverage → Output gaps + Gate
+
+Input: /codex-test-review --ac-trace docs/features/auth/requests/2026-03-01-login.md
+Action: Parse AC → Filter quality-gate → Search evidence → Codex verify → Matrix + Gate
 ```

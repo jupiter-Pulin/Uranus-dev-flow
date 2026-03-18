@@ -35,7 +35,7 @@ Every non-quality-gate AC must map to evidence.
 | Gate | Requirement |
 |------|-------------|
 | Reason class | Closed enum: `ENV_UNAVAILABLE` / `UNSAFE_TO_AUTOMATE` / `ONE_TIME_MIGRATION` |
-| Codex verification | `/codex-test-review --ac-trace` must emit `VALID_EXCEPTION` (pending: Phase B implementation) |
+| Codex verification | `/codex-test-review --ac-trace` must emit `VALID_EXCEPTION` |
 | Expiry | Required (ISO 8601); default +14d; expired = ⛔ in strict, ⚠️ in advisory |
 
 | AC Count | Max Exceptions |

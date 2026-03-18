@@ -1,6 +1,6 @@
 ---
 description: Review test case sufficiency using Codex MCP, suggest additional edge cases. Supports review loop with context preservation.
-argument-hint: [<file-or-dir|description>] [--type unit|integration|e2e] [--continue <threadId>]
+argument-hint: [<file-or-dir|description>] [--type unit|integration|e2e] [--continue <threadId>] [--ac-trace <request-path>]
 allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Grep, Glob
 ---
 
@@ -9,6 +9,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Gr
 @skills/test-review/SKILL.md
 @skills/test-review/references/codex-prompt-test-review.md
 @skills/test-review/references/codex-prompt-test-gen.md
+@skills/test-review/references/codex-prompt-ac-trace.md
 
 ## Context
 
@@ -35,6 +36,7 @@ $ARGUMENTS
 | Module name         | `"portfolio service"`      | Search related test files              |
 | No parameter        | -                          | Auto-detect from git diff              |
 | `--continue`        | `--continue <threadId>`    | Continue previous review session       |
+| `--ac-trace`        | `--ac-trace <path>` or bare | AC traceability mode (see below)       |
 
 ### Workflow
 
@@ -86,6 +88,35 @@ Smart detect → Read test + source → Codex review (5 dimensions) → Coverage
 To re-review after additions: `/codex-test-review --continue <threadId>`
 ````
 
+### AC Traceability Mode (`--ac-trace`)
+
+When `--ac-trace` is specified, skip the 5-dimension review and execute the AC traceability workflow from SKILL.md.
+
+#### Additional Context
+
+- Request docs: !`ls docs/features/*/requests/*.md 2>/dev/null | head -5`
+
+#### AC Traceability Output
+
+````markdown
+## AC Traceability Report
+
+### Request: <path>
+
+| # | AC | Evidence Type | Evidence Location | Confidence | Status |
+|---|-----|--------------|-------------------|------------|--------|
+| 1 | <AC text> | Automated test | test/xxx.test.js:42 | High | ✅ |
+| 2 | <AC text> | Runtime verification | /feature-verify L3 | Medium | ✅ |
+| 3 | <AC text> | Manual exception | ENV_UNAVAILABLE, expires 2026-04-01 | -- | ⚠️ |
+| 4 | <AC text> | (none) | -- | -- | ⛔ |
+
+### Exception Summary
+- Total ACs: N (M non-quality-gate)
+- Exceptions: X/Y cap
+
+### Gate: ✅ Adequate / ⚠️ Adequate with exceptions / ⚠️ Need Human / ⛔ Inadequate (N gaps)
+````
+
 ## Examples
 
 ```bash
@@ -93,4 +124,6 @@ To re-review after additions: `/codex-test-review --continue <threadId>`
 /codex-test-review "portfolio service tests"
 /codex-test-review
 /codex-test-review --continue abc123
+/codex-test-review --ac-trace docs/features/auth/requests/2026-03-01-login.md
+/codex-test-review --ac-trace
 ```

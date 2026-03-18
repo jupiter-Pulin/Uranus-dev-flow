@@ -9,6 +9,7 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*)
 @skills/test-review/SKILL.md
 @skills/test-review/references/codex-prompt-test-gen.md
 @skills/test-review/references/codex-prompt-test-review.md
+@skills/test-review/references/codex-prompt-ac-trace.md
 
 ## Context
 

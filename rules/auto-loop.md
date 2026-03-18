@@ -20,7 +20,7 @@
 | code files  | Fix P0/P1/P2       | `/codex-review-fast` |
 | code files  | review Ready + P2/Nit | P2/Nit Quality Sweep |
 | code files  | review Ready (no P2/Nit) | `/precommit-fast` |
-| code files  | precommit Pass     | Doc Sync (see Note)  |
+| code files  | precommit Pass     | Adequacy Gate (if request doc) → Doc Sync |
 | code files  | precommit failure  | Fix -> re-run        |
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |
 | `.md`       | review failure     | Fix -> re-run        |
@@ -196,6 +196,28 @@ Review commands must output standard markers. Hook-parsed sentinels are consumed
 | `✅ All Pass` | Precommit | All checks passed | Hook |
 | `⛔ FAIL` / `❌ FAIL` | Precommit | Check failed | Hook |
 | `⚠️ Need Human` | Any | Needs human intervention | Behavior-layer only |
+
+### Adequacy Gate (behavior-layer, request-doc-aware)
+
+After precommit Pass, if a request doc with `## Acceptance Criteria` is detected:
+
+| Step | Action |
+|------|--------|
+| 1 | Auto-detect request doc (3-level fallback, same as doc sync) |
+| 2 | `/codex-test-review --ac-trace <request-path>` |
+| 3 | Evaluate gate (mode from `testing-project.md ## Adequacy Mode`) |
+
+**Mode behavior**:
+
+| Mode | ✅ Adequate | ⚠️ Adequate with exceptions | ⚠️ Need Human | ⛔ Inadequate |
+|------|------------|--------------------|--------------| --------------|
+| advisory (default) | Continue | Continue + log | Warn + continue | Warn + continue |
+| strict | Continue | Continue + log | **Stop** (blocking) | Re-enter fix loop |
+| off | Skip | Skip | Skip | Skip |
+
+**Detection**: No request doc with AC section → skip (no gate). Same 3-level fallback as Doc Sync: context → git diff → `⚠️ Need Human`.
+
+**v1 scope**: Behavior-layer only (no hook enforcement). Advisory mode default. Strict opt-in via `testing-project.md`.
 
 ### Doc Sync Note
 

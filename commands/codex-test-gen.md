@@ -9,6 +9,7 @@ allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Read, Grep, Glob, Wri
 @skills/test-review/SKILL.md
 @skills/test-review/references/codex-prompt-test-gen.md
 @skills/test-review/references/codex-prompt-test-review.md
+@skills/test-review/references/codex-prompt-ac-trace.md
 
 ## Context
 
