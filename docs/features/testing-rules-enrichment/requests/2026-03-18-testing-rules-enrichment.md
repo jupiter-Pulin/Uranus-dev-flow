@@ -1,7 +1,7 @@
 # Request: Testing Rules Enrichment + AC Traceability
 
 > **Created**: 2026-03-18
-> **Status**: In Progress
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Source**: `/best-practices` audit + `/codex-brainstorm` Nash Equilibrium (threadId: `019cfee9-f2ad-7ed1-b6f9-35d573b84fd1`)
@@ -51,8 +51,8 @@
 - [x] `testing.md` contains Adequacy Gate Sentinels (4 states)
 - [x] `testing-project.md` exists with precedence header + commented override sections
 - [x] `CLAUDE.md` references `@rules/testing-project.md`
-- [ ] `/codex-test-review --ac-trace` mode documented in SKILL.md (Phase B — pending)
-- [ ] `auto-loop.md` has Adequacy Gate section (Phase C — pending)
+- [x] `/codex-test-review --ac-trace` mode documented in SKILL.md (Phase B)
+- [x] `auto-loop.md` has Adequacy Gate section (Phase C)
 - [x] Tests: `testing.md` content assertions pass
 - [x] `/codex-review-doc` pass
 - [x] `/precommit-fast` pass
@@ -65,8 +65,8 @@
 | Brainstorm | ✅ Done | Nash Equilibrium reached (3 rounds, threadId: `019cfee9-f2ad-7ed1-b6f9-35d573b84fd1`) |
 | Tech Spec | ✅ Done | `2-tech-spec.md` — Codex review ✅ Mergeable (threadId: `019cff28-7dc9-7fa2-afdc-e86e791d8255`) |
 | Implementation (Phase A) | ✅ Done | `ae6b016` — rules rewrite + testing-project.md + tests |
-| Implementation (Phase B) | Pending | `--ac-trace` mode for `/codex-test-review` |
-| Implementation (Phase C) | Pending | Auto-loop adequacy gate |
+| Implementation (Phase B) | ✅ Done | `--ac-trace` workflow + Codex prompt + command update |
+| Implementation (Phase C) | ✅ Done | Adequacy Gate section in auto-loop.md + trigger table update |
 | Testing | ✅ Done | 11/11 content assertions pass |
 | Review | ✅ Done | `/codex-review-doc` + `/precommit-fast` pass |
 
