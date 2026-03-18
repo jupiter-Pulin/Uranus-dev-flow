@@ -1,6 +1,6 @@
 ---
 name: create-request
-description: "Create or update request documents. Use when: planning features, tracking requests, updating progress. Not for: tech specs (use tech-spec), code implementation (use feature-dev). Output: request document with status tracking."
+description: "Create, update, or scan request documents. Use when: planning features, tracking requests, updating progress, scanning incomplete requests, checking request status dashboard. Not for: tech specs (use tech-spec), code implementation (use feature-dev). Output: request document with status tracking."
 allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 ---
 
@@ -8,7 +8,17 @@ allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 
 ## Trigger
 
-- Keywords: create request, new request, write request, build request, update request, sync progress
+- Keywords: create request, new request, write request, build request, update request, sync progress, scan requests, request status, incomplete requests, request dashboard
+
+## Mode Overview
+
+```mermaid
+flowchart LR
+    A[/create-request] --> B{Mode?}
+    B -->|--status| C[Scan: Discover → Parse → Filter → Report]
+    B -->|--update| D[Update: Load → Analyze → Map → Update → Report]
+    B -->|default| E[Create: Gather → Explore → Generate → Confirm]
+```
 
 ## Modes
 
@@ -16,6 +26,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 | -------- | ----------------------------- | ------------------------------- |
 | `create` | No file specified / new request | Gather info -> Fill template -> Create file |
 | `update` | File specified / update request | Read current state -> Check implementation -> Update progress |
+| `scan`   | `--status` flag                 | Scan all requests -> Parse metadata -> Filter incomplete -> Report |
 
 ## When NOT to Use
 
@@ -82,7 +93,7 @@ Split by: **layer** (behavior vs code) if detected, then **functional area** if 
 
 ### Sibling Request Output
 
-When user accepts split, create N files: `YYYY-MM-DD-{title-slug}-r{N}.md`. Each gets its own AC subset (target ≤8), scoped Related Files, and conditional `> **Depends On**:` header if dependency exists between siblings.
+When user accepts split, create indexed files: `YYYY-MM-DD-{title-slug}-r1.md`, `...-r2.md`, etc. (e.g., `2026-03-18-auth-fix-r1.md`, `2026-03-18-auth-fix-r2.md`). Each gets its own AC subset (target ≤8), scoped Related Files, and conditional `> **Depends On**:` header if dependency exists between siblings.
 
 ## Create Mode: Interaction
 
@@ -101,6 +112,8 @@ If incomplete info, ask:
 
 ## Update Mode Workflow
 
+**Path validation**: `--update <path>` must match `docs/features/*/requests/*.md` (or `archived/`). Reject paths outside this scope before any write action.
+
 ```
 Phase 1: Load      -> Read existing request document
 Phase 2: Analyze   -> Analyze Related Files + git changes
@@ -116,7 +129,7 @@ Phase 5: Report    -> Output change summary
 git log --oneline --since="<created_date>" -- <related_files>
 
 # Check test status
-grep -r "describe\|it\(" test/ --include="*<feature>*"
+grep -rE "describe|it\(" test/ --include="*<feature>*"
 
 # Check review status
 git log --oneline --grep="codex-review" -- <related_files>
@@ -136,7 +149,7 @@ git log --oneline --grep="codex-review" -- <related_files>
 
 | Section               | Update Logic                              |
 | --------------------- | ----------------------------------------- |
-| `Status`              | Pending -> In Development -> Completed    |
+| `Status`              | Canonical lifecycle: Pending → In Progress → Completed. Normalize variants: `In Development`/`In Dev` → `In Progress`; `Done` → `Completed` |
 | `Progress` table      | Update each phase status based on git changes |
 | `Acceptance Criteria` | Check checkboxes based on implementation/test results |
 | `Progress.Note`       | Add latest commit message summary         |
@@ -151,6 +164,72 @@ If confirmation needed, ask:
 3. Any blocked items to mark?
 ```
 
+---
+
+## Scan Mode Workflow
+
+```
+Phase 1: Discover  -> Glob docs/features/*/requests/*.md (exclude archived/)
+Phase 2: Parse     -> Extract Status, Priority, Created, AC progress from each doc
+Phase 3: Filter    -> Keep incomplete (Status ≠ Completed, Done, Superseded)
+Phase 4: Report    -> Group by status, sort by priority then date, output markdown
+```
+
+### Phase 1: Discovery
+
+```
+Glob: docs/features/*/requests/*.md
+Exclude: docs/features/*/requests/archived/*.md
+```
+
+Count total, active, and archived separately.
+
+### Phase 2: Metadata Parsing
+
+Support two metadata formats (try in order, use first match):
+
+| Format | Status Pattern | Priority Pattern | Created Pattern |
+|--------|---------------|-----------------|-----------------|
+| Blockquote | `> **Status**: <value>` | `> **Priority**: <value>` | `> **Created**: <value>` |
+| Table | `^\| Status \| **?<value>**? \|` (anchor to line start, metadata section only — first 15 lines) | `^\| Priority \| <value> \|` | `^\| Created \| <value> \|` |
+
+**Fallback**: If metadata missing, extract date from filename (`YYYY-MM-DD-*`), default status to `unknown`, priority to `--`.
+
+**AC Progress**: Count `- [x]` (checked) vs total `- [ ]` + `- [x]` in `## Acceptance Criteria` section.
+
+**Feature name**: Extract from path — second segment after `docs/features/` (e.g., `docs/features/auth/requests/...` → `auth`).
+
+### Phase 3: Filter & Classify
+
+| Status | Classification | Include in Report |
+|--------|---------------|-------------------|
+| Completed | Done | No |
+| Done | Done | No |
+| Superseded | Done | No |
+| In Progress / In Development / In Dev | Active | Yes |
+| Pending | Backlog | Yes |
+| Design / Proposed | Pre-work | Yes |
+| unknown | Backlog (grouped with Pending) | Yes |
+
+**Stale detection**: Pending requests with Created date > 30 days ago → mark `[stale]`.
+
+### Phase 4: Report Format
+
+Console-only markdown output (no file creation). Group by status in actionability order:
+
+1. **In Progress** — active work, highest actionability
+2. **Pending** — backlog, includes stale detection
+3. **Design / Proposed** — pre-implementation
+
+Each group as a table with columns: `#`, `Request`, `Feature`, `Priority`, `Created`, `AC`, `Path`.
+Pending group adds a `Stale` column.
+
+**Sort order within each group**: Priority descending (`P0 > P1 > P2 > --`), then Created ascending (oldest first).
+
+Bottom summary table: status counts + average age (days since Created).
+
+Summary line at top: `N incomplete / M total (K archived excluded)`.
+
 ## File Naming
 
 **Format**: `YYYY-MM-DD-kebab-case-title.md`
@@ -160,7 +239,7 @@ If confirmation needed, ask:
 ## Output
 
 - Request document at `docs/features/<feature>/requests/YYYY-MM-DD-<title>.md`
-- Sections: Background, Requirements, Acceptance Criteria, Priority
+- Sections: Background, Requirements, Scope, Related Files, Acceptance Criteria, Progress, References
 - Status: New or Updated
 
 ## Verification
