@@ -14,7 +14,7 @@
 
 - 建立新 skill `/load-pr-review`，將 GitHub PR review 建議載入 Claude Code session
 - 使用 GraphQL `reviewThreads` 取得 thread 結構（含 `isResolved`、`isOutdated`；上限 `first:100` threads、`first:20` comments/thread）
-- 三層互動模式：`summary`（預設）→ `plan`（分類策略）→ `fix`（guided 修復）
+- 三層互動模式：`plan`（預設，analysis-only）→ `summary`（輕量顯示）→ `fix`（explicit opt-in 修復）
 - Smart defaults：無參數自動偵測當前分支 PR、支援 PR# / URL 輸入
 - Token budget 機制：預設載入 30 條 unresolved threads（`reviewThreads first:100`、`comments first:20`），防止 context 爆量
 - 回寫功能（workflow-gated）：reply comment + resolve thread，SKILL.md 要求 dry-run → plan → AskUserQuestion 確認後才執行 `--execute`
@@ -65,6 +65,7 @@
 | Development | Done | Feat `6034ec2` + 3 hotfixes (`5adbbaf` `1ffa763` `31f7090`) + Go template context check |
 | Testing | Done | 40 tests pass (`73a85c5`): 22 core + 18 error/edge cases |
 | Acceptance | Done | All 13 AC checked |
+| Enhancement (2026-03-18) | Done | Bug fix: (1) batch verdict → per-thread `/seek-verdict` for independent assessment (2) default mode `summary` → `plan` (analysis-only, no auto-fix) |
 
 ## References
 

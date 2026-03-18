@@ -66,9 +66,11 @@ sequenceDiagram
     JS-->>SK: Token-budgeted summary
 
     alt plan/fix mode + verdict enabled
-        SK->>CX: Step 1.5: Batch triage (issue-analyze + seek-verdict)
-        Note over CX: Independent research (anti-anchoring)
-        CX-->>SK: Per-thread verdicts (ACTIONABLE / NON_ACTIONABLE / UNCERTAIN)
+        loop Each unresolved thread (parallel)
+            SK->>CX: Step 1.5: /seek-verdict per thread (fresh Codex)
+            Note over CX: Independent research (anti-anchoring)
+            CX-->>SK: Per-thread verdict (DISMISS_VERDICT audit trail)
+        end
     end
 
     SK->>U: Present digest (summary mode)
@@ -200,7 +202,7 @@ bash scripts/run-skill.sh load-pr-review load-pr-review.js \
 | Argument | Description | Default |
 | -------- | ----------- | ------- |
 | `<PR#\|URL>` | PR 指定 | 當前分支的 PR |
-| `--mode <summary\|plan\|fix>` | 互動模式 | `summary` |
+| `--mode <plan\|summary\|fix>` | 互動模式 | `plan`（analysis-only, no auto-fix） |
 | `--all` | 顯示全部 comments（含已解決，硬上限 200） | `false` |
 | `--writeback` | 啟用回寫功能 | `false` |
 | `--execute` | 回寫直接執行（跳過 dry-run） | `false` |
@@ -233,28 +235,31 @@ Preflight checks:
 
 > Note: "Has review threads" 檢查在 Step 2 fetch 完成後執行（metadata 不含 thread 資訊）。若無 threads → Inform: "No review comments on this PR"。
 
-#### Step 1.5: Issue Analysis Triage（verdict-enabled by default）
+#### Step 1.5: Per-Thread Independent Verdict（via `/seek-verdict`）
 
-在 **plan** 和 **fix** 模式下（非 summary），對 unresolved threads 進行批次 Codex verdict triage。
+在 **plan**（預設）和 **fix** 模式下（非 summary），對每個 unresolved thread 獨立呼叫 `/seek-verdict` 進行 Codex 評估。每個 thread 取得自己的 fresh Codex context — 不共享 cross-thread 狀態。
+
+**為什麼 per-thread 而非 batch**: 每條 review comment 需要獨立視角。Batch 在單一 Codex call 中會造成 cross-thread 汙染（一個 verdict 影響另一個）。Per-thread 確保每次評估真正獨立。
 
 **觸發條件**:
 
 | Mode | Verdict | 原因 |
 |------|---------|------|
 | summary | 跳過 | 輕量顯示，不需成本 |
-| plan | 執行（預設） | 在 plan 表格中補充 Codex 評估 |
+| plan | 執行（預設） | 在 plan 表格中補充獨立 Codex 評估 |
 | fix | 執行（預設） | 預先篩選 actionable threads |
 
 **Flag**: `--no-verdict` 停用此步驟。
 
 **執行流程**:
-1. 收集 Step 1 中所有 unresolved threads（`--all` 時仍僅 triage unresolved）
-2. 呼叫 `mcp__codex__codex`（fresh thread, `sandbox: 'read-only'`, `approval-policy: 'never'`）
-3. 解析 JSON array 回應，將 `thread_id` 對應回載入的 threads
-4. 若 >60% threads 為 NON_ACTIONABLE，發出 `[VERDICT_TRIAGE_WARN]`（anti-abuse）
-5. Codex 呼叫失敗時，顯示警告並跳過 verdict（graceful degradation）
+1. 收集所有 unresolved threads（`--all` 時仍僅 triage unresolved）
+2. 對每個 thread 打包為 `/seek-verdict` finding（finding_key、severity P2、comment body、relevant_diff）
+3. 透過 **Skill tool**（built-in）呼叫 `/seek-verdict`（每個 thread 一次獨立 Codex 呼叫）
+4. 並行 dispatch（1-5 全並行；6-15 並行；16-30 並行+警告成本；30+ 建議 `--no-verdict`）
+5. 若 >60% threads 為 DISMISS_VERIFIED，發出 `[VERDICT_TRIAGE_WARN]`（anti-abuse）
+6. 任何 `/seek-verdict` 失敗時，標記該 thread 為 UNCERTAIN，繼續處理（graceful degradation）
 
-**Anti-anchoring**: prompt 僅包含原始 thread 資料（reviewer comments、file、line），不包含 Claude 自身分類結果。
+**Anti-anchoring**: `/seek-verdict` 原生強制 — Claude 分類結果不會傳給 Codex。
 
 **Verdict 分類對照**（依 `seek-verdict` policy-mapping 門檻）:
 
@@ -312,7 +317,11 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate
 
 #### Step 4: Present Digest（依 mode）
 
-**summary mode**（default）:
+**plan mode**（default — analysis-only, no auto-fix）:
+
+> 預設模式為分析模式。不編輯任何檔案。Fix 需要明確 `--mode fix`。
+
+**summary mode**（`--mode summary`）:
 
 ```markdown
 ## PR #42: Feature title
@@ -416,7 +425,8 @@ gh api graphql -f query='mutation($id:ID!) { resolveReviewThread(input: {threadI
 **Total estimated effort**: M-L（1 JS script ~200-300 LOC + 3 reference docs + SKILL.md）
 
 **Implementation status**:
-- Step 1.5 verdict triage: ✅ Implemented（SKILL.md + `references/verdict-triage-prompt.md`）
+- Step 1.5 verdict triage: ✅ Implemented — per-thread `/seek-verdict`（SKILL.md + `references/verdict-triage-prompt.md` 改寫）
+- Analysis-only default: ✅ Implemented — default mode `plan`, fix requires explicit `--mode fix`
 
 ## 6. Testing Strategy
 
