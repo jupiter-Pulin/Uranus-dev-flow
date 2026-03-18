@@ -9,7 +9,17 @@
 ❌ Using context state to skip auto-loop obligations (review/precommit)
 ❌ Proposing new session without first attempting `/compact` + retry
 
-## Three-Tier Policy
+## Auto-Compact Mode
+
+When the user has enabled auto-compact (Claude Code setting), the harness handles compaction automatically. In this mode:
+
+- **Skip all manual context monitoring** — no `/context` checks, no Three-Tier zone tracking
+- **Never mention context capacity** — do not warn about context size, propose new sessions, or suggest `/compact`
+- **Focus entirely on the task** — context management is the harness's responsibility, not the model's
+
+Detection: if prior messages show `[auto-compact]` markers or the conversation has been auto-compacted, treat auto-compact as enabled.
+
+## Three-Tier Policy (manual compact mode only)
 
 | Zone | Condition | Action |
 |------|-----------|--------|
