@@ -1,6 +1,6 @@
 ---
 description: Create, update, or scan request documents. Auto-fill template on creation, sync with implementation progress on update, scan all incomplete requests with --status.
-argument-hint: [--update <file-path>] [--feature <name>] [--status]
+argument-hint: [--update <file-path>] [--update-all] [--feature <name>] [--status]
 allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 ---
 
@@ -28,6 +28,7 @@ $ARGUMENTS
 | Parameter          | Description                       |
 | ------------------ | --------------------------------- |
 | `--status`         | Scan mode: report all incomplete requests |
+| `--update-all`     | Batch update: scan all incomplete + git verify + batch edit |
 | `--update <path>`  | Update mode: specify request path |
 | `--feature <name>` | Create mode: specify feature area |
 | No parameter       | Auto-determine from context       |
@@ -36,6 +37,7 @@ $ARGUMENTS
 
 ```
 Has --status        -> Scan Mode
+Has --update-all    -> Batch Update Mode
 Has --update        -> Update Mode
 Has --feature       -> Create Mode
 Context references request doc -> Update Mode (after confirmation)
@@ -101,7 +103,7 @@ Follow the Update Mode Workflow in the skill:
 
 | Section             | Changes                  |
 | ------------------- | ------------------------ |
-| Status              | Pending -> In Development|
+| Status              | Pending -> In Progress   |
 | Progress.Development| ⬜ -> 🔄 In Progress      |
 | Progress.Testing    | ⬜ -> 🔄 In Progress      |
 | Acceptance Criteria | 2/5 -> 4/5 ✅            |
@@ -164,6 +166,9 @@ Follow the Update Mode Workflow in the skill:
 
 # Scan all incomplete requests
 /create-request --status
+
+# Batch update all stale request docs
+/create-request --update-all
 
 # Update specific request
 /create-request --update docs/features/auth/requests/2026-01-23-fix-login-validation.md
