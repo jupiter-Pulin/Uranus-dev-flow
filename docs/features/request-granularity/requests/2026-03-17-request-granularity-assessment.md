@@ -1,7 +1,7 @@
 # Request: Add Granularity Assessment to /create-request
 
 > **Created**: 2026-03-17
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -37,16 +37,16 @@
 
 ## Acceptance Criteria
 
-- [ ] SKILL.md has Phase 1.5a (quick) and Phase 1.5b (refined) granularity check
-- [ ] AC count signal excludes canonical 6 quality-gate commands
-- [ ] Layer mixing detection has pre-Explore keyword fallback + post-Explore file analysis
-- [ ] Decision logic triggers at `signal_count >= 2`
-- [ ] AskUserQuestion in both SKILL.md and command allowed-tools
-- [ ] Template has granularity guide (≤8 AC target, layer, effort)
-- [ ] Template has `Depends On` header metadata field
-- [ ] Tests pass
-- [ ] Pass `/codex-review-doc`
-- [ ] Pass `/precommit-fast`
+- [x] SKILL.md has Phase 1.5a (quick) and Phase 1.5b (refined) granularity check
+- [x] AC count signal excludes canonical 6 quality-gate commands
+- [x] Layer mixing detection has pre-Explore keyword fallback + post-Explore file analysis
+- [x] Decision logic triggers at `signal_count >= 2`
+- [x] AskUserQuestion in both SKILL.md and command allowed-tools
+- [x] Template has granularity guide (≤8 AC target, layer, effort)
+- [x] Template has `Depends On` header metadata field
+- [x] Tests pass
+- [x] Pass `/codex-review-doc`
+- [x] Pass `/precommit-fast`
 
 ## Progress
 

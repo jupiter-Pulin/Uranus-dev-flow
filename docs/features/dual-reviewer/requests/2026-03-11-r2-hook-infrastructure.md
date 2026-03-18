@@ -1,7 +1,7 @@
 # R2: Hook Infrastructure — 狀態更新、閘門解析與鎖定
 
 > **Created**: 2026-03-11
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Parent Request**: [dual-reviewer-parallel-architecture.md](./2026-03-11-dual-reviewer-parallel-architecture.md)
@@ -42,38 +42,38 @@
 
 ### AC1: emit-review-gate 解析分支
 
-- [ ] `post-tool-review-state.sh` 偵測 Bash tool 執行 `emit-review-gate` 時觸發
-- [ ] 解析 `REVIEW_GATE=PENDING` → 設定 `review_mode=dual`、`aggregate_gate.executed=false`、`gate=null`、`reason=null`
-- [ ] 解析 `REVIEW_GATE=READY` → 設定 `aggregate_gate.executed=true`、`gate=READY`、`reason=null`
-- [ ] 解析 `REVIEW_GATE=BLOCKED` → 設定 `aggregate_gate.executed=true`、`gate=BLOCKED`、`reason=null`
-- [ ] 使用 `tail -1` + 行首錨定 `^REVIEW_GATE=` 取最後有效 gate
+- [x] `post-tool-review-state.sh` 偵測 Bash tool 執行 `emit-review-gate` 時觸發
+- [x] 解析 `REVIEW_GATE=PENDING` → 設定 `review_mode=dual`、`aggregate_gate.executed=false`、`gate=null`、`reason=null`
+- [x] 解析 `REVIEW_GATE=READY` → 設定 `aggregate_gate.executed=true`、`gate=READY`、`reason=null`
+- [x] 解析 `REVIEW_GATE=BLOCKED` → 設定 `aggregate_gate.executed=true`、`gate=BLOCKED`、`reason=null`
+- [x] 使用 `tail -1` + 行首錨定 `^REVIEW_GATE=` 取最後有效 gate
 
 ### AC2: 可攜式鎖定機制
 
-- [ ] `_lock()` 使用 `mkdir` lockdir（POSIX 原子操作）
-- [ ] Bounded wait 5 秒逾時
-- [ ] Stale lock 回收：TTL 30 秒過期**或** owner PID 已死亡（任一成立即回收）
-- [ ] `_unlock()` 僅在 `HAVE_LOCK=1` 時執行
-- [ ] 鎖定失敗 → fail-closed：寫入 `aggregate_gate.gate=BLOCKED`、`reason=lock_failure`
+- [x] `_lock()` 使用 `mkdir` lockdir（POSIX 原子操作）
+- [x] Bounded wait 5 秒逾時
+- [x] Stale lock 回收：TTL 30 秒過期**或** owner PID 已死亡（任一成立即回收）
+- [x] `_unlock()` 僅在 `HAVE_LOCK=1` 時執行
+- [x] 鎖定失敗 → fail-closed：寫入 `aggregate_gate.gate=BLOCKED`、`reason=lock_failure`
 
 ### AC3: stop-guard dual mode
 
-- [ ] `review_mode=dual` 時強制 strict blocking（`FORCE_STRICT=true`，無視 warn 設定）
-- [ ] `review_mode=dual` + `aggregate_gate.executed=true` + `gate=READY` → 放行
-- [ ] `review_mode=dual` + `aggregate_gate.executed=true` + `gate=BLOCKED` → 阻擋
-- [ ] `review_mode=dual` + `aggregate_gate.executed=false` → 阻擋（reason: `aggregation_incomplete`）
-- [ ] `review_mode` 缺失或 `"single"` → 現有邏輯不變（向後相容）
+- [x] `review_mode=dual` 時強制 strict blocking（`FORCE_STRICT=true`，無視 warn 設定）
+- [x] `review_mode=dual` + `aggregate_gate.executed=true` + `gate=READY` → 放行
+- [x] `review_mode=dual` + `aggregate_gate.executed=true` + `gate=BLOCKED` → 阻擋
+- [x] `review_mode=dual` + `aggregate_gate.executed=false` → 阻擋（reason: `aggregation_incomplete`）
+- [x] `review_mode` 缺失或 `"single"` → 現有邏輯不變（向後相容）
 
 ### AC4: edit invalidation
 
-- [ ] `post-edit-format.sh` 編輯檔案後重置 `aggregate_gate.executed=false`、`gate=null`、`reason=null`
-- [ ] 重置時使用鎖定機制
+- [x] `post-edit-format.sh` 編輯檔案後重置 `aggregate_gate.executed=false`、`gate=null`、`reason=null`
+- [x] 重置時使用鎖定機制
 
 ### Quality Gates
 
-- [ ] 所有 hook 測試通過
-- [ ] 現有測試全數通過（無破壞性）
-- [ ] Pass `/codex-review-fast`
+- [x] 所有 hook 測試通過
+- [x] 現有測試全數通過（無破壞性）
+- [x] Pass `/codex-review-fast`
 
 ## Progress
 

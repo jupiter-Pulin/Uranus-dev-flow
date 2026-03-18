@@ -1,7 +1,7 @@
 # Request: Context Management Rule
 
 > **Created**: 2026-03-17
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -38,20 +38,20 @@
 
 ## Acceptance Criteria
 
-- [ ] `rules/context-management.md` 存在且包含 `## Prohibited Behaviors`、`## Three-Tier Policy`、`## Compact Preservation` sections
-- [ ] Three-Tier Policy 定義 Normal (<80%)、Compact (80-92%)、Critical (≥92%) 三個 zone
-- [ ] Prohibited 包含「未 `/context` 不得聲稱 context 不足」且有 `/context` unavailable 例外
-- [ ] Critical zone action 明確要求先完成 auto-loop obligations 再 compact
-- [ ] Compact preservation 包含 task list、decisions、threadIds、uncommitted files、no secrets
-- [ ] `auto-loop.md:12` 包含 `@rules/context-management.md` cross-reference
-- [ ] `CLAUDE.md` `## Rules` 包含 `@rules/context-management.md` 引用
-- [ ] `.claude/CLAUDE.md` `## Rules` 包含相同引用
-- [ ] `CLAUDE.template.md` rules list 包含引用
-- [ ] `commands/install-rules.md` Phase 2 expected rules table 包含 `context-management.md`
-- [ ] `commands/install-rules.md` Phase 4.6 fallback `## Rules` block 包含引用
-- [ ] `test/commands/context-management-rule.test.js` 測試通過
-- [ ] Pass `/codex-review-doc`
-- [ ] Pass `/precommit-fast`
+- [x] `rules/context-management.md` 存在且包含 `## Prohibited Behaviors`、`## Three-Tier Policy`、`## Compact Preservation` sections
+- [x] Three-Tier Policy 定義 Normal (<80%)、Compact (80-92%)、Critical (≥92%) 三個 zone
+- [x] Prohibited 包含「未 `/context` 不得聲稱 context 不足」且有 `/context` unavailable 例外
+- [x] Critical zone action 明確要求先完成 auto-loop obligations 再 compact
+- [x] Compact preservation 包含 task list、decisions、threadIds、uncommitted files、no secrets
+- [x] `auto-loop.md:12` 包含 `@rules/context-management.md` cross-reference
+- [x] `CLAUDE.md` `## Rules` 包含 `@rules/context-management.md` 引用
+- [x] `.claude/CLAUDE.md` `## Rules` 包含相同引用
+- [x] `CLAUDE.template.md` rules list 包含引用
+- [x] `commands/install-rules.md` Phase 2 expected rules table 包含 `context-management.md`
+- [x] `commands/install-rules.md` Phase 4.6 fallback `## Rules` block 包含引用
+- [x] `test/commands/context-management-rule.test.js` 測試通過
+- [x] Pass `/codex-review-doc`
+- [x] Pass `/precommit-fast`
 
 ## Progress
 

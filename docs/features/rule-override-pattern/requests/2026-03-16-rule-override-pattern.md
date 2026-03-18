@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Date | 2026-03-16 |
-| Status | Proposed |
+| Status | **Superseded** |
 | Author | SD0 |
 | Tech Spec | [2-tech-spec.md](../2-tech-spec.md) |
 | Source | `/best-practices` audit on auto-loop customization conflict |

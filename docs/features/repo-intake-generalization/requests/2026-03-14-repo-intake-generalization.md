@@ -1,5 +1,9 @@
 # repo-intake Generalization — MidwayJS 耦合移除
 
+> **Created**: 2026-03-14
+> **Status**: Completed
+> **Priority**: P1
+
 ## Background
 
 `repo-intake` skill 的掃描腳本硬編碼 MidwayJS 框架邏輯（isMidwayProject、MidwayJS 固定權重、@midwayjs/mock 偵測等）。sd0x-dev-flow 是通用 Claude Code plugin，不綁定特定框架。需重寫為 framework-agnostic config-driven scanner。

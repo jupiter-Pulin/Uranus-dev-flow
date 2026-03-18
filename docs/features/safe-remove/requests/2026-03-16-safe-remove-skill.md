@@ -1,7 +1,7 @@
 # `/safe-remove` — 安全移除 plugin 資產
 
 > **Created**: 2026-03-16
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P2
 
 ## Background
@@ -43,18 +43,18 @@
 
 ## Acceptance Criteria
 
-- [ ] `/safe-remove skill <name>` 可正確 discover 所有引用（commands/, rules/, CLAUDE.md, README, agents/, hooks/）
-- [ ] `/safe-remove command <name>` 可正確 discover command 引用
-- [ ] BLOCKER 偵測覆蓋：`@skills/` bindings in commands、`hooks.json` command paths、agents `skills:` YAML field
-- [ ] PATCHABLE 偵測覆蓋：CLAUDE.md table、README.md + 5 locale variants（count + detail row）、rules/ prose mentions、skill descriptions
-- [ ] Dry-run mode 輸出完整 plan（files to delete + patches + blockers）不做任何修改
-- [ ] `--execute` mode 需 AskUserQuestion 確認後才執行
-- [ ] Execute 順序：patches first → deletes last
-- [ ] Post-removal type-specific verification（`@skills/<name>/`、`skills: <name>`、`/<name>`、hooks path）回傳 0 結果（排除 archived docs）
-- [ ] Per-asset-type discovery matrix 有明確定義（skill/command/agent/rule/script/hook 各自的 BLOCKER/PATCHABLE pattern）
-- [ ] Target not found 時輸出明確錯誤訊息（idempotency）
-- [ ] `disable-model-invocation: true` 設定於 command
-- [ ] 通過 `/codex-review-fast`
+- [x] `/safe-remove skill <name>` 可正確 discover 所有引用（commands/, rules/, CLAUDE.md, README, agents/, hooks/）
+- [x] `/safe-remove command <name>` 可正確 discover command 引用
+- [x] BLOCKER 偵測覆蓋：`@skills/` bindings in commands、`hooks.json` command paths、agents `skills:` YAML field
+- [x] PATCHABLE 偵測覆蓋：CLAUDE.md table、README.md + 5 locale variants（count + detail row）、rules/ prose mentions、skill descriptions
+- [x] Dry-run mode 輸出完整 plan（files to delete + patches + blockers）不做任何修改
+- [x] `--execute` mode 需 AskUserQuestion 確認後才執行
+- [x] Execute 順序：patches first → deletes last
+- [x] Post-removal type-specific verification（`@skills/<name>/`、`skills: <name>`、`/<name>`、hooks path）回傳 0 結果（排除 archived docs）
+- [x] Per-asset-type discovery matrix 有明確定義（skill/command/agent/rule/script/hook 各自的 BLOCKER/PATCHABLE pattern）
+- [x] Target not found 時輸出明確錯誤訊息（idempotency）
+- [x] `disable-model-invocation: true` 設定於 command
+- [x] 通過 `/codex-review-fast`
 
 ## Design Decisions（Debate Record）
 

@@ -1,5 +1,9 @@
 # Upgrade Doctor — `/claude-health` Sync Module
 
+> **Created**: 2026-03-14
+> **Status**: Completed
+> **Priority**: P1
+
 ## Background
 
 Plugin 版本更新後，host project 的 installed assets（rules, hooks, scripts）不會自動同步。用戶必須手動執行 `/install-rules`、`/install-hooks`、`/install-scripts` 才能取得新版。目前：

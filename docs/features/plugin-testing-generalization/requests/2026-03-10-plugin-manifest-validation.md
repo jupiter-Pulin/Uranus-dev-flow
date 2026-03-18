@@ -1,7 +1,7 @@
 # plugin.json Manifest Validation Test
 
 > **Created**: 2026-03-10
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md) (parent feature; this request adds manifest validation coverage)
 
@@ -45,24 +45,24 @@
 
 ### Hard Tests（test failure = CI fail）
 
-- [ ] `test/commands/plugin-manifest.test.js` 建立
-- [ ] T1: Valid JSON parse
-- [ ] T2: `name` 存在且為 kebab-case (`/^[a-z0-9]+(-[a-z0-9]+)*$/`)
-- [ ] T3: Version sync — `plugin.version === package.version`
-- [ ] T4: No unknown root fields（allowlist: `name`, `version`, `description`, `author`, `homepage`, `repository`, `license`, `keywords`, `commands`, `agents`, `skills`, `hooks`, `mcpServers`, `outputStyles`, `lspServers`）
-- [ ] T5: Component path fields `./` prefix — 目標欄位: `commands`, `agents`, `skills`, `hooks`, `mcpServers`, `outputStyles`, `lspServers`；if present, string 或 array 中每個值都以 `./` 開頭
-- [ ] T6: Component path fields type check — 同上目標欄位；reject object / object[]（防止 `[{name, path}]` legacy format）
+- [x] `test/commands/plugin-manifest.test.js` 建立
+- [x] T1: Valid JSON parse
+- [x] T2: `name` 存在且為 kebab-case (`/^[a-z0-9]+(-[a-z0-9]+)*$/`)
+- [x] T3: Version sync — `plugin.version === package.version`
+- [x] T4: No unknown root fields（allowlist: `name`, `version`, `description`, `author`, `homepage`, `repository`, `license`, `keywords`, `commands`, `agents`, `skills`, `hooks`, `mcpServers`, `outputStyles`, `lspServers`）
+- [x] T5: Component path fields `./` prefix — 目標欄位: `commands`, `agents`, `skills`, `hooks`, `mcpServers`, `outputStyles`, `lspServers`；if present, string 或 array 中每個值都以 `./` 開頭
+- [x] T6: Component path fields type check — 同上目標欄位；reject object / object[]（防止 `[{name, path}]` legacy format）
 
 ### Recommended Tests（test failure = CI fail + descriptive message）
 
-- [ ] T7: `version` 存在且符合 semver (`/^\d+\.\d+\.\d+/`)
-- [ ] T8: `description` 存在且非空
-- [ ] T9: `keywords` 為 string array（if present）
+- [x] T7: `version` 存在且符合 semver (`/^\d+\.\d+\.\d+/`)
+- [x] T8: `description` 存在且非空
+- [x] T9: `keywords` 為 string array（if present）
 
 ### Quality Gates
 
-- [ ] Pass `/codex-review-fast`
-- [ ] Pass `/precommit`
+- [x] Pass `/codex-review-fast`
+- [x] Pass `/precommit`
 
 ## Progress
 

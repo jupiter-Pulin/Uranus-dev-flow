@@ -1,7 +1,7 @@
 # 雙 Reviewer Auto-Loop 整合
 
 > **Created**: 2026-03-13
-> **Status**: In Progress
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [3-auto-loop-integration.md](../3-auto-loop-integration.md)
 
@@ -43,39 +43,39 @@
 
 ### AC1: Command Workflow Dual Dispatch
 
-- [ ] `codex-review-fast.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
-- [ ] `codex-review.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
-- [ ] `codex-review-branch.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
-- [ ] 3 個 command 的 Workflow 步驟遵循 canonical sequence：emit PENDING → collect metadata → Dual Review（Codex blocking + Task background） → Await Codex → Reconcile → Emit Gate → Output
+- [x] `codex-review-fast.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
+- [x] `codex-review.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
+- [x] `codex-review-branch.md` Workflow 包含 "Dual Review" 或 "Task" 步驟
+- [x] 3 個 command 的 Workflow 步驟遵循 canonical sequence：emit PENDING → collect metadata → Dual Review（Codex blocking + Task background） → Await Codex → Reconcile → Emit Gate → Output
 
 ### AC2: Auto-Loop Dual Awareness
 
-- [ ] `auto-loop.md` 包含 "Dual Review Mode" section
-- [ ] 定義 first-pass dual、non-blocking secondary、late P0/P1、loop re-review、pre-precommit checkpoint 規則
-- [ ] `.claude/rules/auto-loop.md` 同步更新
-- [ ] Structural test：grep `auto-loop.md` for "Dual Review Mode"
+- [x] `auto-loop.md` 包含 "Dual Review Mode" section
+- [x] 定義 first-pass dual、non-blocking secondary、late P0/P1、loop re-review、pre-precommit checkpoint 規則
+- [x] `.claude/rules/auto-loop.md` 同步更新
+- [x] Structural test：grep `auto-loop.md` for "Dual Review Mode"
 
 ### AC3: SKILL.md + review-common.md Loop Behavior
 
-- [ ] SKILL.md `--continue` loops 明確寫 "Codex `codex-reply` only; do not restart secondary"
-- [ ] `review-common.md` Dual Mode loop 定義與 SKILL.md 一致（無 "每輪 fresh Task" 矛盾）
-- [ ] 新增 pre-precommit reconcile 步驟說明
+- [x] SKILL.md `--continue` loops 明確寫 "Codex `codex-reply` only; do not restart secondary"
+- [x] `review-common.md` Dual Mode loop 定義與 SKILL.md 一致（無 "每輪 fresh Task" 矛盾）
+- [x] 新增 pre-precommit reconcile 步驟說明
 
 ### AC4: Output Template
 
-- [ ] 3 個 review command 的 Output template 包含 `[source:]` tag
-- [ ] Source tag 支援 `codex|toolkit|both` 標記（`strict-reviewer` fallback 歸類為 `toolkit`）
+- [x] 3 個 review command 的 Output template 包含 `[source:]` tag
+- [x] Source tag 支援 `codex|toolkit|both` 標記（`strict-reviewer` fallback 歸類為 `toolkit`）
 
 ### AC5: Behavioral Paths
 
-- [ ] First-pass path：觸發 `/codex-review-fast` 時，同時啟動 Codex + Task background
-- [ ] Loop path：`--continue` re-review 僅呼叫 `codex-reply`，不啟動新 Task
-- [ ] Late-arrival path：pre-precommit 時若 Task 已完成且有 P0/P1 → re-emit BLOCKED → re-enter loop
+- [x] First-pass path：觸發 `/codex-review-fast` 時，同時啟動 Codex + Task background
+- [x] Loop path：`--continue` re-review 僅呼叫 `codex-reply`，不啟動新 Task
+- [x] Late-arrival path：pre-precommit 時若 Task 已完成且有 P0/P1 → re-emit BLOCKED → re-enter loop
 
 ### AC6: Quality Gates
 
-- [ ] Pass `/codex-review-fast`（修改後的 command 不影響 review 流程）
-- [ ] Manual review 確認 dual dispatch 實際觸發
+- [x] Pass `/codex-review-fast`（修改後的 command 不影響 review 流程）
+- [x] Manual review 確認 dual dispatch 實際觸發
 
 ## Progress
 

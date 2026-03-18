@@ -1,7 +1,7 @@
 # R1: Foundation — Config 擴充與閘門腳本
 
 > **Created**: 2026-03-11
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Parent Request**: [dual-reviewer-parallel-architecture.md](./2026-03-11-dual-reviewer-parallel-architecture.md)
@@ -41,30 +41,30 @@
 
 ### AC1: allowed-tools 擴充
 
-- [ ] `commands/codex-review-fast.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `commands/codex-review.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `commands/codex-review-branch.md` 的 `allowed-tools` 包含 `Task`
-- [ ] `skills/codex-code-review/SKILL.md` 的 `allowed-tools` 包含 `Task`
+- [x] `commands/codex-review-fast.md` 的 `allowed-tools` 包含 `Task`
+- [x] `commands/codex-review.md` 的 `allowed-tools` 包含 `Task`
+- [x] `commands/codex-review-branch.md` 的 `allowed-tools` 包含 `Task`
+- [x] `skills/codex-code-review/SKILL.md` 的 `allowed-tools` 包含 `Task`
 
 ### AC2: strict-reviewer 解耦
 
-- [ ] `.claude/agents/strict-reviewer.md` 不再包含 `skills: codex-code-review`
-- [ ] strict-reviewer 仍可獨立運作（手動測試）
+- [x] `.claude/agents/strict-reviewer.md` 不再包含 `skills: codex-code-review`
+- [x] strict-reviewer 仍可獨立運作（手動測試）
 
 ### AC3: emit-review-gate.sh
 
-- [ ] `scripts/emit-review-gate.sh` 建立且可執行（`chmod +x`）
-- [ ] `bash scripts/emit-review-gate.sh PENDING` 輸出 `REVIEW_GATE=PENDING`
-- [ ] `bash scripts/emit-review-gate.sh READY` 輸出 `REVIEW_GATE=READY`
-- [ ] `bash scripts/emit-review-gate.sh BLOCKED` 輸出 `REVIEW_GATE=BLOCKED`
-- [ ] 無參數時回傳 usage 錯誤
-- [ ] 無效參數時回傳錯誤（非 PENDING/READY/BLOCKED）
+- [x] `scripts/emit-review-gate.sh` 建立且可執行（`chmod +x`）
+- [x] `bash scripts/emit-review-gate.sh PENDING` 輸出 `REVIEW_GATE=PENDING`
+- [x] `bash scripts/emit-review-gate.sh READY` 輸出 `REVIEW_GATE=READY`
+- [x] `bash scripts/emit-review-gate.sh BLOCKED` 輸出 `REVIEW_GATE=BLOCKED`
+- [x] 無參數時回傳 usage 錯誤
+- [x] 無效參數時回傳錯誤（非 PENDING/READY/BLOCKED）
 
 ### Quality Gates
 
-- [ ] `test/scripts/emit-review-gate.test.js` 通過
-- [ ] 現有測試全數通過（無破壞性）
-- [ ] Pass `/codex-review-fast`
+- [x] `test/scripts/emit-review-gate.test.js` 通過
+- [x] 現有測試全數通過（無破壞性）
+- [x] Pass `/codex-review-fast`
 
 ## Progress
 

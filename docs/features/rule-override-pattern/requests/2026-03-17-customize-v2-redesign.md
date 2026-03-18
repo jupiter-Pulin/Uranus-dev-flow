@@ -1,7 +1,7 @@
 # Request: --customize v2 Incremental Redesign
 
 > **Created**: 2026-03-17
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [3-customize-v2.md](../3-customize-v2.md)
 
@@ -39,22 +39,22 @@ v1 `--customize` wizard 只支援 4 個 preset 維度（code review / doc review
 
 ## Acceptance Criteria
 
-- [ ] `--customize auto-loop`（無 sub-flag）輸出 status table 且不修改檔案
-- [ ] `--add-section` 正確 append section 且不破壞已有內容
-- [ ] `--add-section` 重複 heading 偵測 → error + redirect to `--update-section`
-- [ ] `--add-section` 自訂 heading input validation（level `##` only / length 3-80 / alphanumeric+spaces+hyphens+parens / reject newlines, `<!--`, empty/space-only）
-- [ ] `--update-section "X"` 只替換目標 section，保留其餘內容
-- [ ] `--reset` 需 AskUserQuestion 確認後才執行全量重新產生
-- [ ] Sub-flag 互斥驗證（`--add-section` + `--reset` → error；`--add-section` + `--update-section` → error；`--update-section` + `--reset` → error）
-- [ ] `--customize` + `--all`/`--list`/`--force`/`--dry-run`/`--legacy-strategy`/`rule-names` → Mode Gate error（繼承 v1）
-- [ ] Argument table 包含 `--add-section`, `--update-section`, `--reset` 三個 sub-flag 說明
-- [ ] Sentinel detection 正確處理 multiline HTML comments
-- [ ] 無 sentinel 的 v1 legacy files fallback to heading detection
-- [ ] Hash 統一為 blob hash（`Based on` emit + health check compare）
-- [ ] `/claude-health` duplicate heading P2 warning 正確觸發
-- [ ] Section parser 跳過 fenced code block 內的 `##`
-- [ ] Pass `/codex-review-doc`
-- [ ] Pass `/precommit-fast`
+- [x] `--customize auto-loop`（無 sub-flag）輸出 status table 且不修改檔案
+- [x] `--add-section` 正確 append section 且不破壞已有內容
+- [x] `--add-section` 重複 heading 偵測 → error + redirect to `--update-section`
+- [x] `--add-section` 自訂 heading input validation（level `##` only / length 3-80 / alphanumeric+spaces+hyphens+parens / reject newlines, `<!--`, empty/space-only）
+- [x] `--update-section "X"` 只替換目標 section，保留其餘內容
+- [x] `--reset` 需 AskUserQuestion 確認後才執行全量重新產生
+- [x] Sub-flag 互斥驗證（`--add-section` + `--reset` → error；`--add-section` + `--update-section` → error；`--update-section` + `--reset` → error）
+- [x] `--customize` + `--all`/`--list`/`--force`/`--dry-run`/`--legacy-strategy`/`rule-names` → Mode Gate error（繼承 v1）
+- [x] Argument table 包含 `--add-section`, `--update-section`, `--reset` 三個 sub-flag 說明
+- [x] Sentinel detection 正確處理 multiline HTML comments
+- [x] 無 sentinel 的 v1 legacy files fallback to heading detection
+- [x] Hash 統一為 blob hash（`Based on` emit + health check compare）
+- [x] `/claude-health` duplicate heading P2 warning 正確觸發
+- [x] Section parser 跳過 fenced code block 內的 `##`
+- [x] Pass `/codex-review-doc`
+- [x] Pass `/precommit-fast`
 
 ## Progress
 

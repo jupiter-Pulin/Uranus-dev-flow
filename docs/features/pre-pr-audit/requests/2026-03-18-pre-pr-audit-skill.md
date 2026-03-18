@@ -1,7 +1,7 @@
 # Request: Pre-PR Audit Skill
 
 > **Created**: 2026-03-18
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Source**: `/best-practices` audit + `/codex-brainstorm` Nash Equilibrium (threadId: `019cff6f-2340-7b30-aec7-256b10a90f93`)
@@ -41,15 +41,15 @@ Auto-loop 確保 code review + precommit 通過，但缺少「PR 就緒」的量
 
 ## Acceptance Criteria
 
-- [ ] SKILL.md contains 5 dimensions with weights
-- [ ] SKILL.md contains scoring model (pass/partial/fail/N/A)
-- [ ] SKILL.md contains 3-tier gate (PR-Ready/PR-Caution/PR-Blocked)
-- [ ] SKILL.md contains hard-fail overrides
-- [ ] SKILL.md contains fast/deep modes
-- [ ] Command supports `--mode`, `--strict`, `--json` args
-- [ ] CLAUDE.md has `/pre-pr-audit` in Command Quick Reference
-- [ ] Tests pass
-- [ ] `/codex-review-doc` pass
+- [x] SKILL.md contains 5 dimensions with weights
+- [x] SKILL.md contains scoring model (pass/partial/fail/N/A)
+- [x] SKILL.md contains 3-tier gate (PR-Ready/PR-Caution/PR-Blocked)
+- [x] SKILL.md contains hard-fail overrides
+- [x] SKILL.md contains fast/deep modes
+- [x] Command supports `--mode`, `--strict`, `--json` args
+- [x] CLAUDE.md has `/pre-pr-audit` in Command Quick Reference
+- [x] Tests pass
+- [x] `/codex-review-doc` pass
 
 ## Progress
 

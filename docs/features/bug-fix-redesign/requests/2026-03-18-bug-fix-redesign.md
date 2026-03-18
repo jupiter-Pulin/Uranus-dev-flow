@@ -1,7 +1,7 @@
 # Request: Bug-Fix Skill Redesign
 
 > **Created**: 2026-03-18
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Source**: `/best-practices` audit + `/codex-brainstorm` Nash Equilibrium (threadId: `019cff9f-8946-78c0-8c7e-9d3edf594530`)
@@ -40,26 +40,26 @@
 
 ## Acceptance Criteria
 
-- [ ] SKILL.md contains `❌ git add | git commit | git push` Prohibited block
-- [ ] SKILL.md `allowed-tools` is `Bash` (not `Bash(git:*)`)
-- [ ] SKILL.md has mandatory `/codex-test-review` step with gap closure
-- [ ] SKILL.md has freshness rule
-- [ ] SKILL.md references `@rules/testing.md`
-- [ ] SKILL.md has bug-type matrix including cross-service row
-- [ ] SKILL.md has auto-loop Doc Sync pointer
-- [ ] Verification checklist includes "No git add/commit/push executed"
-- [ ] `commands/bug-fix.md` `allowed-tools` is `Bash`
-- [ ] `commands/bug-fix.md` review workflow includes `/codex-test-review`
-- [ ] `commands/bug-fix.md` does not reference `testing-guide.md`
-- [ ] `testing-guide.md` does not exist
-- [ ] `/codex-review-doc` pass
-- [ ] `/precommit-fast` pass
+- [x] SKILL.md contains `❌ git add | git commit | git push` Prohibited block
+- [x] SKILL.md `allowed-tools` is `Bash` (not `Bash(git:*)`)
+- [x] SKILL.md has mandatory `/codex-test-review` step with gap closure
+- [x] SKILL.md has freshness rule
+- [x] SKILL.md references `@rules/testing.md`
+- [x] SKILL.md has bug-type matrix including cross-service row
+- [x] SKILL.md has auto-loop Doc Sync pointer
+- [x] Verification checklist includes "No git add/commit/push executed"
+- [x] `commands/bug-fix.md` `allowed-tools` is `Bash`
+- [x] `commands/bug-fix.md` review workflow includes `/codex-test-review`
+- [x] `commands/bug-fix.md` does not reference `testing-guide.md`
+- [x] `testing-guide.md` does not exist
+- [x] `/codex-review-doc` pass
+- [x] `/precommit-fast` pass
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Tech Spec | ✅ Done | `docs/features/bug-fix-redesign/2-tech-spec.md` |
-| Development | Pending | T1-T3 |
-| Testing | Pending | T4 |
-| Verification | Pending | T5 |
+| Development | ✅ Done | `625715a` + `92ec7e4` |
+| Testing | ✅ Done | 14/14 tests pass |
+| Verification | ✅ Done | Review + precommit pass, CI ✅ |

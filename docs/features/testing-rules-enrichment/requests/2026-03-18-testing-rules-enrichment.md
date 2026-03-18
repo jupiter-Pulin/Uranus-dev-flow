@@ -1,7 +1,7 @@
 # Request: Testing Rules Enrichment + AC Traceability
 
 > **Created**: 2026-03-18
-> **Status**: Pending
+> **Status**: In Progress
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Source**: `/best-practices` audit + `/codex-brainstorm` Nash Equilibrium (threadId: `019cfee9-f2ad-7ed1-b6f9-35d573b84fd1`)
@@ -45,17 +45,17 @@
 
 ## Acceptance Criteria
 
-- [ ] `testing.md` contains AAA convention rule
-- [ ] `testing.md` contains naming convention (`when...then` or `<unit> <condition> → <expected>`)
-- [ ] `testing.md` contains Evidence Model table (2 types + 1 exception)
-- [ ] `testing.md` contains Adequacy Gate Sentinels (4 states)
-- [ ] `testing-project.md` exists with precedence header + commented override sections
-- [ ] `CLAUDE.md` references `@rules/testing-project.md`
-- [ ] `/codex-test-review --ac-trace` mode documented in SKILL.md
-- [ ] `auto-loop.md` has Adequacy Gate section (after precommit, before doc sync)
-- [ ] Tests: `testing.md` content assertions pass
-- [ ] `/codex-review-doc` pass
-- [ ] `/precommit-fast` pass
+- [x] `testing.md` contains AAA convention rule
+- [x] `testing.md` contains naming convention (`when...then` or `<unit> <condition> → <expected>`)
+- [x] `testing.md` contains Evidence Model table (2 types + 1 exception)
+- [x] `testing.md` contains Adequacy Gate Sentinels (4 states)
+- [x] `testing-project.md` exists with precedence header + commented override sections
+- [x] `CLAUDE.md` references `@rules/testing-project.md`
+- [ ] `/codex-test-review --ac-trace` mode documented in SKILL.md (Phase B — pending)
+- [ ] `auto-loop.md` has Adequacy Gate section (Phase C — pending)
+- [x] Tests: `testing.md` content assertions pass
+- [x] `/codex-review-doc` pass
+- [x] `/precommit-fast` pass
 
 ## Progress
 
@@ -64,9 +64,11 @@
 | Best Practices | ✅ Done | `/best-practices` audit completed |
 | Brainstorm | ✅ Done | Nash Equilibrium reached (3 rounds, threadId: `019cfee9-f2ad-7ed1-b6f9-35d573b84fd1`) |
 | Tech Spec | ✅ Done | `2-tech-spec.md` — Codex review ✅ Mergeable (threadId: `019cff28-7dc9-7fa2-afdc-e86e791d8255`) |
-| Implementation | Pending | 12 tasks (9S + 1M + 2S verify) |
-| Testing | Pending | Content assertions + manual session test |
-| Review | Pending | `/codex-review-doc` + `/precommit-fast` |
+| Implementation (Phase A) | ✅ Done | `ae6b016` — rules rewrite + testing-project.md + tests |
+| Implementation (Phase B) | Pending | `--ac-trace` mode for `/codex-test-review` |
+| Implementation (Phase C) | Pending | Auto-loop adequacy gate |
+| Testing | ✅ Done | 11/11 content assertions pass |
+| Review | ✅ Done | `/codex-review-doc` + `/precommit-fast` pass |
 
 ## References
 
