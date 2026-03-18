@@ -1,7 +1,7 @@
 ---
-description: Load GitHub PR review comments into AI session — summarize, plan, fix, writeback.
+description: Load GitHub PR review comments into AI session — analyze, triage, plan. Default: analysis-only (no auto-fix).
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(bash:*), Bash(jq:*), Read, Grep, Glob, Edit, Write, AskUserQuestion, mcp__codex__codex
-argument-hint: "[PR#|URL] [--mode summary|plan|fix] [--all] [--writeback] [--budget <N>] [--no-verdict]"
+argument-hint: "[PR#|URL] [--mode plan|summary|fix] [--all] [--writeback] [--budget <N>] [--no-verdict]"
 ---
 
 @skills/load-pr-review/SKILL.md
@@ -26,7 +26,7 @@ Load the PR review comments per SKILL.md workflow. Use context block data for PR
 | Arg | Description |
 |-----|-------------|
 | `<PR#\|URL>` | Target PR (default: current branch PR) |
-| `--mode summary\|plan\|fix` | Interaction mode (default: summary) |
+| `--mode plan\|summary\|fix` | Interaction mode (default: plan — analysis-only) |
 | `--all` | Include resolved + outdated threads |
 | `--writeback` | Enable reply/resolve writeback |
 | `--budget <N>` | Max loaded threads (default: 30, 200 with --all; GraphQL ceiling: 100) |
@@ -36,9 +36,9 @@ Load the PR review comments per SKILL.md workflow. Use context block data for PR
 
 1. **Resolve PR** — from args or context block data
 2. **Fetch** — run script `fetch` subcommand
-3. **Verdict Triage** (plan/fix mode, unless `--no-verdict`) — batch Codex assessment per Step 1.5 in SKILL.md
-4. **Present** — based on `--mode`, enriched with verdict data
-5. **Fix** (if mode=fix) — apply changes per thread, then auto-loop per @rules/auto-loop.md
+3. **Verdict Triage** (plan/fix mode, unless `--no-verdict`) — per-thread `/seek-verdict` invocation (independent Codex per thread)
+4. **Present** — based on `--mode` (default: plan — analysis report, no edits), enriched with verdict data
+5. **Fix** (only if explicit `--mode fix`) — apply changes per thread, then auto-loop per @rules/auto-loop.md
 6. **Writeback** (if `--writeback`) — dry-run plan → AskUserQuestion → execute
 
 ## Examples

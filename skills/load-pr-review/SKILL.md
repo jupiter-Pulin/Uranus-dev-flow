@@ -1,6 +1,6 @@
 ---
 name: load-pr-review
-description: "Load GitHub PR review comments into AI session — summarize, plan fixes, apply changes, optional writeback. Use when: reviewing PR feedback, planning fixes, addressing review comments, replying to reviewers. Not for: creating reviews (use codex-review-fast), creating PRs (use create-pr), viewing PR status (use pr-summary)."
+description: "Load GitHub PR review comments into AI session — analyze, triage, plan. Default: analysis-only (no auto-fix). Use when: reviewing PR feedback, planning fixes, addressing review comments, replying to reviewers. Not for: creating reviews (use codex-review-fast), creating PRs (use create-pr), viewing PR status (use pr-summary)."
 ---
 
 # Load PR Review
@@ -22,10 +22,32 @@ description: "Load GitHub PR review comments into AI session — summarize, plan
 ## Core Principle
 
 ```
-Load review → AI-assisted triage → optional fix → optional writeback
+Load review → independent per-thread triage → analysis report → user decides next step
+Default: analysis-only. Fix and writeback require explicit --mode fix / --writeback.
 Data plane (JS script) handles fetch/normalize/writeback.
 Control plane (this SKILL.md) handles classification, fix orchestration, auto-loop.
 ```
+
+## Analysis-Only Default ⚠️
+
+This skill is an **analysis tool by default**. It loads PR review comments and produces a triage report. It does NOT auto-fix.
+
+### Prohibited Behaviors
+
+| ❌ Prohibited | ✅ Correct |
+|--------------|-----------|
+| Auto-fixing code after loading PR reviews | Present analysis report, wait for user to invoke `--mode fix` |
+| Editing files in plan mode | Only read and classify; no writes |
+| Suggesting "let me fix this" without explicit `--mode fix` | "Use `--mode fix` to start fixing ACTIONABLE threads." |
+| Skipping triage and jumping to fixes | Always complete Step 1.5 triage before any action |
+
+### Mode Behavior
+
+| Mode | Default? | Reads Code | Edits Code | Writes Back |
+|------|----------|------------|------------|-------------|
+| `plan` | **Yes** | ✅ | ❌ | ❌ |
+| `summary` | No | ❌ | ❌ | ❌ |
+| `fix` | No (explicit) | ✅ | ✅ (after AskUserQuestion) | Only with `--writeback` |
 
 ## Workflow
 
@@ -35,7 +57,7 @@ sequenceDiagram
     participant SK as SKILL.md
     participant JS as load-pr-review.js
     participant GH as GitHub (gh CLI)
-    participant CX as Codex (fresh thread)
+    participant SV as /seek-verdict (per thread)
     participant AL as Auto-Loop
 
     U->>SK: /load-pr-review [args]
@@ -49,21 +71,23 @@ sequenceDiagram
     JS-->>SK: Normalized JSON
 
     alt plan/fix mode + verdict enabled
-        SK->>CX: Batch triage (issue-analyze + seek-verdict pattern)
-        Note over CX: Independent research
-        CX-->>SK: Per-thread verdicts
+        loop Each unresolved thread (parallel)
+            SK->>SV: /seek-verdict (fresh Codex per thread)
+            Note over SV: Independent research
+            SV-->>SK: Per-thread verdict
+        end
     end
 
     alt summary mode
         SK->>U: Table of threads
     end
 
-    alt plan mode
-        SK->>SK: Classify comments (AI)
-        SK->>U: Fix strategy by priority
+    alt plan mode (DEFAULT)
+        SK->>SK: Map verdicts to categories
+        SK->>U: Analysis report (no edits)
     end
 
-    alt fix mode
+    alt fix mode (explicit --mode fix only)
         SK->>U: AskUserQuestion — select threads
         loop Each selected thread
             SK->>SK: Read file + apply fix
@@ -109,28 +133,39 @@ If `summary.total === 0`:
 
 > No review comments found on this PR.
 
-## Step 1.5: Issue Analysis Triage (verdict-enabled by default)
+## Step 1.5: Per-Thread Independent Verdict (via `/seek-verdict`)
 
-In **plan** and **fix** modes (not summary), run a batch Codex assessment following `/issue-analyze`'s classification model and `/seek-verdict`'s blind verdict pattern.
+In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread** for independent Codex assessment. Each thread gets its own fresh Codex context — no shared state between threads.
+
+**Why per-thread, not batch**: Each review comment needs an independent perspective. Batch assessment in a single Codex call allows cross-thread contamination (one verdict influencing another). Per-thread invocation ensures every assessment is genuinely independent.
 
 **When to execute**:
 
 | Mode | Verdict | Reason |
 |------|---------|--------|
 | summary | Skip | Lightweight display, cost not justified |
-| plan | Execute (default) | Enrich plan table with Codex assessment |
+| plan | Execute (default) | Enrich plan table with independent Codex assessment |
 | fix | Execute (default) | Pre-select actionable threads |
 
 **Flag**: `--no-verdict` disables this step.
 
-**Execution**: Use the batch prompt template in `references/verdict-triage-prompt.md`:
-1. Collect all unresolved threads from Step 1 output (when `--all` is used, scope remains unresolved-only for triage; resolved/outdated threads are excluded from verdict assessment)
-2. Call `mcp__codex__codex` with fresh thread, `sandbox: 'read-only'`, `approval-policy: 'never'`
-3. Parse JSON array response — match each entry's `thread_id` to loaded threads
-4. If >60% threads are NON_ACTIONABLE, emit `[VERDICT_TRIAGE_WARN]`
-5. If Codex call fails, warn user and proceed without verdict (graceful degradation)
+**Execution**:
 
-**Anti-anchoring**: The prompt contains only raw thread data (reviewer comments, file, line). Never include Claude's own classification.
+1. Collect all unresolved threads from Step 1 output
+2. For each thread, package as a finding for `/seek-verdict`:
+   - `finding_key`: `<thread.path>|<first comment summary truncated to 120 chars>`
+   - `severity`: P2 (all PR review threads assessed at P2 level for seek-verdict compatibility)
+   - `original_finding_text`: reviewer's comment body
+   - `relevant_diff`: `git diff HEAD -- <thread.path>`
+3. Invoke `/seek-verdict` per thread via **Skill tool** (built-in, always available — no `allowed-tools` entry needed)
+   - Launch threads in parallel where possible (multiple Skill tool calls in one message)
+   - Each `/seek-verdict` independently reads the code and assesses the comment
+   - Concurrency: 1-5 all parallel; 6-15 parallel; 16-30 parallel + warn cost; 30+ recommend `--no-verdict`
+4. Collect per-thread `[DISMISS_VERDICT]` audit trails
+5. If >60% threads receive DISMISS_VERIFIED, emit `[VERDICT_TRIAGE_WARN]`
+6. If any `/seek-verdict` call fails, warn user and mark that thread as UNCERTAIN (graceful degradation)
+
+**Anti-anchoring**: `/seek-verdict` enforces this natively — Claude's classification is never sent to Codex.
 
 **Result mapping** (per `@skills/seek-verdict/references/policy-mapping.md`; normal state — heightened thresholds apply after `[DISMISS_PATTERN_WARN]`, see policy-mapping.md Anti-Abuse Guard):
 
@@ -142,9 +177,9 @@ In **plan** and **fix** modes (not summary), run a batch Codex assessment follow
 
 ## Step 2: Present (mode-dependent)
 
-### Summary Mode (default)
+### Summary Mode (`--mode summary`)
 
-Display the thread table:
+Lightweight display — no verdict triage, no code reads.
 
 ```markdown
 ## PR #<N>: <title>
@@ -154,10 +189,10 @@ Display the thread table:
 |---|------|------|----------|---------------------|
 | 1 | src/foo.ts | 42 | alice | Use early return... |
 
-Use `--mode plan` to get fix strategy, or `--mode fix` to start fixing.
+Use `--mode plan` to get fix strategy with independent Codex assessment.
 ```
 
-### Plan Mode
+### Plan Mode (DEFAULT)
 
 Classify each thread using verdict data from Step 1.5 (or AI judgment if verdict unavailable):
 
@@ -189,11 +224,13 @@ Present grouped by verdict then priority:
 Use `--mode fix` to start fixing ACTIONABLE threads.
 ```
 
-### Fix Mode
+### Fix Mode (explicit `--mode fix` required)
 
-1. Show plan first (as in plan mode)
+**⚠️ Fix mode is opt-in only. Never auto-enter fix mode. The user must explicitly pass `--mode fix`.**
+
+1. Show plan first (as in plan mode, with full verdict triage)
    - ACTIONABLE threads are pre-selected; NON_ACTIONABLE threads are listed with `(DISMISS_VERIFIED — skip suggested)` — user can override via AskUserQuestion
-2. AskUserQuestion: which threads to fix?
+2. AskUserQuestion: which threads to fix? (user must confirm before any edits)
 3. For each selected thread:
    a. Read the file at `thread.path` around `thread.line`
    b. Understand the review comment
@@ -264,18 +301,20 @@ Human-readable table for direct display.
 - [ ] GraphQL fetch returns normalized threads
 - [ ] REST fallback activates when GraphQL fails
 - [ ] Token budget truncation works (default 30, --all 200)
-- [ ] Summary/plan/fix modes produce correct output
+- [ ] Default mode is `plan` (analysis-only, no edits)
+- [ ] Fix mode requires explicit `--mode fix`
+- [ ] No files edited in plan or summary mode
+- [ ] Per-thread `/seek-verdict` invoked (not batch) in plan/fix mode
+- [ ] Each `/seek-verdict` uses fresh Codex thread (anti-anchoring)
+- [ ] `--no-verdict` skips triage
+- [ ] >60% DISMISS_VERIFIED triggers `[VERDICT_TRIAGE_WARN]`
 - [ ] Writeback dry-run shows plan without executing
 - [ ] Writeback execute posts reply + optional resolve
 - [ ] Auto-loop triggers after fix mode edits
-- [ ] Verdict triage executes in plan/fix mode (not summary)
-- [ ] `--no-verdict` skips triage
-- [ ] Codex prompt contains no Claude classifications (anti-anchoring)
-- [ ] >60% NON_ACTIONABLE triggers `[VERDICT_TRIAGE_WARN]`
 
 ## References
 
 - `references/api-contract.md` — GraphQL query + REST fallback specification
 - `references/token-budget.md` — Truncation strategy + budget rules
 - `references/writeback-guardrails.md` — Writeback safety rules + jq pattern
-- `references/verdict-triage-prompt.md` — Batch Codex verdict prompt for PR review triage
+- `references/verdict-triage-prompt.md` — Per-thread verdict packaging template (for `/seek-verdict` integration)

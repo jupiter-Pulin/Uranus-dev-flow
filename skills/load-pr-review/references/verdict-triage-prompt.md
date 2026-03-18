@@ -1,4 +1,4 @@
-# Verdict Triage Prompt — Batch PR Review Thread Assessment
+# Verdict Packaging Template — Per-Thread `/seek-verdict` Integration
 
 <!-- Pattern source: @skills/seek-verdict/references/verdict-prompt.md -->
 <!-- Classification source: @skills/issue-analyze/references/classification.md (Review Thread section) -->
@@ -6,94 +6,84 @@
 
 ## Usage
 
-Used with `mcp__codex__codex` (**fresh thread required**) in `/load-pr-review` Step 1.5.
+Used in `/load-pr-review` Step 1.5. Each unresolved thread is packaged as a finding for independent `/seek-verdict` invocation via **Skill tool** (built-in, always available).
 
-```typescript
-mcp__codex__codex({
-  prompt: `You are a senior code reviewer performing an independent triage of PR review comments.
+## Per-Thread Packaging
 
-## PR Context
+For each unresolved thread, construct the `/seek-verdict` finding:
 
-- PR #${PR_NUMBER}: ${PR_TITLE}
-- Head: ${HEAD_BRANCH} -> Base: ${BASE_BRANCH}
-- HEAD SHA: ${CURRENT_HEAD_SHA}
+| Field | Source | Redaction |
+|-------|--------|-----------|
+| `finding_key` | `<thread.path>\|<first comment summary, max 120 chars>` | Strip code snippets |
+| `severity` | `P2` (all PR threads assessed at P2 level) | — |
+| `original_finding_text` | Reviewer's comment body (max 500 chars) | Strip secrets/tokens per `@rules/logging.md` |
+| `origin_thread_id` | N/A (no prior review session) | — |
+| `current_head_sha` | `git rev-parse HEAD` | — |
+| `relevant_diff` | `git diff HEAD -- <thread.path>` | Sent to Codex unredacted; **never recorded in audit log** |
 
-## Review Threads Under Triage
+## Invocation
 
-${THREADS.map((t, i) => `
-### Thread ${i + 1} (id: ${t.id})
-- File: ${t.path}:${t.line}
-- Reviewer: ${t.comments[0].author}
-- Comment: ${t.comments[0].body}
-${t.comments.length > 1 ? t.comments.slice(1).map(c => `  - Reply (${c.author}): ${c.body}`).join('\n') : ''}
-`).join('\n')}
-
-## Your Task
-
-For EACH thread above, independently determine:
-1. Is this comment actionable (requires a code/doc change) or non-actionable (already addressed, false positive, or purely cosmetic with no real impact)?
-2. What category does it belong to?
-
-**Do not assume any comment is valid or invalid.** You must independently verify each by reading the actual code.
-
-## ⚠️ Important: You must independently research the project ⚠️
-
-When reviewing, you **must** perform the following research, do not rely only on the context above:
-
-### Git Exploration (Priority)
-1. Check change status: \`git status\`
-2. Check changed files: \`git diff --name-only HEAD\`
-3. Check full changes for specific file: \`git diff HEAD -- <file-path>\`
-4. Check full content of changed files: \`cat <changed file> | head -200\`
-
-### Project Research
-- Search called functions: \`grep -r "functionName" src/ -l | head -10\`
-- Read related files: \`cat <file-path> | head -100\`
-- Understand class definitions: \`grep -A 20 "class ClassName" src/\`
-
-## Output Format (JSON array, one entry per thread)
-
-Respond with a JSON array. Each entry must include ALL fields:
-
-[
-  {
-    "thread_id": "<thread.id>",
-    "verdict": "ACTIONABLE | NON_ACTIONABLE | UNCERTAIN",
-    "confidence": <0.0-1.0>,
-    "category": "code_change | doc_update | question | disagree | nit",
-    "reasoning": "<brief justification citing specific code evidence>",
-    "evidence_refs": ["<file:line>", ...]
-  }
-]`,
-  sandbox: 'read-only',
-  'approval-policy': 'never',
-});
 ```
+/seek-verdict "<thread.path>|<first comment summary>"
+```
+
+Each thread gets its own **independent** `/seek-verdict` invocation:
+- Fresh Codex thread per assessment (enforced by seek-verdict protocol)
+- No cross-thread context contamination
+- Anti-anchoring: Claude's classification is never included
+
+## Parallel Dispatch
+
+Launch multiple `/seek-verdict` calls in parallel where possible (single message, multiple Skill tool calls). Concurrency guidance:
+
+| Thread Count | Strategy |
+|-------------|----------|
+| 1-5 | All in parallel |
+| 6-15 | Parallel (default budget) |
+| 16-30 | Parallel, but warn user about cost |
+| 30+ | Recommend `--no-verdict` or reduce `--budget` |
+
+## Result Collection
+
+Each `/seek-verdict` returns a `[DISMISS_VERDICT]` audit trail. Map to thread classification:
+
+| Verdict Result | Thread Grouping |
+|---------------|----------------|
+| `DISMISS_VERIFIED` | Likely Non-Actionable |
+| `FIX_REQUIRED` | ACTIONABLE |
+| `NEED_HUMAN` | Needs Discussion |
 
 ## Anti-Anchoring Enforcement
 
 | Check | Required |
 |-------|----------|
-| Prompt does NOT contain Claude's classification results | Yes |
-| Prompt does NOT contain "Claude thinks..." or similar | Yes |
-| Prompt includes "Do not assume any comment is valid or invalid" | Yes |
-| Prompt includes full Research Block | Yes |
-| Uses fresh `mcp__codex__codex` thread | Yes |
+| `/seek-verdict` prompt does NOT contain Claude's classification | Yes (enforced natively) |
+| Each thread gets fresh Codex context | Yes (enforced by seek-verdict protocol) |
+| No batch — each thread assessed independently | Yes |
 
 ## Anti-Abuse Guard
 
 | Condition | Action |
 |-----------|--------|
-| >60% of threads receive NON_ACTIONABLE | Emit `[VERDICT_TRIAGE_WARN]` |
+| >60% of threads receive DISMISS_VERIFIED | Emit `[VERDICT_TRIAGE_WARN]` |
 
 ```
 [VERDICT_TRIAGE_WARN] pr=<N> | non_actionable_ratio=<N/total> | reason=high-dismiss-ratio | timestamp=<ISO8601>
 ```
 
+Note: `/seek-verdict`'s own anti-abuse guard (3 consecutive dismissals → heightened thresholds) applies per-session across all threads.
+
 ## Graceful Degradation
 
-If Codex call fails (timeout, parse error), log warning and proceed without verdict data. All threads default to "no verdict" state — Claude falls back to its own classification.
+If any `/seek-verdict` call fails (timeout, Codex error), mark that thread as UNCERTAIN and proceed. Claude falls back to its own classification for failed threads only.
 
-## Per-Thread Body Truncation
+## Redaction Rules
 
-Each comment body in the prompt is truncated to 500 chars (shorter than the data plane's 2000 char limit) to keep the batch prompt within Codex context limits.
+Per `@skills/seek-verdict/references/policy-mapping.md`:
+
+| Field | Policy |
+|-------|--------|
+| `finding_key` | File path + issue summary (≤120 chars); no code snippets |
+| `original_finding_text` | Reviewer comment truncated to 500 chars; no secrets/tokens/passwords |
+| `relevant_diff` | Sent to Codex unredacted for research; **never recorded in `[DISMISS_VERDICT]` audit log** |
+| `evidence` in audit log | File:line references only; no source code content |

@@ -49,18 +49,19 @@ The `summary` object in output tracks truncation state:
 
 ## Verdict Triage Cost
 
-The verdict triage phase (Step 1.5) adds 1 Codex MCP batch call when in plan/fix mode.
+The verdict triage phase (Step 1.5) invokes `/seek-verdict` **per thread** (each gets an independent Codex call) when in plan/fix mode.
 
 | Parameter | Impact |
 |-----------|--------|
-| Codex calls | +1 (batch, all threads in single call) |
-| Per-thread body in prompt | 500 chars (truncated from 2000) |
-| Cost scaling | Proportional to loaded thread count |
+| Codex calls | 1 per unresolved thread (independent, parallel where possible) |
+| Per-thread comment in finding | 500 chars (truncated from 2000) |
+| Cost scaling | Linear: N threads = N Codex calls |
 
 **Cost optimization**: Use `--no-verdict` to skip the triage phase for budget-sensitive runs or when thread count is large.
 
 | Threads | Recommendation |
 |---------|---------------|
-| 1-15 | Verdict on (default) |
-| 16-30 | Verdict on, but consider `--no-verdict` if cost-sensitive |
-| 30+ | Consider `--no-verdict` or reduce `--budget` |
+| 1-5 | Verdict on (default, low cost) |
+| 6-15 | Verdict on (default) |
+| 16-30 | Verdict on, but warn user about cost; consider `--no-verdict` |
+| 30+ | Recommend `--no-verdict` or reduce `--budget` |
