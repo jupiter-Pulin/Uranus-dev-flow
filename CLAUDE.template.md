@@ -107,6 +107,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/feature-verify` | Feature verification (READ-ONLY) | Development |
 | `/load-pr-review` | Load PR review comments into session | Development |
 | `/pr-comment` | Post review comments to PR | Development |
+| `/deep-explore` | Multi-wave parallel code exploration | Understanding |
 | `/code-explore` | Code exploration | Understanding |
 | `/code-investigate` | Dual-perspective code investigation | Understanding |
 | `/git-investigate` | Track code history | Finding source |
@@ -114,6 +115,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/repo-intake` | One-time project scan | Onboarding |
 | `/next-step` | Change-aware next step advisor | Development |
 | `/risk-assess` | Uncommitted code risk assessment | Development |
+| `/test-deep` | Context-aware test orchestration | Development |
 | `/verify` | Run tests | Development |
 | `/codex-review-fast` | Quick review (diff) | **Required** |
 | `/codex-review` | Full review (lint+build) | Important PR |
