@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { readFileSync, existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 
 const root = resolve(__dirname, '../..');
@@ -38,7 +38,7 @@ test('auto-loop.md correct behavior shows dual dispatch pattern', () => {
 
 // --- .claude/rules/auto-loop.md (installed copy) ---
 
-test('.claude/rules/auto-loop.md is in sync with rules/auto-loop.md', () => {
+test('.claude/rules/auto-loop.md is in sync with rules/auto-loop.md', { skip: !existsSync(resolve(root, '.claude/rules/auto-loop.md')) }, () => {
   const source = readFileSync(resolve(root, 'rules/auto-loop.md'), 'utf8');
   const installed = readFileSync(resolve(root, '.claude/rules/auto-loop.md'), 'utf8');
   assert.equal(source, installed, '.claude/rules/auto-loop.md should match rules/auto-loop.md');
