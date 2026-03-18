@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "installed_at": "2026-03-14T04:00:00Z",
-  "plugin_version": "2.0.11",
+  "plugin_version": "2.0.12",
   "rules": {
-    "auto-loop.md": { "hash": "b9a879eda14f728af0d0fc013c19e9ac49afd58d" },
+    "auto-loop.md": { "hash": "c96fe76575d9b26fc11e6ef51c5991e978283657" },
     "codex-invocation.md": { "hash": "102948dbe364d348db2bce4ffb2494940c6ade21" },
     "docs-numbering.md": { "hash": "89eabf388badd8ce9668a77a3a8150dc5830df29" },
     "docs-writing.md": { "hash": "5a7311b22ed5f7a45964a71976090737ea9c2d81" },
@@ -13,7 +13,8 @@
     "logging.md": { "hash": "730ef9d70812f965cd99a50b15272b2badb4f9ef" },
     "security.md": { "hash": "7f527a07c7e478ebef0e919ae1c320b926a3b990" },
     "self-improvement.md": { "hash": "92037ba27f43243f60bce3bce4bfdf734e23375d" },
-    "testing.md": { "hash": "f088ee44b35e887dd9f5e887659512f89c038654" }
+    "testing.md": { "hash": "5082626872789a1de7ef0017b1b0e2afddb1fb26" },
+    "context-management.md": { "hash": "864e1ad1ffb2a02098cab8de169b3a686f3aec51" }
   },
   "hook_scripts": {
     "pre-edit-guard.sh": { "hash": "693ded505b858af9e9d5ac38ee39da706162b2c0" },
