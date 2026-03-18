@@ -81,6 +81,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/codex-test-review` | Review test coverage | **Required** |
 | `/post-dev-test` | Post-dev test completion | After feature |
 | `/check-coverage` | Test coverage analysis | Quality |
+| `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) | Quality |
 | `/project-audit` | Project health audit with scoring | Quality |
 | `/best-practices` | Industry best practices audit | Quality |
 | `/dep-audit` | Dependency vulnerability audit | Periodic / PR |
@@ -147,7 +148,8 @@ Node.js . JavaScript . node:test
 - @rules/auto-loop-project.md -- Project-specific auto-loop overrides (user-owned)
 - @rules/codex-invocation.md -- Codex must independently research (critical)
 - @rules/fix-all-issues.md -- Zero tolerance
-- @rules/testing.md
+- @rules/testing.md -- Test pyramid, conventions, evidence model, adequacy gate
+- @rules/testing-project.md -- Project-specific testing overrides (user-owned)
 - @rules/framework.md
 - @rules/security.md
 - @rules/docs-writing.md
