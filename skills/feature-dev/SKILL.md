@@ -8,65 +8,128 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash
 
 ## Trigger
 
-- Keywords: develop feature, implement, write code, verify, precommit, commit, refactor, simplify
+- Keywords: develop feature, implement, write code, verify, precommit, refactor, simplify
 
 ## When NOT to Use
 
 - Just want to understand code (use Explore)
-- Review code (use codex-code-review)
-- Review documents (use doc-review)
-- Test-related (use test-review)
+- Review code only (use codex-code-review)
+- Review documents only (use doc-review)
+- Pure test-only tasks without feature changes (use `/codex-test-review` directly)
+
+## Prohibited Actions
+
+```
+❌ git add | git commit | git push — per @rules/git-workflow.md
+```
+
+This skill implements features but does **not** commit. `/precommit-fast` and `/precommit` are quality gates only. To commit, the user must invoke `/smart-commit --execute` separately.
 
 ## Workflow
 
 ```
-Requirements -> Design -> Implement -> Test -> Review -> Commit -> Doc Sync
-                │          │            │        │          │          │
-                ▼          ▼            ▼        ▼          ▼          ▼
-           /codex-     /codex-      /verify  /codex-    /precommit  /update-docs
-           architect   implement             review-fast             /create-request --update
+Requirements → Design → Implement → Test + Review → Precommit Gate → Doc Sync
+                │          │            │                  │               │
+                ▼          ▼            ▼                  ▼               ▼
+           /codex-     /codex-    /verify              /precommit-fast  /update-docs
+           architect   implement  /codex-test-review   (or /precommit)  /create-request --update
+                                  /codex-review-fast
 ```
 
 ## Commands
 
-| Phase     | Command              | Description             |
-| --------- | -------------------- | ----------------------- |
-| Design    | `/codex-architect`   | Get architecture advice |
-| Implement | `/codex-implement`   | Codex writes code       |
-| Verify    | `/verify`            | Run tests to verify     |
-| Review    | `/codex-review-fast` | Code review             |
-| Commit    | `/precommit`         | lint + typecheck + test |
-| Doc Sync  | `/update-docs`       | Sync docs with code     |
-| Doc Sync  | `/create-request --update` | Update request progress |
-| Refactor  | `/simplify`          | Final refactoring       |
+| Phase | Command | Description |
+|-------|---------|-------------|
+| Design | `/codex-architect` | Get architecture advice |
+| Implement | `/codex-implement` | Codex writes code |
+| Test: Run | `/verify` | Run tests (lint → typecheck → unit → integration) |
+| Test: Review | `/codex-test-review` | **Mandatory** — review test sufficiency (5 dimensions) |
+| Test: Generate | `/codex-test-gen` | Generate unit tests for gaps |
+| Test: Integration | `/post-dev-test` | Write missing integration/e2e tests |
+| Review | `/codex-review-fast` | Code review (auto-loop) |
+| Precommit | `/precommit-fast` | lint + test (auto-loop canonical path) |
+| Precommit (full) | `/precommit` | lint + typecheck + test (important PRs) |
+| Doc Sync | `/update-docs` | Sync docs with code |
+| Doc Sync | `/create-request --update` | Update request progress |
+| Refactor | `/simplify` | Final refactoring |
+
+## Test + Review Phase (Detail)
+
+This is the core of feature-dev — ensuring sufficient test coverage before code review.
+
+### Step 1: Run existing tests
+
+```
+/verify → all tests pass?
+  Yes → Step 2
+  No → fix failures → re-run /verify
+```
+
+### Step 2: Test adequacy review (mandatory for code changes)
+
+```
+/codex-test-review → ✅ Tests sufficient?
+  Yes → Step 3
+  No → close gaps (Step 2a) → /codex-test-review --continue
+```
+
+### Step 2a: Gap closure
+
+| Gap Type | Remediation Command |
+|----------|-------------------|
+| Unit test missing/insufficient | `/codex-test-gen` → write tests → `/verify` |
+| Integration/E2E missing | `/post-dev-test` → write tests → `/verify` |
+
+### Step 3: Code review (auto-loop)
+
+```
+/codex-review-fast → ✅ Ready?
+  Yes → Precommit Gate
+  No → fix issues → re-run /codex-review-fast (auto-loop)
+```
+
+### Freshness rule
+
+If code changes after the latest `✅ Tests sufficient` gate (e.g., fixes from code review), rerun `/verify` then `/codex-test-review --continue` before proceeding to precommit gate.
+
+## Testing Requirements
+
+Follow `@rules/testing.md` for conventions (AAA, naming, evidence model).
+Follow `@rules/testing-project.md` for project-specific overrides (directories, runner, adequacy mode).
+
+| Change Type | Test Requirements |
+|-------------|-------------------|
+| New Service/Provider | Must have corresponding unit test |
+| Modify existing logic | Existing tests pass + new logic tested |
+| Bug fix | Must add regression test |
+| New API endpoint | Integration test required |
+| Cross-service change | E2E test required |
+
+## Test File Mapping
+
+Use project convention from `@rules/testing-project.md`. If no override is defined, follow ecosystem defaults:
+
+| Source Pattern | Test Pattern |
+|---------------|-------------|
+| `src/<module>/` | `test/unit/<module>/` or `test/<module>/` |
+| `scripts/<name>.sh` | `test/scripts/<name>.test.js` |
+| `skills/<name>/SKILL.md` | `test/commands/<name>.test.js` |
+| `commands/<name>.md` | `test/commands/<name>.test.js` |
 
 ## Output
 
 - Implemented feature code + tests
-- Review gate: ✅ Pass / ⛔ Issues found
-- Pre-commit results: lint + typecheck + test
+- Test adequacy gate: ✅ Tests sufficient
+- Review gate: ✅ Ready
+- Precommit results: ✅ All Pass
 
-## Verification
+## Verification Checklist
 
-- All tests pass
-- lint + typecheck with no errors
-- Code review passed (Gate ✅)
-
-## Testing Requirements
-
-| Change Type               | Test Requirements                           |
-| ------------------------- | ------------------------------------------- |
-| New Service/Provider      | Must have corresponding unit test           |
-| Modify existing logic     | Ensure existing tests pass + new logic tested |
-| Bug fix                   | Must add regression test                    |
-
-## Test File Mapping
-
-```
-src/service/xxx.service.ts       -> test/unit/service/xxx.service.test.ts
-src/provider/evm/parser.ts       -> test/unit/provider/evm/parser.test.ts
-src/controller/xxx.controller.ts -> test/integration/controller/xxx.test.ts
-```
+- [ ] All tests pass (`/verify`)
+- [ ] Test adequacy reviewed (`/codex-test-review`)
+- [ ] Code review passed (`/codex-review-fast` ✅ Ready)
+- [ ] Precommit passed (`/precommit-fast` ✅ All Pass)
+- [ ] No `git add/commit/push` executed
 
 ## Doc Sync (after precommit Pass)
 
@@ -85,20 +148,25 @@ precommit Pass
 
 ## Review Loop
 
-**MUST re-review after fix until PASS**
+**MUST re-review after fix until PASS** (per @rules/auto-loop.md)
 
 ```
-Review -> Issues found -> Fix -> Re-review -> ... -> ✅ Pass -> Done
+Review → Issues found → Fix → Re-review → ... → ✅ Pass → Next step
 ```
 
 ## Examples
 
 ```
 Input: Implement a fee calculation method
-Action: /codex-architect -> /codex-implement -> /verify -> /codex-review-fast -> /precommit
+Action: /codex-architect → /codex-implement → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
 ```
 
 ```
 Input: This code needs refactoring
-Action: /simplify -> streamline code, eliminate duplication -> /codex-review-fast
+Action: /simplify → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
+```
+
+```
+Input: Feature dev, continue (resuming work)
+Action: Check git status → identify remaining tasks → continue from current phase
 ```
