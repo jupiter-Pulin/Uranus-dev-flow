@@ -67,6 +67,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/issue-analyze` | Issue deep analysis | Root cause |
 | `/repo-intake` | One-time project scan | Onboarding |
 | `/next-step` | Change-aware next step advisor | Development |
+| `/remind` | Lightweight model correction with rule loading | Development |
 | `/risk-assess` | Uncommitted code risk assessment | Development |
 | `/test-deep` | Context-aware test orchestration | Development |
 | `/verify` | Run tests | Development |
@@ -103,6 +104,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/claude-health` | Claude Code config health check + plugin sync | Onboarding / After update |
 | `/pr-review` | PR self-review checklist | Before PR |
 | `/smart-commit` | Smart batch commit (identity/signing diagnostics + group + message + commands) | Git |
+| `/bump-version` | Bump package + plugin version in sync | Git |
 | `/git-profile` | Git identity and GPG signing profile manager | Git |
 | `/push-ci` | Push (with approval) + delegate to /watch-ci | Git |
 | `/watch-ci` | Monitor GitHub Actions CI runs | Git |
