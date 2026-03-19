@@ -1,7 +1,7 @@
 # Context-Aware Test Orchestration Skill (`/test-deep`)
 
 > **Created**: 2026-03-13
-> **Status**: Design
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Best Practices Audit**: Phase 4 Gap Report (conversation 2026-03-13)
@@ -54,40 +54,40 @@
 
 ### AC1: Test Selection
 
-- [ ] 根據 `git diff --name-only` 輸出，正確 mapping 到 candidate test files
-- [ ] 支援多種命名慣例（`src/foo.ts` → `test/foo.test.ts`, `test/unit/foo.test.ts`, `test/integration/foo.test.ts`）
-- [ ] 無 mapping 時 fallback 到 framework `--changedSince` 或 full suite
-- [ ] 變更 config/infra 檔案時，escalate 到 full suite
+- [x] 根據 `git diff --name-only` 輸出，正確 mapping 到 candidate test files
+- [x] 支援多種命名慣例（`src/foo.ts` → `test/foo.test.ts`, `test/unit/foo.test.ts`, `test/integration/foo.test.ts`）
+- [x] 無 mapping 時 fallback 到 framework `--changedSince` 或 full suite
+- [x] 變更 config/infra 檔案時，escalate 到 full suite
 
 ### AC2: Progressive Ladder
 
-- [ ] 按 unit → integration → e2e 順序執行
-- [ ] 低層 failure 時 fail-fast，不繼續高層
-- [ ] 各層結果獨立記錄
+- [x] 按 unit → integration → e2e 順序執行
+- [x] 低層 failure 時 fail-fast，不繼續高層
+- [x] 各層結果獨立記錄
 
 ### AC3: Failure Triage
 
-- [ ] Parser 正確從 test output 提取 structured tags（exit code, error signatures, failing tests, env hints）
-- [ ] LLM 根據 tags + compressed output 產生 root cause classification（code_bug / infra / environment / flaky）
-- [ ] Classification 附帶 reasoning explanation
+- [x] Parser 正確從 test output 提取 structured tags（exit code, error signatures, failing tests, env hints）
+- [x] LLM 根據 tags + compressed output 產生 root cause classification（code_bug / infra / environment / flaky）
+- [x] Classification 附帶 reasoning explanation
 
 ### AC4: Fixer Catalog
 
-- [ ] Core plugin 提供 generic fixers（restart dev server, clear cache, reinstall deps）
-- [ ] Host project 可擴展 domain-specific fixers（faucet funding, DB migration）
-- [ ] Safety tier 正確 gate：Safe=auto, Side-effect=confirm, Destructive=block
-- [ ] Unknown fixers default to confirmation required（default-deny）
+- [x] Core plugin 提供 generic fixers（restart dev server, clear cache, reinstall deps）
+- [x] Host project 可擴展 domain-specific fixers（faucet funding, DB migration）
+- [x] Safety tier 正確 gate：Safe=auto, Side-effect=confirm, Destructive=block
+- [x] Unknown fixers default to confirmation required（default-deny）
 
 ### AC5: Session Artifacts
 
-- [ ] Run metadata 寫入 `.claude/cache/test-deep/<runId>/`
-- [ ] 支援 optional previous-run comparison
-- [ ] 無跨 session learning
+- [x] Run metadata 寫入 `.claude/cache/test-deep/<runId>/`
+- [x] 支援 optional previous-run comparison
+- [x] 無跨 session learning
 
 ### AC6: Orchestrator Integration
 
-- [ ] 使用 dedicated test-deep executor 執行測試（reuse verify-runner 的 cache/log pattern，但自建 multi-target + fail-fast 邏輯）
-- [ ] 不與 `/post-dev-test`, `/codex-test-review` 功能重疊
+- [x] 使用 dedicated test-deep executor 執行測試（reuse verify-runner 的 cache/log pattern，但自建 multi-target + fail-fast 邏輯）
+- [x] 不與 `/post-dev-test`, `/codex-test-review` 功能重疊
 
 ## Design Decisions（from Brainstorm）
 
@@ -104,6 +104,6 @@
 - [x] Best practices audit（Phase 1-4）
 - [x] Adversarial brainstorm（3 rounds, equilibrium reached）
 - [x] Tech spec
-- [ ] Implementation
-- [ ] Testing
-- [ ] Documentation
+- [x] Implementation — `10cea92` feat: Add /test-deep context-aware test orchestration skill
+- [x] Testing — 15/15 schema tests pass, 229/229 test:fast pass
+- [x] Documentation — SKILL.md + 3 references + command + CLAUDE.md entries
