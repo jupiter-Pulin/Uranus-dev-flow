@@ -244,6 +244,32 @@ test('T20: Unknown issue type falls back to feat/ prefix', () => {
   assert.ok(branch.startsWith('feat/'));
 });
 
+// --- T21-T24: Create subcommand tests ---
+
+test('T21: SKILL.md has create subcommand with createJiraIssue', () => {
+  const content = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  assert.match(content, /Subcommand:.*`create`/i, 'should have create subcommand');
+  assert.match(content, /createJiraIssue/, 'should reference createJiraIssue MCP tool');
+});
+
+test('T22: SKILL.md specifies contentFormat markdown', () => {
+  const content = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  assert.match(content, /contentFormat.*markdown/i, 'should specify markdown contentFormat');
+});
+
+test('T23: Command allowed-tools includes create MCP tools', () => {
+  const content = readFileSync(commandPath, 'utf8');
+  assert.match(content, /createJiraIssue/, 'should include createJiraIssue in allowed-tools');
+  assert.match(content, /getJiraProjectIssueTypesMetadata/, 'should include getJiraProjectIssueTypesMetadata in allowed-tools');
+});
+
+test('T24: create-policy.md reference exists with markdown format', () => {
+  const path = join(skillDir, 'references/create-policy.md');
+  assert.ok(existsSync(path), 'create-policy.md should exist');
+  const content = readFileSync(path, 'utf8');
+  assert.match(content, /markdown/i, 'should mention markdown format');
+});
+
 // --- Structural tests ---
 
 test('S1: SKILL.md exists with valid frontmatter', () => {
@@ -269,7 +295,7 @@ test('S3: All reference files exist', () => {
   const refsDir = join(skillDir, 'references');
   assert.ok(existsSync(refsDir), 'references/ directory missing');
 
-  const expected = ['branch-policy.md', 'transition-mapping.md'];
+  const expected = ['branch-policy.md', 'transition-mapping.md', 'create-policy.md'];
   for (const ref of expected) {
     assert.ok(existsSync(join(refsDir, ref)), `references/${ref} missing`);
   }

@@ -1,7 +1,7 @@
 ---
 name: jira
-description: "Jira integration — view issues, generate branches, transition status. Use when: user mentions Jira ticket key (XX-123), says /jira, wants to create branch from ticket, or update Jira status. Not for: GitHub issues (use issue-analyze), creating new Jira tickets (v2)."
-allowed-tools: mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__getTransitionsForJiraIssue, mcp__claude_ai_Atlassian__transitionJiraIssue, mcp__claude_ai_Atlassian__addCommentToJiraIssue, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, Bash(git:*), AskUserQuestion
+description: "Jira integration — view issues, generate branches, create tickets, transition status. Use when: user mentions Jira ticket key (XX-123), says /jira, wants to create branch from ticket, create a new ticket, or update Jira status. Not for: GitHub issues (use issue-analyze)."
+allowed-tools: mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__getTransitionsForJiraIssue, mcp__claude_ai_Atlassian__transitionJiraIssue, mcp__claude_ai_Atlassian__addCommentToJiraIssue, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__createJiraIssue, mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata, Bash(git:*), AskUserQuestion
 ---
 
 # Jira Skill
@@ -16,7 +16,6 @@ View Jira issues, generate branch names from tickets, transition issue status �
 ## When NOT to Use
 
 - GitHub Issues → use `/issue-analyze`
-- Creating new Jira tickets → v2 (deferred)
 - Searching Jira issues → v1.1 (deferred)
 - Generic project management
 
@@ -128,6 +127,54 @@ See `references/transition-mapping.md` for event vocabulary, regex patterns, and
 Execute? /jira transition OK-51513 --event start_work --execute
 ```
 
+## Subcommand: `create`
+
+| Step | Action |
+|------|--------|
+| 1 | Extract project key from input (bare key like `OK`, or from issue key prefix) |
+| 2 | Resolve cloudId |
+| 3 | `getJiraProjectIssueTypesMetadata(cloudId, projectKey)` → list available types |
+| 4 | Validate issue type against available types (case-insensitive match) |
+| 5 | Format description as markdown (see `references/create-policy.md`) |
+| 6 | Plan mode: display creation plan. Execute mode: AskUserQuestion → `createJiraIssue` |
+
+**Input sources** (both supported):
+- `--summary` and `--description` flags: explicit values
+- Context inference: extract summary and description from user's prompt (structured content like Background, Items, etc.)
+
+**MCP call** (`createJiraIssue`):
+
+| Parameter | Source |
+|-----------|--------|
+| `cloudId` | Resolved via step 2 |
+| `projectKey` | From input |
+| `issueTypeName` | Validated against available types |
+| `summary` | From `--summary` or context |
+| `description` | Formatted markdown from `--description` or context |
+| `contentFormat` | Always `"markdown"` |
+
+**Plan output** (default):
+
+```markdown
+## Create Issue Plan
+
+- Project: OK
+- Type: Task
+- Summary: P1 Hardening — Quote state machine + Recovery Worker
+- Description: (preview first 200 chars...)
+
+Execute? /jira create OK --summary "..." --type Task --execute
+```
+
+**Execute output**:
+
+```
+✅ Created: OK-51514
+https://yourorg.atlassian.net/browse/OK-51514
+```
+
+See `references/create-policy.md` for description format guidelines, project key extraction, and issue type validation.
+
 ## Graceful Degradation
 
 | Failure | Message |
@@ -137,6 +184,8 @@ Execute? /jira transition OK-51513 --event start_work --execute
 | Issue not found | "Issue `<KEY>` not found. Verify the key and your access permissions." |
 | Transition not available | "Cannot execute `<event>` from current status `<status>`. Available transitions: ..." |
 | Network error | "Atlassian API unreachable. Please retry later." |
+| Project not found | "Project '<KEY>' not accessible. Check key and permissions." |
+| Issue type not available | "Type '<type>' not in project '<KEY>'. Available: [list from metadata]" |
 
 ## Examples
 
@@ -155,4 +204,10 @@ Execute? /jira transition OK-51513 --event start_work --execute
 
 /jira transition OK-51513 --event pr_merged --execute --comment "Merged via PR #42"
 → Executes transition + adds comment
+
+/jira create OK --summary "Fix login timeout" --type Bug
+→ Plan: Create Bug in OK
+
+/jira create OK --summary "Add user dashboard" --type Story --description "## Background\nDashboard needed for..." --execute
+→ ✅ Created: OK-51515
 ```
