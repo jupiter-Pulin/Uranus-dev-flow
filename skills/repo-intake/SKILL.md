@@ -1,7 +1,7 @@
 ---
 name: repo-intake
 description: "Project initialization inventory (one-time). Use when: first onboarding a project, rebuilding cache after structural changes. Not for: day-to-day development (read cache directly), finding specific files (use code-explore). Output: project map with entrypoints + test map + next steps."
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*)
+allowed-tools: Bash(git:*), Bash(node:*), Read, Write, Grep, Glob
 context: fork
 agent: Explore
 disable-model-invocation: true

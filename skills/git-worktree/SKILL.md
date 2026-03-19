@@ -1,7 +1,7 @@
 ---
 name: git-worktree
 description: "Git worktree management. Work on multiple branches simultaneously without switching or re-cloning. Use when: user mentions worktree, parallel development, simultaneous branches, or /git-worktree"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*)
+allowed-tools: Bash(git:*), Bash(bash:*), Read, Grep, Glob
 ---
 
 # Git Worktree

@@ -1,7 +1,7 @@
 ---
 name: codex-cli-review
 description: "Code review via Codex CLI with full disk access. Use when: deep review needing full codebase read, uncommitted change review. Not for: quick diff review (use codex-code-review), doc review (use doc-review). Output: severity-grouped findings + merge gate."
-allowed-tools: Bash(bash:*), Read, Grep, Glob
+allowed-tools: Bash(bash:*)
 context: fork
 ---
 

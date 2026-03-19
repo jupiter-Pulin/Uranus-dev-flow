@@ -2,7 +2,7 @@
 name: push-ci
 description: "Push to remote and monitor CI. Validates branch safety, executes git push WITH explicit user approval, then monitors CI run status via gh CLI. Use when: user says 'push', 'push and watch CI', 'ship it', 'push-ci'. Not for: committing (use /smart-commit), creating PRs (use /create-pr), merging (use /merge-prep)."
 disable-model-invocation: true
-allowed-tools: Bash(git:*), Bash(gh:*), Read, Grep, Glob, AskUserQuestion
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(bash:*), Read, Grep, Glob, AskUserQuestion
 ---
 
 # Push & CI Monitor

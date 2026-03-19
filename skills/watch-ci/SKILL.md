@@ -1,7 +1,7 @@
 ---
 name: watch-ci
 description: "Monitor GitHub Actions CI runs until completion. Use when: watching CI after push, checking build status, monitoring PR checks, waiting for CI completion, user says 'watch CI', 'check CI', 'CI status', 'monitor build', or /watch-ci. Not for: pushing code (use push-ci), creating PRs (use create-pr). Output: per-run verdict (pass/fail/timeout)."
-allowed-tools: Bash(gh:*), Bash(git:*), Read, Grep, Glob
+allowed-tools: Bash(gh:*), Bash(git:*)
 context: fork
 ---
 

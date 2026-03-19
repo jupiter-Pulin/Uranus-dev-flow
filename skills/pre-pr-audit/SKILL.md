@@ -1,7 +1,7 @@
 ---
 name: pre-pr-audit
 description: "Pre-PR confidence audit with 5-dimension scoring. Use when: final check before commit/push/PR, evaluating PR readiness, assessing test quality + risk + coverage holistically. Triggers: pre-pr, readiness check, confidence audit, final verification, ready to PR, how confident. Not for: code review (use codex-review-fast), post-deploy verification (use feature-verify), periodic health (use project-audit)."
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill, AskUserQuestion
 ---
 
 # Pre-PR Audit

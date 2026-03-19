@@ -1,7 +1,7 @@
 ---
 name: smart-rebase
 description: "Smart partial rebase for squash-merge repositories. Auto-detect which commits to keep/drop when base branch was squash-merged into target. Use when: user says 'rebase', 'partial rebase', 'base already merged', 'smart rebase', or /smart-rebase. Not for: simple git rebase (use git directly), merge conflict resolution (use /merge-prep), branch switching (use git checkout). Output: rebase plan table + copy-pasteable git rebase --onto command."
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*)
+allowed-tools: Bash(git:*), Bash(bash:*), Read, Grep, Glob
 ---
 
 # Smart Rebase — Partial Rebase for Squash-Merge Repos

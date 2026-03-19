@@ -1,7 +1,7 @@
 ---
 name: claude-health
 description: "Claude Code config health check + plugin sync. Use when: auditing .claude/ structure, checking naming, verifying hook setup, detecting plugin version drift, syncing installed assets. Not for: skill quality (use skill-health-check), code review (use codex-code-review). Output: health report + fix recommendations."
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Bash(du:*), Bash(git:*)
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Bash(du:*), Bash(rm:*), Bash(git:*)
 context: fork
 ---
 
