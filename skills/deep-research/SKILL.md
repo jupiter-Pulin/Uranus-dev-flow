@@ -258,6 +258,22 @@ Invoke `/codex-brainstorm` via Skill tool (composable — not reimplemented):
 - Suggested follow-up commands
 ```
 
+## Examples
+
+```
+Input: /deep-research "What are the best patterns for multi-agent orchestration?"
+Output: 2-3 agents explore official docs + codebase + community → claim registry → score 85/100 → report with consensus findings
+
+Input: /deep-research --mode compliance "Are our testing practices aligned with industry standards?"
+Output: 3 agents → compliance mode forces debate → /codex-brainstorm equilibrium → gap analysis report
+
+Input: /deep-research --mode decision "Should we use Redis or PostgreSQL for caching?"
+Output: Parallel research on both options → claim registry with conflicts → debate on unresolved → recommendation with evidence
+
+Input: /deep-research --budget low "What is WebAssembly?"
+Output: Single inline research (no parallel agents) → lightweight report → score with 0.75 confidence cap
+```
+
 ## Verification Checklist
 
 - [ ] Research plan output before agent dispatch
