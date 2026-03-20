@@ -258,20 +258,27 @@ function lintSkill(skillName, skillDir) {
 function detectOrphans(skillNames, commandFiles) {
   const findings = [];
 
-  // Commands that reference skills
+  // Commands that reference skills (via @skills/ directive or same-name convention)
   const commandSkillMap = {};
   for (const cmdFile of commandFiles) {
     const content = readFileSync(join(commandsDir, cmdFile), 'utf8');
     const cmdName = basename(cmdFile, '.md');
     const match = content.match(/@skills\/([^/]+)\//);
-    commandSkillMap[cmdName] = match ? match[1] : null;
+    if (match) {
+      commandSkillMap[cmdName] = match[1];
+    } else if (skillNames.includes(cmdName)) {
+      // Command name matches a skill directory — implicit binding
+      commandSkillMap[cmdName] = cmdName;
+    } else {
+      commandSkillMap[cmdName] = null;
+    }
   }
 
   // Orphan commands (no skill reference, excluding known utility-only)
   const utilityCommands = new Set([
     'precommit', 'precommit-fast', 'verify', 'simplify',
     'doc-refactor', 'zh-tw', 'pr-review', 'install-hooks',
-    'install-rules', 'update-docs', 'project-brief',
+    'install-rules', 'install-scripts', 'update-docs', 'project-brief',
   ]);
 
   for (const [cmd, skill] of Object.entries(commandSkillMap)) {
