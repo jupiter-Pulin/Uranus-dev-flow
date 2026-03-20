@@ -223,11 +223,42 @@ function checkLineCount(content) {
   return { pass: true };
 }
 
+function checkAllowedToolsSync(skillName, skillFm, commandFiles) {
+  if (!skillFm || !skillFm['allowed-tools']) return { pass: true };
+
+  const stripQuotes = (s) => s.replace(/^["']|["']$/g, '').trim();
+  const skillTools = stripQuotes(skillFm['allowed-tools']);
+
+  for (const cmdFile of commandFiles) {
+    const content = normalizeContent(readFileSync(join(commandsDir, cmdFile), 'utf8'));
+    const cmdName = basename(cmdFile, '.md');
+
+    // Match via @skills/ reference or same-name convention
+    const refMatch = content.match(/@skills\/([^/]+)\//);
+    const boundSkill = refMatch ? refMatch[1] : cmdName;
+    if (boundSkill !== skillName) continue;
+
+    const cmdFm = parseFrontmatter(content);
+    if (!cmdFm || !cmdFm['allowed-tools']) continue;
+
+    const cmdTools = stripQuotes(cmdFm['allowed-tools']);
+    if (skillTools !== cmdTools) {
+      return {
+        pass: false,
+        severity: 'P1',
+        message: `allowed-tools mismatch with command "${cmdName}"`,
+        fix: 'Sync allowed-tools — command file is authoritative',
+      };
+    }
+  }
+  return { pass: true };
+}
+
 // ---------------------------------------------------------------------------
 // Skill-level checks
 // ---------------------------------------------------------------------------
 
-function lintSkill(skillName, skillDir) {
+function lintSkill(skillName, skillDir, commandFiles) {
   const skillPath = join(skillDir, 'SKILL.md');
   if (!existsSync(skillPath)) {
     return { name: skillName, findings: [{ pass: false, severity: 'P0', message: 'SKILL.md not found' }] };
@@ -247,6 +278,7 @@ function lintSkill(skillName, skillDir) {
   findings.push({ check: 'references-routing', ...checkReferencesRouting(skillDir, body) });
   findings.push({ check: 'scripts-contract', ...checkScriptsContract(skillDir, body) });
   findings.push({ check: 'line-count', ...checkLineCount(content) });
+  findings.push({ check: 'allowed-tools-sync', ...checkAllowedToolsSync(skillName, fm, commandFiles) });
 
   return { name: skillName, path: skillPath, fm, findings };
 }
@@ -406,7 +438,7 @@ function main() {
     : [];
 
   // Per-skill checks
-  const skillResults = skillDirs.map((d) => lintSkill(d, join(skillsDir, d)));
+  const skillResults = skillDirs.map((d) => lintSkill(d, join(skillsDir, d), commandFiles));
 
   // Cross-skill checks
   const orphanFindings = detectOrphans(skillDirs, commandFiles);
@@ -480,8 +512,8 @@ function main() {
 
   // Per-skill summary
   console.log('## Per-Skill Results\n');
-  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | Lines | Status |');
-  console.log('|-------|---------|----------|--------|--------------|------|---------|-------|--------|');
+  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | Lines | Status |');
+  console.log('|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|');
   for (const result of skillResults) {
     const get = (check) => {
       const f = result.findings.find((x) => x.check === check);
@@ -493,8 +525,9 @@ function main() {
     const hasArgHintIssue = argHintStatus[result.name] === false;
     const status = (issues.length === 0 && !hasArgHintIssue) ? '✅' : issues.some((f) => f.severity === 'P0') ? '🔴' : issues.some((f) => f.severity === 'P1') ? '🟡' : '⚪';
     const argHint = argHintStatus[result.name] === true ? '✅' : argHintStatus[result.name] === false ? '⚪' : '—';
+    const atSync = get('allowed-tools-sync');
     console.log(
-      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${argHint} | ${lines} | ${status} |`
+      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${argHint} | ${atSync} | ${lines} | ${status} |`
     );
   }
   console.log();

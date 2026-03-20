@@ -48,13 +48,17 @@ Run skill-lint.js → [Optional: manual review] → Report + Gate
 | Metric | Value |
 |--------|-------|
 | Skills scanned | N |
-| P0/P1/P2 | N/N/N |
+| Commands scanned | N |
+| Checks passed | N |
+| P0 (Must Fix) | N |
+| P1 (Should Fix) | N |
+| P2 (Suggestion) | N |
 
 ## Per-Skill Results
-| Skill | Routing | When-NOT | Output | Status |
-|-------|---------|----------|--------|--------|
+| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | Lines | Status |
+|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|
 
-## Gate: ✅ All Pass / ⛔ N issues
+## Gate: ✅ All Pass / ⛔ N issues need fixing
 ```
 
 ## Examples

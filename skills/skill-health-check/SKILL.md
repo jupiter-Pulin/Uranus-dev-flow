@@ -15,7 +15,7 @@ context: fork
 
 - Code review (use `/codex-review-fast`)
 - Document review (use `/codex-review-doc`)
-- Creating new skills (use `/skill-creator`)
+- Creating new skills (use `skill-creator` plugin, external)
 - .claude directory structure check (use `/claude-health`)
 
 ## Core Principle
@@ -46,7 +46,7 @@ bash scripts/run-skill.sh skill-health-check skill-lint.js --fix-hint
 | Exit 1 | Warnings only (P2) |
 | Exit 2 | Errors found (P0/P1) |
 
-**Automated checks (8 items):**
+**Automated checks (9 items):**
 
 | # | Check | Severity | Criteria |
 |---|-------|----------|----------|
@@ -58,14 +58,15 @@ bash scripts/run-skill.sh skill-health-check skill-lint.js --fix-hint
 | 6 | References routing | P2 | Each reference file mentioned in body |
 | 7 | Scripts contract | P2 | Each script filename referenced in SKILL.md body |
 | 8 | Line count | P2 | Warning >150, flag >250 |
+| 9 | Allowed-tools sync | P1 | SKILL.md `allowed-tools` matches command `allowed-tools` (command is authoritative) |
 
 **Cross-skill checks (3 items):**
 
 | # | Check | Severity | Criteria |
 |---|-------|----------|----------|
-| 9 | Orphan detection | P2 | Commands ↔ Skills pairing |
-| 10 | Description overlap | P2 | Jaccard similarity >60% flagged |
-| 11 | Argument hint | P2 | Command with skill reference has `argument-hint` in frontmatter |
+| 10 | Orphan detection | P2 | Commands ↔ Skills pairing |
+| 11 | Description overlap | P2 | Jaccard similarity >60% flagged |
+| 12 | Argument hint | P2 | Command with skill reference has `argument-hint` in frontmatter |
 
 ### Step 2: Manual Review (when comprehensive audit requested)
 
@@ -91,15 +92,19 @@ Only run Step 2 when user explicitly requests deep audit. Default: Step 1 only.
 |--------|-------|
 | Skills scanned | N |
 | Commands scanned | N |
+| Checks passed | N |
 | P0 (Must Fix) | N |
 | P1 (Should Fix) | N |
 | P2 (Suggestion) | N |
 
 ## Per-Skill Results
 
-| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | Lines | Status |
-|-------|---------|----------|--------|--------------|------|---------|-------|--------|
-| name  | ✅/🟡/⚪ | ...    | ...    | ...          | ...  | ✅/⚪/— | N     | ✅/🟡  |
+| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | Lines | Status |
+|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|
+| name  | ✅/🟡/⚪ | ...    | ...    | ...          | ...  | ✅/⚪/— | ✅/🟡   | N     | ✅/🟡/⚪/🔴 |
+
+## P0 (Must Fix)
+- **skill-name**: Issue → Fix recommendation
 
 ## P1 (Should Fix)
 - **skill-name**: Issue → Fix recommendation
