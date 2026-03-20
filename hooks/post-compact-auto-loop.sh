@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# PostCompact Hook: Re-inject auto-loop rules after context compaction
-# Always exit 0 (non-blocking). Output to stdout = injected into agent context.
-# Only outputs when there are pending review/precommit steps.
+# SessionStart (compact) Hook: Re-inject auto-loop rules after context compaction
+# Registered as SessionStart with matcher "compact" — fires after compaction.
+# stdout is injected into Claude's context (SessionStart stdout injection).
+# Always exit 0 (non-blocking). Only outputs when there are pending review/precommit steps.
 
 set -euo pipefail
 

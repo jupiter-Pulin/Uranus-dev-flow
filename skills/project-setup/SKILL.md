@@ -256,14 +256,15 @@ Same 3-level fallback as Phase 5.1, but search for `hooks/pre-edit-guard.sh`:
 ### 6.2 Copy Hook Scripts
 
 1. `mkdir -p ${REPO_ROOT}/.claude/hooks/`
-2. Copy 4 hooks (exclude `namespace-hint.sh` — plugin-only):
+2. Copy 5 hooks (exclude `namespace-hint.sh` — plugin-only):
 
-   | Hook | Event | Purpose |
-   |------|-------|---------|
-   | `pre-edit-guard.sh` | PreToolUse | Block editing .env/.git |
-   | `post-edit-format.sh` | PostToolUse | Auto-format + track changes |
-   | `post-tool-review-state.sh` | PostToolUse | Parse review results |
-   | `stop-guard.sh` | Stop | Check review + precommit completed |
+   | Hook | Event | Matcher | Purpose |
+   |------|-------|---------|---------|
+   | `pre-edit-guard.sh` | PreToolUse | Edit\|Write | Block editing .env/.git |
+   | `post-edit-format.sh` | PostToolUse | Edit\|Write | Auto-format + track changes |
+   | `post-tool-review-state.sh` | PostToolUse | Bash\|mcp__codex__codex\|mcp__codex__codex-reply | Parse review results |
+   | `stop-guard.sh` | Stop | — | Check review + precommit completed |
+   | `post-compact-auto-loop.sh` | SessionStart | compact | Re-inject auto-loop rules after compaction |
 
 3. `chmod +x` each installed script.
 4. Conflict strategy: same as Phase 5.2.
@@ -286,6 +287,9 @@ Hook definition mapping (uses `$CLAUDE_PROJECT_DIR` for portability):
     ],
     "Stop": [
       {"matcher": "", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
+    ],
+    "SessionStart": [
+      {"matcher": "compact", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-auto-loop.sh"}]}
     ]
   }
 }

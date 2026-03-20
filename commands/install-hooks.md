@@ -86,6 +86,7 @@ Read all `.sh` files from the discovered hooks directory. The available hooks ar
 | `post-edit-format.sh` | PostToolUse | Edit, Write | Auto-format + track code/doc changes |
 | `post-tool-review-state.sh` | PostToolUse | Bash, mcp__codex__codex, mcp__codex__codex-reply | Parse review results, update state file |
 | `stop-guard.sh` | Stop | — | Check review + precommit completed before stop |
+| `post-compact-auto-loop.sh` | SessionStart | compact | Re-inject auto-loop rules after context compaction |
 
 > **Note**: The plugin's `SessionStart` namespace hook (`scripts/namespace-hint.sh`, defined in `hooks.json`) is intentionally excluded from local install — it emits plugin-namespaced command guidance (`/sd0x-dev-flow:...`) which is incorrect for local installations where commands are accessed without namespace prefix.
 
@@ -145,6 +146,9 @@ Hook definition mapping (use `$CLAUDE_PROJECT_DIR` for CWD-independent paths —
     ],
     "Stop": [
       {"matcher": "", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-guard.sh"}]}
+    ],
+    "SessionStart": [
+      {"matcher": "compact", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-auto-loop.sh"}]}
     ]
   }
 }
@@ -157,7 +161,7 @@ Stop-guard mode is configured via `env.STOP_GUARD_MODE` in settings, with resolu
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
 - **Legacy migration** (always, before merge): scan the target settings file for bare relative paths `.claude/hooks/<name>.sh` in hook commands and upgrade to `"$CLAUDE_PROJECT_DIR"/.claude/hooks/<name>.sh`. Also scan the **other** settings file (e.g., if writing to `settings.json`, also check `settings.local.json` and vice versa) — **warn** if legacy entries are found there, but do not auto-write the non-target file.
-- For each event (PreToolUse/PostToolUse/Stop):
+- For each event (PreToolUse/PostToolUse/Stop/SessionStart):
   - If no existing entries for this event → add all
   - If existing entries: check each hook's `command` path
     - Same command path exists → **Skip**

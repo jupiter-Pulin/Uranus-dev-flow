@@ -21,21 +21,21 @@
 三層強化：
 
 1. **P0**: Stop guard 預設改 strict（`.claude/settings.json`）
-2. **P1**: PostCompact re-injection hook（compact 後重新注入核心規則）
+2. **P1**: SessionStart (compact) re-injection hook（compact 後重新注入核心規則；不用 PostCompact 因其 stdout 不注入 context）
 3. **P2**: Stop guard block message 加入禁止行為引用
 
 ## Acceptance Criteria
 
 - [ ] AC1: `.claude/settings.json` 包含 `env.STOP_GUARD_MODE: "strict"`
-- [ ] AC2: 新增 `PostCompact` hook，compact 後自動注入 auto-loop 核心規則
-- [ ] AC3: PostCompact hook 僅在有 pending 步驟時注入（非無條件）
+- [ ] AC2: 新增 `SessionStart` (matcher: `compact`) hook，compact 後自動注入 auto-loop 核心規則
+- [ ] AC3: SessionStart compact hook 僅在有 pending 步驟時注入（非無條件）
 - [ ] AC4: Stop guard strict mode 的 block description 包含核心禁止行為引用
-- [ ] AC5: `hooks/hooks.json` 註冊 PostCompact event
-- [ ] AC6: `/install-hooks` 安裝後自動包含 PostCompact hook
-- [ ] AC7: `/project-setup` hook mapping 包含 PostCompact
-- [ ] AC8: PostCompact hook 包含 plugin-defers-to-local arbitration
+- [ ] AC5: `hooks/hooks.json` 註冊 SessionStart compact entry
+- [ ] AC6: `/install-hooks` 安裝後自動包含 SessionStart compact hook
+- [ ] AC7: `/project-setup` hook mapping 包含 SessionStart compact
+- [ ] AC8: SessionStart compact hook 包含 plugin-defers-to-local arbitration
 - [ ] AC9: 既有測試全部通過
-- [ ] AC10: 新增 PostCompact hook 的測試
+- [ ] AC10: 新增 SessionStart compact hook 的測試
 
 ## Progress
 
@@ -43,6 +43,6 @@
 |---|------|--------|
 | 1 | Tech spec | In Progress |
 | 2 | P0: strict mode 設定 | Planned |
-| 3 | P1: PostCompact hook | Planned |
+| 3 | P1: SessionStart compact hook | Planned |
 | 4 | P2: block message 強化 | Planned |
 | 5 | Tests | Planned |

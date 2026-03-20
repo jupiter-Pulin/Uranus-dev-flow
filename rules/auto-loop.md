@@ -137,10 +137,12 @@ Claude: [Edit tool complete]
 
 ## Enforcement Mechanism
 
-### Dual-Layer Defense
+### Three-Layer Defense
 
 ```
 [Edit/Write] -> [PostToolUse Hook] -> [State file update]
+                                          ↓
+[Context Compact] -> [SessionStart compact] -> [Re-inject auto-loop from state]
                                           ↓
 [Stop Hook] <- Read state file <- [Review command executed]
 ```
@@ -148,6 +150,7 @@ Claude: [Edit tool complete]
 | Layer       | Mechanism                          | Trigger              |
 | ----------- | ---------------------------------- | -------------------- |
 | PostToolUse | Track file changes + review result | Edit/Bash execution  |
+| SessionStart (compact) | Re-inject auto-loop rules after compaction (stdout → context) | Context compaction |
 | Stop Hook   | Warn before stopping if review pending (strict mode: block) | When attempting stop  |
 
 ### State File Schema

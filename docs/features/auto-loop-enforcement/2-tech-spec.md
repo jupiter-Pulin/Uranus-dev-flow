@@ -7,10 +7,10 @@
 - **Problem**: 1M context model 下 auto-loop compliance drift。模型問「要繼續嗎？」而非直接執行。`stop-guard.sh` 預設 `warn` 模式無法阻擋。Compact 後核心規則消失加劇 drift。
 - **Goals**:
   1. Stop guard 預設改 strict — 模型嘗試停止時 hook 直接 block
-  2. PostCompact re-injection — compact 後自動重新注入 auto-loop 核心規則
+  2. SessionStart (compact) re-injection — compact 後自動重新注入 auto-loop 核心規則
   3. Block message 可操作化 — 告訴模型「為什麼被 block」+「要做什麼」
 - **Scope**:
-  - v1: strict default + PostCompact hook + block message 強化
+  - v1: strict default + SessionStart compact hook + block message 強化
   - Out of scope: prompt-based Stop hook、pending_action state machine、deadlock counter（best-practices debate 已排除）
 
 ## 2. Existing Code Analysis
@@ -21,11 +21,11 @@
 |--------|-------------|----------|
 | `hooks/stop-guard.sh:46-66` | Guard mode resolution（env > settings.local > settings > default） | 核心修改點 |
 | `hooks/stop-guard.sh:270-289` | Block/warn output logic | 修改 description 內容 |
-| `hooks/post-tool-review-state.sh` | State file update（code_review, doc_review, precommit） | 供 PostCompact hook 讀取 |
-| `hooks/hooks.json` | Hook event 註冊 | 新增 PostCompact entry |
-| `hooks/post-edit-format.sh:203-225` | Edit 後設定 has_code/doc_change + invalidate state | 供 PostCompact hook 判斷 pending |
+| `hooks/post-tool-review-state.sh` | State file update（code_review, doc_review, precommit） | 供 SessionStart compact hook 讀取 |
+| `hooks/hooks.json` | Hook event 註冊 | 新增 SessionStart compact entry |
+| `hooks/post-edit-format.sh:203-225` | Edit 後設定 has_code/doc_change + invalidate state | 供 SessionStart compact hook 判斷 pending |
 | `rules/auto-loop.md:5-14` | Prohibited behaviors 列表 | Re-injection 內容來源 |
-| `commands/install-hooks.md` | Hook 安裝指令 | 更新以包含 PostCompact |
+| `commands/install-hooks.md` | Hook 安裝指令 | 更新以包含 SessionStart compact |
 
 ### Key Insight
 
@@ -45,7 +45,7 @@ flowchart TD
     R[Review Command] --> PR[PostToolUse: post-tool-review-state.sh]
     PR --> |update code_review.passed| SF
 
-    C[Context Compact] --> PC[PostCompact: post-compact-auto-loop.sh]
+    C[Context Compact] --> PC[SessionStart compact: post-compact-auto-loop.sh]
     PC --> |read state| SF
     PC --> |inject rules if pending| CTX[Agent Context]
 
@@ -80,18 +80,20 @@ flowchart TD
 | Review 沒 pass | log 警告，allow stop | **exit 2, block stop** |
 | 全部通過 | allow stop | allow stop (unchanged) |
 
-### 3.3 P1: PostCompact Re-injection Hook
+### 3.3 P1: SessionStart (compact) Re-injection Hook
 
 **新增檔案**: `hooks/post-compact-auto-loop.sh`
 
-**觸發**: Claude Code compact 事件後
+**觸發**: `SessionStart` event with matcher `compact` — compaction 後觸發，stdout 注入 Claude context
+
+**重要設計決策**: 官方文件明確指出只有 `SessionStart` 和 `UserPromptSubmit` 的 stdout 會注入 Claude 的 context。`PostCompact` 雖然是合法 event，但其 stdout 只在 verbose mode (Ctrl+O) 可見，不會被 Claude 看到。因此必須使用 `SessionStart` matcher `compact`。
 
 **邏輯**:
 
 ```bash
 #!/usr/bin/env bash
-# PostCompact Hook: Re-inject auto-loop rules after context compaction
-# Always exit 0 (non-blocking). Output to stdout = injected into agent context.
+# SessionStart (compact) Hook: Re-inject auto-loop rules after context compaction
+# stdout is injected into Claude's context (SessionStart stdout injection).
 
 # === Plugin-defers-to-local arbitration (mandatory, same as all plugin hooks) ===
 # [Same pattern as stop-guard.sh:13-37]
@@ -134,18 +136,17 @@ fi
 exit 0  # Always non-blocking
 ```
 
-**hooks.json 註冊**:
+**hooks.json 註冊**（加入現有 SessionStart array）:
 
 ```json
-"PostCompact": [
+"SessionStart": [
   {
     "matcher": "",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-compact-auto-loop.sh"
-      }
-    ]
+    "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/namespace-hint.sh"}]
+  },
+  {
+    "matcher": "compact",
+    "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-compact-auto-loop.sh"}]
   }
 ]
 ```
@@ -173,8 +174,8 @@ printf '{"ok":false,"reason":"Missing required steps","description":"Execute imm
 | Risk | Probability | Mitigation |
 |------|-------------|------------|
 | Strict mode 導致 infinite block loop | Low | 已有 `HOOK_BYPASS=1` escape hatch + behavior-layer 3-round rule |
-| PostCompact hook 輸出太多造成 context 污染 | Low | 僅在有 pending 步驟時注入（~5 行），且 exit 0 non-blocking |
-| State file 不存在時 PostCompact 無效 | Medium | Graceful degradation：無 state file = 無輸出 = 無影響 |
+| SessionStart compact hook 輸出太多造成 context 污染 | Low | 僅在有 pending 步驟時注入（~5 行），且 exit 0 non-blocking |
+| State file 不存在時 SessionStart compact 無效 | Medium | Graceful degradation：無 state file = 無輸出 = 無影響 |
 | 新 clone 沒有 strict 設定 | Low | `.claude/settings.json` is tracked；`/project-setup` 也會設定 |
 | Block message 過長被截斷 | Low | 控制在 200 字元內 |
 
@@ -183,12 +184,12 @@ printf '{"ok":false,"reason":"Missing required steps","description":"Execute imm
 | # | Task | Effort | Output |
 |---|------|--------|--------|
 | 1 | `.claude/settings.json` 加 `env.STOP_GUARD_MODE: "strict"` | S | 設定檔 |
-| 2 | 新建 `hooks/post-compact-auto-loop.sh` | M | PostCompact hook |
-| 3 | `hooks/hooks.json` 註冊 PostCompact event | S | Hook 註冊 |
+| 2 | 新建 `hooks/post-compact-auto-loop.sh` | M | SessionStart compact hook |
+| 3 | `hooks/hooks.json` 註冊 SessionStart compact entry | S | Hook 註冊 |
 | 4 | `hooks/stop-guard.sh` block message 強化 | S | 改善 description |
-| 5 | 更新 `commands/install-hooks.md` 包含 PostCompact | S | 安裝指令更新 |
-| 6 | 更新 `skills/project-setup/SKILL.md` hook mapping 包含 PostCompact | S | Onboarding 路徑 |
-| 7 | PostCompact hook 包含 plugin-defers-to-local arbitration | S | 一致性 |
+| 5 | 更新 `commands/install-hooks.md` 包含 SessionStart compact | S | 安裝指令更新 |
+| 6 | 更新 `skills/project-setup/SKILL.md` hook mapping 包含 SessionStart compact | S | Onboarding 路徑 |
+| 7 | SessionStart compact hook 包含 plugin-defers-to-local arbitration | S | 一致性 |
 | 8 | 新增 `test/hooks/post-compact-auto-loop.test.js` | M | 測試 |
 | 9 | 更新既有 `test/hooks/stop-guard.test.js`（如存在） | S | 測試 |
 
@@ -196,21 +197,22 @@ printf '{"ok":false,"reason":"Missing required steps","description":"Execute imm
 
 | Type | Test | File |
 |------|------|------|
-| Unit | PostCompact hook: pending code review → 輸出包含 `/codex-review-fast` | `test/hooks/post-compact-auto-loop.test.js` |
-| Unit | PostCompact hook: pending precommit → 輸出包含 `/precommit-fast`（canonical per auto-loop） | `test/hooks/post-compact-auto-loop.test.js` |
-| Unit | PostCompact hook: pending doc review → 輸出包含 `/codex-review-doc` | `test/hooks/post-compact-auto-loop.test.js` |
-| Unit | PostCompact hook: all passed → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
-| Unit | PostCompact hook: no state file → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
-| Schema | hooks.json 包含 PostCompact entry | `test/hooks/hooks-json.test.js` |
+| Unit | SessionStart compact hook: pending code review → 輸出包含 `/codex-review-fast` | `test/hooks/post-compact-auto-loop.test.js` |
+| Unit | SessionStart compact hook: pending precommit → 輸出包含 `/precommit-fast`（canonical per auto-loop） | `test/hooks/post-compact-auto-loop.test.js` |
+| Unit | SessionStart compact hook: pending doc review → 輸出包含 `/codex-review-doc` | `test/hooks/post-compact-auto-loop.test.js` |
+| Unit | SessionStart compact hook: all passed → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
+| Unit | SessionStart compact hook: no state file → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
+| Schema | hooks.json 包含 SessionStart compact entry | `test/hooks/hooks-json.test.js` |
 | Content | settings.json 包含 strict mode | Inline assertion |
 
 ## 7. Open Questions
 
 | # | Question | Impact | Recommendation |
 |---|----------|--------|----------------|
-| 1 | 是否需要 PreCompact hook 做 snapshot？ | Low | v1 不需要 — PostCompact 直接讀 state file 即可 |
-| 2 | PostCompact re-injection 是否需要 i18n（中/英）？ | Low | v1 英文即可 — 模型能理解 |
+| 1 | SessionStart compact re-injection 是否需要 i18n（中/英）？ | Low | v1 英文即可 — 模型能理解 |
 
 **已決定（非 open）**:
-- PostCompact hook 必須包含 plugin-defers-to-local arbitration（與所有 plugin hooks 一致）
+- ~~Q: 是否需要 PreCompact hook 做 snapshot？~~ 不需要 — SessionStart compact 直接讀 state file 即可
+- ~~Q: 為何不用 PostCompact？~~ PostCompact stdout 不注入 Claude context（只有 SessionStart 和 UserPromptSubmit 的 stdout 會注入）
+- SessionStart compact hook 必須包含 plugin-defers-to-local arbitration（與所有 plugin hooks 一致）
 - `/project-setup` v1 scope 內同步更新 hook mapping

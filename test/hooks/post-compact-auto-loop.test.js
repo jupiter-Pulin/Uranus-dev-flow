@@ -224,8 +224,9 @@ test('post-compact-auto-loop defers to local hook when installed', () => {
     join(cwd, '.claude', 'settings.json'),
     JSON.stringify({
       hooks: {
-        PostCompact: [
+        SessionStart: [
           {
+            matcher: 'compact',
             hooks: [
               {
                 type: 'command',
@@ -273,7 +274,7 @@ test('post-compact-auto-loop skips arbitration in dev mode (hooks.json at root)'
     join(cwd, '.claude', 'settings.json'),
     JSON.stringify({
       hooks: {
-        PostCompact: [{ hooks: [{ command: '.claude/hooks/post-compact-auto-loop.sh' }] }],
+        SessionStart: [{ matcher: 'compact', hooks: [{ command: '.claude/hooks/post-compact-auto-loop.sh' }] }],
       },
     })
   );
