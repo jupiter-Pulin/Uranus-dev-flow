@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "installed_at": "2026-03-14T04:00:00Z",
-  "plugin_version": "2.0.18",
+  "plugin_version": "2.0.19",
   "rules": {
     "auto-loop.md": { "hash": "c96fe76575d9b26fc11e6ef51c5991e978283657" },
     "codex-invocation.md": { "hash": "102948dbe364d348db2bce4ffb2494940c6ade21" },
