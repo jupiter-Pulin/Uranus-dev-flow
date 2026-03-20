@@ -36,7 +36,7 @@ Load the PR review comments per SKILL.md workflow. Use context block data for PR
 
 1. **Resolve PR** — from args or context block data
 2. **Fetch** — run script `fetch` subcommand
-3. **Verdict Triage** (plan/fix mode, unless `--no-verdict`) — per-thread `/seek-verdict` invocation (independent Codex per thread)
+3. **Verdict Triage** (plan/fix mode, unless `--no-verdict`) — per-thread `/seek-verdict` invocation (independent Codex per thread) — MUST execute via Skill tool before presenting results
 4. **Present** — based on `--mode` (default: plan — analysis report, no edits), enriched with verdict data
 5. **Fix** (only if explicit `--mode fix`) — apply changes per thread, then auto-loop per @rules/auto-loop.md
 6. **Writeback** (if `--writeback`) — dry-run plan → AskUserQuestion → execute

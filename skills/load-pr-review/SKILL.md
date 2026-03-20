@@ -28,6 +28,15 @@ Data plane (JS script) handles fetch/normalize/writeback.
 Control plane (this SKILL.md) handles classification, fix orchestration, auto-loop.
 ```
 
+## Non-Negotiable Rules
+
+| # | Rule | Violation = |
+|---|------|-------------|
+| 1 | Plan/fix mode MUST invoke `/seek-verdict` via Skill tool per unresolved thread (unless `--no-verdict`) | Report invalid — re-run with verdict |
+| 2 | Step 3 (Present) is blocked until Step 2 (Verdict Triage) completes | Report invalid |
+| 3 | Each `/seek-verdict` must use fresh Codex context per thread (no batch) | Triage invalid |
+| 4 | Plan output MUST include Codex Verdict Threads field (non-empty, from Step 2) | Report rejected |
+
 ## Analysis-Only Default ⚠️
 
 This skill is an **analysis tool by default**. It loads PR review comments and produces a triage report. It does NOT auto-fix.
@@ -39,7 +48,9 @@ This skill is an **analysis tool by default**. It loads PR review comments and p
 | Auto-fixing code after loading PR reviews | Present analysis report, wait for user to invoke `--mode fix` |
 | Editing files in plan mode | Only read and classify; no writes |
 | Suggesting "let me fix this" without explicit `--mode fix` | "Use `--mode fix` to start fixing ACTIONABLE threads." |
-| Skipping triage and jumping to fixes | Always complete Step 1.5 triage before any action |
+| Skipping triage and jumping to fixes | Always complete Step 2 verdict triage before any action |
+| Skipping `/seek-verdict` and classifying threads with AI judgment alone | Invoke `/seek-verdict` per thread via Skill tool; AI judgment is fallback only for failed calls |
+| Outputting plan table without Codex verdict data when `--no-verdict` was not passed | Complete Step 2 before Step 3 |
 
 ### Precedence
 
@@ -138,7 +149,7 @@ If `summary.total === 0`:
 
 > No review comments found on this PR.
 
-## Step 1.5: Per-Thread Independent Verdict (via `/seek-verdict`)
+## Step 2: Per-Thread Verdict Triage (via `/seek-verdict`) — MANDATORY
 
 In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread** for independent Codex assessment. Each thread gets its own fresh Codex context — no shared state between threads.
 
@@ -180,7 +191,54 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
 | ACTIONABLE | >= 0.70 | any | FIX_REQUIRED | ACTIONABLE |
 | UNCERTAIN / low | any | any | NEED_HUMAN | Needs Discussion |
 
-## Step 2: Present (mode-dependent)
+### Behavior Anchor: Verdict Must Be Invoked, Not Described
+
+**Declaring = Executing**: Saying "will run /seek-verdict" or "should invoke per-thread verdict" without actually calling the Skill tool is a violation.
+
+**Summary = Triage**: Classifying threads using Claude's own judgment (without Codex) and presenting them as triaged is a violation when `--no-verdict` was not passed.
+
+#### Correct Pattern
+
+```
+[Step 1 fetch complete, 5 unresolved threads]
+        |
+        "Running per-thread verdict triage..."
+        |
+        [Skill tool: /seek-verdict "src/foo.ts|Use early return"]     <- Actual invocation
+        [Skill tool: /seek-verdict "src/bar.ts|Missing null check"]   <- Parallel
+        [... one per unresolved thread]
+        |
+        "Verdicts collected. Presenting analysis report..."
+        |
+        [Step 3: Present with verdict data]
+```
+
+#### Incorrect Pattern (PROHIBITED)
+
+```
+[Step 1 fetch complete, 5 unresolved threads]
+        |
+        "Classifying threads..."                <- Claude classifying without Codex
+        |
+        [Output plan table with Claude's own judgment]  <- No /seek-verdict invoked
+        |
+        "Analysis complete."                    <- Skipped Step 2 entirely
+```
+
+## GATE: Verdict Complete
+
+Step 3 (Present) is **blocked** until one of these conditions is met:
+
+| Condition | Gate passes |
+|-----------|-------------|
+| All unresolved threads have `/seek-verdict` results | Yes |
+| `--no-verdict` flag passed | Yes (skip Step 2 entirely) |
+| `--mode summary` | Yes (Step 2 skipped by design) |
+| Some `/seek-verdict` calls failed | Yes — failed threads marked UNCERTAIN, proceed |
+
+**If gate is not met, do not output the plan table.**
+
+## Step 3: Present (mode-dependent)
 
 ### Summary Mode (`--mode summary`)
 
@@ -199,7 +257,7 @@ Use `--mode plan` to get fix strategy with independent Codex assessment.
 
 ### Plan Mode (DEFAULT)
 
-Classify each thread using verdict data from Step 1.5 (or AI judgment if verdict unavailable):
+Classify each thread using verdict data from Step 2 (or AI judgment if verdict unavailable):
 
 | Category | Description | Priority |
 |----------|-------------|----------|
@@ -229,6 +287,21 @@ Present grouped by verdict then priority:
 Use `--mode fix` to start fixing ACTIONABLE threads.
 ```
 
+### Codex Verdict Threads
+<!-- MANDATORY: This field cannot be filled without executing Step 2 -->
+
+In plan/fix mode output, always include the verdict threads table:
+
+```markdown
+### Codex Verdict Threads
+| Thread | Codex Thread ID | Verdict | Confidence |
+|--------|----------------|---------|------------|
+| src/foo.ts:42 | codex_abc123 | DISMISS_VERIFIED | 0.92 |
+| src/bar.ts:15 | codex_def456 | FIX_REQUIRED | 0.85 |
+```
+
+> If `--no-verdict`: output `Verdict triage skipped (--no-verdict)` instead of the table.
+
 ### Fix Mode (explicit `--mode fix` required)
 
 **⚠️ Fix mode is opt-in only. Never auto-enter fix mode. The user must explicitly pass `--mode fix`.**
@@ -243,7 +316,7 @@ Use `--mode fix` to start fixing ACTIONABLE threads.
    d. **Auto-loop**: code changes → `/codex-review-fast` → `/precommit`; doc changes → `/codex-review-doc`
 4. After all fixes complete, suggest `--writeback` to close the loop
 
-## Step 3: Writeback (optional, gated)
+## Step 4: Writeback (optional, gated)
 
 Only when `--writeback` is specified.
 
@@ -254,7 +327,7 @@ bash scripts/run-skill.sh load-pr-review load-pr-review.js \
   writeback --plan --input <json-path> --threads <IDs>
 ```
 
-Show the plan table to user (includes Verdict column from Step 1.5 when available). Ask for approval via AskUserQuestion.
+Show the plan table to user (includes Verdict column from Step 2 when available). Ask for approval via AskUserQuestion.
 
 ### Execute (after approval)
 
@@ -302,6 +375,15 @@ Human-readable table for direct display.
 
 ## Verification Checklist
 
+### Verdict Enforcement (Step 2)
+- [ ] Per-thread `/seek-verdict` invoked via Skill tool (NOT classified by Claude alone)
+- [ ] Each `/seek-verdict` uses fresh Codex thread (anti-anchoring)
+- [ ] Plan output includes Codex Verdict Threads field (non-empty unless `--no-verdict`)
+- [ ] `--no-verdict` properly skips Step 2 with explicit skip note
+- [ ] >60% DISMISS_VERIFIED triggers `[VERDICT_TRIAGE_WARN]`
+- [ ] Failed `/seek-verdict` calls marked UNCERTAIN (graceful degradation)
+
+### Other Steps
 - [ ] PR target resolves correctly (explicit, URL, current branch)
 - [ ] GraphQL fetch returns normalized threads
 - [ ] REST fallback activates when GraphQL fails
@@ -309,10 +391,6 @@ Human-readable table for direct display.
 - [ ] Default mode is `plan` (analysis-only, no edits)
 - [ ] Fix mode requires explicit `--mode fix`
 - [ ] No files edited in plan or summary mode
-- [ ] Per-thread `/seek-verdict` invoked (not batch) in plan/fix mode
-- [ ] Each `/seek-verdict` uses fresh Codex thread (anti-anchoring)
-- [ ] `--no-verdict` skips triage
-- [ ] >60% DISMISS_VERIFIED triggers `[VERDICT_TRIAGE_WARN]`
 - [ ] Writeback dry-run shows plan without executing
 - [ ] Writeback execute posts reply + optional resolve
 - [ ] Auto-loop triggers after fix mode edits

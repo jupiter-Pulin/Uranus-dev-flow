@@ -1,12 +1,14 @@
 # Verdict Packaging Template — Per-Thread `/seek-verdict` Integration
 
+> Step 2 is mandatory in plan/fix mode. Presenting analysis without executing this template is a SKILL.md violation.
+
 <!-- Pattern source: @skills/seek-verdict/references/verdict-prompt.md -->
 <!-- Classification source: @skills/issue-analyze/references/classification.md (Review Thread section) -->
 <!-- Threshold source: @skills/seek-verdict/references/policy-mapping.md -->
 
 ## Usage
 
-Used in `/load-pr-review` Step 1.5. Each unresolved thread is packaged as a finding for independent `/seek-verdict` invocation via **Skill tool** (built-in, always available).
+Used in `/load-pr-review` Step 2 (MANDATORY). Each unresolved thread is packaged as a finding for independent `/seek-verdict` invocation via **Skill tool** (built-in, always available).
 
 ## Per-Thread Packaging
 
@@ -87,3 +89,15 @@ Per `@skills/seek-verdict/references/policy-mapping.md`:
 | `original_finding_text` | Reviewer comment truncated to 500 chars; no secrets/tokens/passwords |
 | `relevant_diff` | Sent to Codex unredacted for research; **never recorded in `[DISMISS_VERDICT]` audit log** |
 | `evidence` in audit log | File:line references only; no source code content |
+
+## Verification of Execution
+
+After all per-thread `/seek-verdict` invocations complete, the model must be able to fill this table:
+
+| Required Field | Source |
+|---------------|--------|
+| Codex Thread ID | From each `/seek-verdict` Skill tool response |
+| Verdict | DISMISS_VERIFIED / FIX_REQUIRED / NEED_HUMAN |
+| Confidence | 0.0-1.0 from Codex |
+
+If this table cannot be filled, Step 2 was not executed. Return to Step 2 before proceeding.
