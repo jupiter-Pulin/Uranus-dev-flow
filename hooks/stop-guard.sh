@@ -37,12 +37,12 @@ if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]] \
 fi
 
 # === Configuration ===
-# Mode priority: env STOP_GUARD_MODE > settings.local hooks_config.stop_guard_mode
-#                > settings.json hooks_config.stop_guard_mode > default "warn"
+# Mode priority: env STOP_GUARD_MODE > settings.local env.STOP_GUARD_MODE (or legacy hooks_config)
+#                > settings.json env.STOP_GUARD_MODE (or legacy hooks_config) > default "warn"
 # HOOK_BYPASS=1  - Skip all checks (emergency escape hatch)
 # HOOK_DEBUG=1   - Output debug info
 
-# === Mode resolution (env > settings.local > settings > default) ===
+# === Mode resolution (env > legacy settings hooks_config > default) ===
 _resolve_guard_mode() {
   # Priority 1: Environment variable
   if [[ -n "${STOP_GUARD_MODE:-}" ]]; then echo "$STOP_GUARD_MODE"; return; fi
@@ -51,7 +51,8 @@ _resolve_guard_mode() {
     local _m
     for _sf in "${CLAUDE_PROJECT_DIR:-.}/.claude/settings.local.json" \
                "${CLAUDE_PROJECT_DIR:-.}/.claude/settings.json"; do
-      _m=$(jq -r '.hooks_config.stop_guard_mode // empty' "$_sf" 2>/dev/null) || true
+      # Try env.STOP_GUARD_MODE first (canonical), then legacy hooks_config
+      _m=$(jq -r '.env.STOP_GUARD_MODE // .hooks_config.stop_guard_mode // empty' "$_sf" 2>/dev/null) || true
       if [[ -n "$_m" ]]; then echo "$_m"; return; fi
     done
   fi

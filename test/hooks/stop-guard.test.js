@@ -205,10 +205,11 @@ if (query && query.includes('contains(')) {
   }
 }
 
-// Handle hooks_config.stop_guard_mode (mode resolution)
-if (query && query.includes('hooks_config.stop_guard_mode')) {
-  const val = (data.hooks_config && data.hooks_config.stop_guard_mode) || '';
-  process.stdout.write(val);
+// Handle env.STOP_GUARD_MODE // hooks_config.stop_guard_mode (mode resolution)
+if (query && (query.includes('env.STOP_GUARD_MODE') || query.includes('hooks_config.stop_guard_mode'))) {
+  const envVal = (data.env && data.env.STOP_GUARD_MODE) || '';
+  const legacyVal = (data.hooks_config && data.hooks_config.stop_guard_mode) || '';
+  process.stdout.write(envVal || legacyVal);
   process.exit(0);
 }
 
@@ -1251,6 +1252,33 @@ test('mode resolution: settings.json fallback', () => {
     env: { CLAUDE_PROJECT_DIR: workDir },
   });
   assert.equal(result.status, 2, 'settings.json strict should block');
+});
+
+test('mode resolution: env.STOP_GUARD_MODE in settings.json (canonical path)', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-mode-env-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  mkdirSync(join(workDir, '.claude'), { recursive: true });
+  writeFileSync(
+    join(workDir, '.claude', 'settings.json'),
+    JSON.stringify({ env: { STOP_GUARD_MODE: 'strict' } })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 2, 'env.STOP_GUARD_MODE=strict in settings should block');
 });
 
 test('mode resolution: default warn when no config', () => {

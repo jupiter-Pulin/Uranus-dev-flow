@@ -150,9 +150,9 @@ Hook definition mapping (use `$CLAUDE_PROJECT_DIR` for CWD-independent paths —
 }
 ```
 
-Stop-guard mode is configured via `hooks_config.stop_guard_mode` in settings (not as a command prefix), with 4-level resolution: env `STOP_GUARD_MODE` > `settings.local.json` > `settings.json` > default `warn`.
+Stop-guard mode is configured via `env.STOP_GUARD_MODE` in settings, with resolution: env `STOP_GUARD_MODE` > default `warn`.
 
-> **Default strict mode**: `/install-hooks` writes `"hooks_config": {"stop_guard_mode": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no config is found.
+> **Default strict mode**: `/install-hooks` writes `"env": {"STOP_GUARD_MODE": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no env var is set.
 
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
@@ -163,8 +163,8 @@ Merge strategy:
     - Same command path exists → **Skip**
     - Different command at same matcher → **Skip** + warn (unless `--force`)
     - No matching entry → **Append**
-- **Stop hook mode merge**: when an existing Stop entry references `stop-guard.sh`, the command string no longer contains a mode prefix. Mode is stored in `hooks_config.stop_guard_mode`. If the existing `hooks_config.stop_guard_mode` differs from the requested mode, update it (or warn without `--force`).
-- **`hooks_config` write**: after merging hook entries, write `{"hooks_config": {"stop_guard_mode": "<MODE>"}}` into the target settings file. Merge with existing `hooks_config` keys (preserve other fields).
+- **Stop hook mode merge**: when an existing Stop entry references `stop-guard.sh`, the command string no longer contains a mode prefix. Mode is stored in `env.STOP_GUARD_MODE`. If the existing `env.STOP_GUARD_MODE` differs from the requested mode, update it (or warn without `--force`).
+- **`env` write**: after merging hook entries, write `{"env": {"STOP_GUARD_MODE": "<MODE>"}}` into the target settings file. Merge with existing `env` keys (preserve other fields).
 - **Coexistence detection**: if `hooks/hooks.json` exists at repo root (= plugin source repo), warn that plugin hooks may conflict with installed hooks. The runtime arbitration guard handles this automatically, but inform the user.
 - `--force` semantics: **Replace** the existing entry at the same matcher (not append a duplicate). Remove the old entry, then add the new one.
 - Write updated settings back

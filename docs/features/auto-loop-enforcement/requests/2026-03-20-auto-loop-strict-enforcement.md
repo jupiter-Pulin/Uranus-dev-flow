@@ -26,7 +26,7 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1: `.claude/settings.json` 包含 `hooks_config.stop_guard_mode: "strict"`
+- [ ] AC1: `.claude/settings.json` 包含 `env.STOP_GUARD_MODE: "strict"`
 - [ ] AC2: 新增 `PostCompact` hook，compact 後自動注入 auto-loop 核心規則
 - [ ] AC3: PostCompact hook 僅在有 pending 步驟時注入（非無條件）
 - [ ] AC4: Stop guard strict mode 的 block description 包含核心禁止行為引用

@@ -159,7 +159,7 @@ plugin_hash    = git hash-object --no-filters <plugin-path>  # source of truth
 | Check | Method | Severity |
 |-------|--------|----------|
 | Legacy hook paths | Grep `settings.json` for bare `.claude/hooks/` without `$CLAUDE_PROJECT_DIR` | Found → P2 |
-| `stop_guard_mode` present | Read `hooks_config.stop_guard_mode` | Missing → P2 (info). Note: `/install-hooks` defaults to `strict` at install time; `stop-guard.sh` runtime defaults to `warn` when no config found. Missing config means runtime uses `warn` — may differ from install intent. |
+| `STOP_GUARD_MODE` present | Read `env.STOP_GUARD_MODE` (also check legacy `hooks_config.stop_guard_mode`) | Missing from both → P2 (info). Legacy `hooks_config` found → P2 (migration recommended). `/install-hooks` defaults to `strict` at install time; `stop-guard.sh` runtime defaults to `warn` when no config. |
 | Hook entry integrity | Each installed hook script has matching settings entry | Missing entry → P1 |
 | Orphan hook entries | Settings references script that doesn't exist on disk | Orphan → P2 |
 
@@ -279,7 +279,7 @@ S3 settings compatibility issues 全部委派給 `/install-hooks`（避免 sync 
 | Issue | Fix Action | Delegation |
 |-------|-----------|------------|
 | Legacy hook paths | Path migration to `$CLAUDE_PROJECT_DIR` format | `/install-hooks --all`（內建 legacy migration 邏輯） |
-| Missing `hooks_config` | Write default `stop_guard_mode` | `/install-hooks --all --guard-mode strict` |
+| Missing `STOP_GUARD_MODE` | Write default env var | `/install-hooks --all --guard-mode strict` |
 | Orphan hook entries | Report only（不自動刪除，可能是用戶自訂）| 無（diagnosis only）|
 | Missing hook entries | Add settings entry for installed script | `/install-hooks <missing-names>` |
 

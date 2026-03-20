@@ -291,15 +291,15 @@ Hook definition mapping (uses `$CLAUDE_PROJECT_DIR` for portability):
 }
 ```
 
-Stop-guard mode is configured via `hooks_config.stop_guard_mode` in settings (not as a command prefix), with 4-level resolution: env `STOP_GUARD_MODE` > `settings.local.json` > `settings.json` > default `warn`.
+Stop-guard mode is configured via `env.STOP_GUARD_MODE` in settings, with resolution: env `STOP_GUARD_MODE` > default `warn`.
 
-> **Default strict mode**: `/project-setup` writes `"hooks_config": {"stop_guard_mode": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no config is found.
+> **Default strict mode**: `/project-setup` writes `"env": {"STOP_GUARD_MODE": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no env var is set.
 
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
 - **Legacy migration**: scan for bare `.claude/hooks/<name>.sh` paths → upgrade to `"$CLAUDE_PROJECT_DIR"/.claude/hooks/<name>.sh`
 - For each event: append-only merge (skip if same command path exists)
-- **Stop hook mode merge**: mode is stored in `hooks_config.stop_guard_mode` (not in the command string). `/project-setup` writes `{"hooks_config": {"stop_guard_mode": "<MODE>"}}` to the target settings file, merging with existing `hooks_config` keys
+- **Stop hook mode merge**: mode is stored in `env.STOP_GUARD_MODE` (not in the command string). `/project-setup` writes `{"env": {"STOP_GUARD_MODE": "<MODE>"}}` to the target settings file, merging with existing `env` keys
 - **Coexistence detection**: if `hooks/hooks.json` exists at repo root (= plugin source repo), warn that plugin hooks and installed hooks may coexist. Runtime arbitration handles dedup automatically
 - Write updated settings back
 
@@ -332,7 +332,7 @@ Summarize all phases and perform closed-loop check:
 | `@rules/` references | `@rules/auto-loop.md` in `.claude/CLAUDE.md` | ✅ |
 | Rule files | `.claude/rules/auto-loop.md` exists | ✅ |
 | Hook enforcement | `stop-guard` in `.claude/settings.json` | ✅ |
-| Guard mode | `hooks_config.stop_guard_mode` = `strict` in settings | ✅ (unless `--guard-mode warn`) |
+| Guard mode | `env.STOP_GUARD_MODE` = `strict` in settings | ✅ (unless `--guard-mode warn`) |
 
 ### Output
 

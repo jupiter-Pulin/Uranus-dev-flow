@@ -85,15 +85,15 @@ Mode 解析順序（高優先 → 低優先）：
 | Priority | Source | Key/Var | Example |
 |----------|--------|---------|---------|
 | 1 | 環境變數 | `STOP_GUARD_MODE` | `STOP_GUARD_MODE=strict` |
-| 2 | `.claude/settings.local.json` | `.hooks_config.stop_guard_mode` | `"strict"` or `"warn"` |
-| 3 | `.claude/settings.json` | `.hooks_config.stop_guard_mode` | `"strict"` or `"warn"` |
+| 2 | `.claude/settings.local.json` | `.env.STOP_GUARD_MODE` (legacy: `.hooks_config.stop_guard_mode`) | `"strict"` or `"warn"` |
+| 3 | `.claude/settings.json` | `.env.STOP_GUARD_MODE` (legacy: `.hooks_config.stop_guard_mode`) | `"strict"` or `"warn"` |
 | 4 | Script default | hardcoded | `"warn"` |
 
 Allowed values: `strict` | `warn`。Invalid value → fallback to `warn` + stderr warning。
 
 - [x] `stop-guard.sh` 實作上述 4 級 mode 解析（取代現有 `${STOP_GUARD_MODE:-warn}`）
 - [x] `/install-hooks` 不再把 `STOP_GUARD_MODE=strict` 寫入 command string prefix
-- [x] `/install-hooks` 改為寫入 `.hooks_config.stop_guard_mode` 到 target settings（`--local` → `settings.local.json`，否則 `settings.json`；`--guard-mode` 參數仍保留）
+- [x] `/install-hooks` 改為寫入 `env.STOP_GUARD_MODE` 到 target settings（`--local` → `settings.local.json`，否則 `settings.json`；`--guard-mode` 參數仍保留）
 - [x] `skills/project-setup/SKILL.md` hook mapping 移除 `STOP_GUARD_MODE=<MODE>` command prefix
 - [x] Plugin 和 installed 版本的 stop-guard command string 保持 mode-agnostic
 - [x] Backward compatible：既有 `STOP_GUARD_MODE=strict` env prefix 仍可運作（env var 優先序最高）

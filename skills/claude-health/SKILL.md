@@ -201,7 +201,7 @@ Check **both** `settings.json` and `settings.local.json` (precedence: `settings.
 | # | Check | Method | Criteria |
 |---|-------|--------|----------|
 | S3.1 | Legacy hook paths | Grep both settings files for bare `.claude/hooks/` without `$CLAUDE_PROJECT_DIR` | Found → P2 |
-| S3.2 | `stop_guard_mode` present | Read `hooks_config.stop_guard_mode` from either settings file | Missing from both → P2 (info). Install-time default: `strict`; runtime fallback: `warn` |
+| S3.2 | `STOP_GUARD_MODE` present | Read `env.STOP_GUARD_MODE` from either settings file (also check legacy `hooks_config.stop_guard_mode`) | Missing from both → P2 (info). Legacy `hooks_config` found → P2 (migration recommended). Install-time default: `strict`; runtime fallback: `warn` |
 | S3.3 | Hook entry integrity | Each installed hook script has matching entry in either settings file | Missing from both → P1 |
 | S3.4 | Orphan hook entries | Either settings file references script that doesn't exist on disk | Orphan → P2 |
 

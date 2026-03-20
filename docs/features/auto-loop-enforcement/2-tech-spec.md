@@ -57,18 +57,18 @@ flowchart TD
 
 ### 3.2 P0: Strict Mode Default
 
-**變更**: `.claude/settings.json` 新增 `hooks_config`。
+**變更**: `.claude/settings.json` 新增 `env.STOP_GUARD_MODE`（`hooks_config` 不是 Claude Code settings schema 合法欄位，改用 `env`）。
 
 ```json
 {
-  "hooks_config": {
-    "stop_guard_mode": "strict"
+  "env": {
+    "STOP_GUARD_MODE": "strict"
   }
 }
 ```
 
 **影響範圍**:
-- `stop-guard.sh:46-60` 的 mode resolution 不需改 — 已支援 settings.json 讀取
+- `stop-guard.sh:46-60` 的 mode resolution 不需改 — env var 已是最高優先
 - `/project-setup` 安裝後也寫入此設定（v1 scope）
 - `/install-hooks` 安裝後也寫入此設定（v1 scope）
 
@@ -182,7 +182,7 @@ printf '{"ok":false,"reason":"Missing required steps","description":"Execute imm
 
 | # | Task | Effort | Output |
 |---|------|--------|--------|
-| 1 | `.claude/settings.json` 加 `hooks_config.stop_guard_mode: "strict"` | S | 設定檔 |
+| 1 | `.claude/settings.json` 加 `env.STOP_GUARD_MODE: "strict"` | S | 設定檔 |
 | 2 | 新建 `hooks/post-compact-auto-loop.sh` | M | PostCompact hook |
 | 3 | `hooks/hooks.json` 註冊 PostCompact event | S | Hook 註冊 |
 | 4 | `hooks/stop-guard.sh` block message 強化 | S | 改善 description |
