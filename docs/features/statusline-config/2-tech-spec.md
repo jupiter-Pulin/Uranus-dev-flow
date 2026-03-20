@@ -206,6 +206,7 @@ Always use jq fallback: `jq -r '.field // 0'`
 ```
 
 With `NO_COLOR=1` (separators rendered as plain `·`):
+
 ```
 ~/.../my-project | main | Opus 4.6 | ctx 55% left · est $0.42
 ```
@@ -369,6 +370,7 @@ When `agent.name` is present:
 3. Separator: standard pipe `|`
 
 Display order (left to right):
+
 ```
 Normal mode:    Directory | Git branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?
 Worktree mode:  [WT:name] branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?

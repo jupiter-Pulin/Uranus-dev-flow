@@ -376,6 +376,7 @@ Human-readable table for direct display.
 ## Verification Checklist
 
 ### Verdict Enforcement (Step 2)
+
 - [ ] Per-thread `/seek-verdict` invoked via Skill tool (NOT classified by Claude alone)
 - [ ] Each `/seek-verdict` uses fresh Codex thread (anti-anchoring)
 - [ ] Plan output includes Codex Verdict Threads field (non-empty unless `--no-verdict`)
@@ -384,6 +385,7 @@ Human-readable table for direct display.
 - [ ] Failed `/seek-verdict` calls marked UNCERTAIN (graceful degradation)
 
 ### Other Steps
+
 - [ ] PR target resolves correctly (explicit, URL, current branch)
 - [ ] GraphQL fetch returns normalized threads
 - [ ] REST fallback activates when GraphQL fails
