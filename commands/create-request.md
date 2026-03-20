@@ -8,6 +8,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
 
 @skills/create-request/SKILL.md
 @skills/create-request/references/template.md
+@skills/create-request/references/feature-context-resolution.md
 
 ## Context
 

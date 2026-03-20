@@ -8,7 +8,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Write
 
 @skills/tech-spec/SKILL.md
 @skills/tech-spec/references/template.md
-@references/feature-context-resolution.md
+@skills/tech-spec/references/feature-context-resolution.md
 
 ## Context Detection
 
