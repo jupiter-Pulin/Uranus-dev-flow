@@ -4,7 +4,7 @@ argument-hint: [<docs-path | feature-keyword>]
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(ls:*), Bash(git:*), Bash(find:*), Bash(node:*)
 ---
 
-@references/feature-context-resolution.md
+@skills/tech-spec/references/feature-context-resolution.md
 
 ## Auto-Trigger
 
@@ -21,7 +21,7 @@ Auto-triggered after precommit Pass, only when the change maps to a feature unde
 
 **Key principle: can't find target → `## Gate: ⚠️ Need Human` — don't guess or create new docs.**
 
-Use the shared feature context resolution algorithm (see `@references/feature-context-resolution.md`):
+Use the shared feature context resolution algorithm (see `@skills/tech-spec/references/feature-context-resolution.md`):
 
 ```bash
 # Auto-detect feature context (5-level cascade)
