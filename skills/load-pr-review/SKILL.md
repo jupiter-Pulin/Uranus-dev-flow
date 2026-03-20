@@ -41,6 +41,11 @@ This skill is an **analysis tool by default**. It loads PR review comments and p
 | Suggesting "let me fix this" without explicit `--mode fix` | "Use `--mode fix` to start fixing ACTIONABLE threads." |
 | Skipping triage and jumping to fixes | Always complete Step 1.5 triage before any action |
 
+### Precedence
+
+> **Rule priority**: Plan mode's analysis-only constraint overrides the "Skill analysis-only mode" exception in `fix-all-issues.md`.
+> Issues found in plan mode are recorded in the analysis report (logged as `[ANALYSIS_ONLY_DEFERRED]`), not auto-fixed. User must explicitly invoke `--mode fix` to apply changes.
+
 ### Mode Behavior
 
 | Mode | Default? | Reads Code | Edits Code | Writes Back |
