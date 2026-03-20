@@ -22,11 +22,10 @@ Customize `~/.claude/statusline-command.sh` — segments, themes, and colors.
 | Directory   | `workspace.current_dir`               | ON               | Truncate deep paths: `~/.../last-dir` |
 | Git branch  | shell `git`                           | ON               | `--no-optional-locks`, cache 5s       |
 | Agent       | `agent.name`                          | ON (conditional) | Show when present; color: `C_MODEL`   |
-| Model       | `model.display_name`                  | ON               | -                                     |
-| Context %   | `context_window.remaining_percentage` | ON               | Green >40%, Yellow 20-40%, Red <=20%  |
-| Token Usage | `context_window.current_usage`        | ON (conditional) | `{in}k/{out}k` when non-null; color: `C_COST` |
+| Model       | `model.display_name` + `context_window.context_window_size` | ON | Smart tier suffix: `Opus 4.6 (1M)` — auto-skip if display_name already contains context info |
+| Context %   | `context_window.remaining_percentage` + `context_window_size` | ON | `ctx 60% left (600k/1M)` — Green >40%, Yellow 20-40%, Red <=20% |
+| Token Usage | `context_window.total_input_tokens` + `total_output_tokens` | ON (conditional) | `{in}k/{out}k` session cumulative; color: `C_COST` |
 | Cost        | `cost.total_cost_usd`                 | ON               | Show when >= $0.005, `est $X.XX`      |
-| >200k alert | `exceeds_200k_tokens`                 | ON               | Show only when `true`                 |
 | Worktree    | `worktree.name` + `worktree.branch`   | ON (conditional) | `[WT:{name}] {branch}` or `[WT:{name}]` if branch absent; **replaces** Directory + Git branch when present; color: `C_BRANCH` |
 
 For full JSON schema, see [json-schema.md](references/json-schema.md).
@@ -96,10 +95,13 @@ Scripts use semantic tokens instead of hardcoded colors:
 - Cost: only when `>= 0.005`, format `est $X.XX`
 - Alert style: `C_ALERT` + bold (`\033[1m`) to distinguish from `C_CTX_BAD`
 - Token format: `%.1fk` via awk (e.g. 8500 → `8.5k`); values < 1000 show raw number
+- Tier format: `>=1M → (1M)`, `>=1000 → ({N}k)`, else raw; used for model suffix + context absolute
+- Model tier suffix: append `(1M)` or `(200k)` from `context_window_size`; **skip if `display_name` already contains** `context`, `1M`, or `200k`
+- Context absolute: `ctx 60% left (600k/1M)` — remaining tokens calculated from `remaining_percentage * context_window_size / 100`
 - Sanitize free-text: strip control chars (`tr -d '[:cntrl:]'`) + truncate 30 chars for `agent.name`, `worktree.name`, `worktree.branch`
 - Worktree replace: when `worktree.name` present, replace Directory + Git branch with `[WT:{name}] {branch}` (or `[WT:{name}]` if `worktree.branch` absent — hook-based worktrees)
-- Render order (normal): `Directory | Git branch | Agent? | Model | Context % · Token Usage? · Cost? · >200k?`
-- Render order (worktree): `[WT:name] branch | Agent? | Model | Context % · Token Usage? · Cost? · >200k?`
+- Render order (normal): `Directory | Git branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost?`
+- Render order (worktree): `[WT:name] branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost?`
 
 ## Script Structure
 
@@ -130,15 +132,20 @@ fi
 ## Example Output
 
 ```
-Normal mode:
-~/.../my-project | feat/auth | Opus 4.6 | ctx 48% left · 8.5k/1.2k · est $0.12
-~/.../my-project | main | Opus 4.6 | ctx 18% left · est $1.23 · >200k
+Normal mode (1M context):
+~/.../my-project | feat/auth | Opus 4.6 (1M) | ctx 60% left (600k/1M) · 85.0k/12.0k · est $18.12
+
+Normal mode (200k context):
+~/.../my-project | main | Sonnet 4.6 (200k) | ctx 30% left (60k/200k) · 120.0k/8.0k · est $3.50
 
 With agent:
-~/.../my-project | feat/auth | security-reviewer | Opus 4.6 | ctx 48% left · est $0.12
+~/.../my-project | feat/auth | security-reviewer | Opus 4.6 (1M) | ctx 48% left (480k/1M) · est $0.12
 
 Worktree mode:
-[WT:fix-123] bugfix/issue-123 | Opus 4.6 | ctx 22% left · 42.0k/8.0k · est $1.23 · >200k
+[WT:fix-123] bugfix/issue-123 | Opus 4.6 (1M) | ctx 22% left (220k/1M) · 42.0k/8.0k · est $1.23
+
+display_name already has context info (no duplicate suffix):
+~/.../my-project | main | Opus 4.6 (1M context) | ctx 60% left (600k/1M) · est $18.12
 ```
 
 ## Output
