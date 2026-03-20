@@ -5,11 +5,11 @@
 | Field | Value |
 |-------|-------|
 | Skill Name | `statusline-config` |
-| Status | Implemented (stable) |
+| Status | v1 implemented (stable); v2 proposed — see [Section 11](#11-v2-update-new-json-fields--segments) |
 | Standalone Install | `npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config` |
 | Output | `~/.claude/statusline-command.sh` (POSIX shell script) |
 | Dependencies | `jq` (required), `git` (optional, for branch segment) |
-| Claude Code Version | 2.1+ |
+| Claude Code Version | 2.1+ (v2 targets 2.1.80+ JSON schema) |
 
 ## 1. Overview
 
@@ -165,7 +165,7 @@ sequenceDiagram
 
 ## 7. JSON Schema
 
-> **Source of truth**: `skills/statusline-config/references/json-schema.md`. The table below is reproduced for self-contained reading.
+> **Source of truth**: `skills/statusline-config/references/json-schema.md`. The table below reflects the **v1 schema** (currently implemented). For v2 additions, see [Section 11.3](#113-new-json-fields).
 
 Claude Code pipes this JSON to the script's stdin on every update:
 
@@ -202,17 +202,15 @@ Always use jq fallback: `jq -r '.field // 0'`
 
 ```
 ~/.../my-project | feat/auth | Opus 4.6 | ctx 48% left · est $0.12
-```
-
-```
 ~/.../my-project | main | Opus 4.6 | ctx 18% left · est $1.23 · >200k
 ```
 
-With `NO_COLOR=1`:
-
+With `NO_COLOR=1` (separators rendered as plain `·`):
 ```
 ~/.../my-project | main | Opus 4.6 | ctx 55% left · est $0.42
 ```
+
+> **Separator convention**: `|` (pipe) between major segments, `·` (middle dot, UTF-8 `\xc2\xb7`) between minor sub-segments within the same group.
 
 ## 9. Accessibility
 
@@ -236,3 +234,240 @@ skills/statusline-config/
 commands/
 └── statusline-config.md            # Command entry point
 ```
+
+---
+
+## 11. v2 Update: New JSON Fields + Segments
+
+### 11.1 Background
+
+Claude Code 2.1.80+ 的 statusline JSON 新增了多個欄位（11 個 top-level 欄位 + 4 個 `current_usage` sub-fields = 15 entries）。本次更新將 skill 對齊官方 schema 並新增 3 個 conditional segments。
+
+> **v2 Completion Checklist** — 以下項目全部完成後，status 可改為 `v2 implemented`：
+> - [ ] `references/json-schema.md` updated with all new fields
+> - [ ] `SKILL.md` Segments table + Script Rules + Examples updated
+> - [ ] Verification JSON updated and tested
+> - [ ] User script regenerated and verified
+
+### 11.2 Design Decisions (Nash Equilibrium)
+
+經由 Claude + Codex adversarial brainstorm 達成共識（threadId: `019d094a-f297-7852-905d-507df678e1f5`）。
+
+| # | Decision | Result | Rationale |
+|---|----------|--------|-----------|
+| D1 | Token Usage segment | **A-compact**: independent segment `8.5k/1.2k` | 社群主流 + 語意清晰，不混入 context % |
+| D2 | Color token strategy | **X (full reuse)**: themes.md zero changes | ROI: 5 themes x N tokens 的乘數效應使新增 token 成本過高 |
+| D3 | Conditional segments | **ON when present**: auto-show, auto-hide | 匹配現有 cost/git/alert 的 conditional 模式 |
+| D4 | Bright red in ansi-default | **No change**: keep `\033[31m` | ansi-default 是 compatibility fallback，`\033[91m` 非 POSIX 標準 |
+
+### 11.3 New JSON Fields
+
+以下欄位需加入 `references/json-schema.md`（11 top-level + 4 sub-fields = 15 entries）：
+
+#### Top-level Fields (11)
+
+| Field | Type | Description | Segment? |
+|-------|------|-------------|:--------:|
+| `cwd` | string | Alias for `workspace.current_dir` | No (redundant) |
+| `transcript_path` | string | Path to conversation transcript | No |
+| `context_window.total_input_tokens` | number | Cumulative input tokens | No (session-level) |
+| `context_window.total_output_tokens` | number | Cumulative output tokens | No (session-level) |
+| `context_window.current_usage` | object\|null | Last API call token breakdown | **Yes** |
+| `agent.name` | string\|undefined | Agent name (only with `--agent`) | **Yes** |
+| `worktree.name` | string\|undefined | Worktree name | **Yes** |
+| `worktree.path` | string\|undefined | Worktree absolute path | No |
+| `worktree.branch` | string\|undefined | Worktree git branch | (sub-display) |
+| `worktree.original_cwd` | string\|undefined | Pre-worktree directory | No |
+| `worktree.original_branch` | string\|undefined | Pre-worktree branch | No |
+
+#### `current_usage` Sub-fields (4)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `context_window.current_usage.input_tokens` | number | Input tokens in current context |
+| `context_window.current_usage.output_tokens` | number | Output tokens generated |
+| `context_window.current_usage.cache_creation_input_tokens` | number | Tokens written to cache |
+| `context_window.current_usage.cache_read_input_tokens` | number | Tokens read from cache |
+
+#### Null/Undefined Handling
+
+| Pattern | Fields | jq Guard |
+|---------|--------|----------|
+| `null` before first API call | `context_window.current_usage`, `used_percentage`, `remaining_percentage` | `// empty` (hide segment) |
+| `undefined` (key absent) | `agent.name`, `worktree.*`, `vim.mode` | `// empty` (hide segment) |
+
+### 11.4 New Segments
+
+#### Render Modes
+
+| Mode | Condition | Max Segments | Segment Slots (? = conditional) |
+|------|-----------|:------------:|---------------|
+| Normal | `worktree.name` absent | 8 | Directory, Git branch, Agent?, Model, Context %, Token Usage?, Cost?, >200k? |
+| Worktree | `worktree.name` present | 7 | [WT:name] branch, Agent?, Model, Context %, Token Usage?, Cost?, >200k? |
+
+> Worktree mode replaces Directory + Git branch with a single `[WT:{name}] {branch}` slot (8 - 2 + 1 = 7).
+> Always-on slots: 4 in normal (Directory, Git branch, Model, Context %), 3 in worktree (WT slot, Model, Context %). Conditional slots: Agent, Token Usage, Cost, >200k.
+
+#### Example Output
+
+```
+v1 (6 segments):
+~/.../my-project | feat/auth | Opus 4.6 | ctx 48% left · est $0.12
+
+v2 normal mode (token usage + agent):
+~/.../my-project | feat/auth | Opus 4.6 | ctx 48% left · 8.5k/1.2k · est $0.12
+~/.../my-project | feat/auth | security-reviewer | Opus 4.6 | ctx 48% left · est $0.12
+
+v2 worktree mode:
+[WT:fix-123] bugfix/issue-123 | Opus 4.6 | ctx 22% left · 42.0k/8.0k · est $1.23 · >200k
+```
+
+#### Segment Definitions
+
+| Segment | JSON Field | Default | Display Format | Color Token | Condition |
+|---------|-----------|---------|---------------|-------------|-----------|
+| Token Usage | `context_window.current_usage` | ON (conditional) | `{in}k/{out}k` | `C_COST` | Show when `current_usage` is non-null |
+| Agent | `agent.name` | ON (conditional) | `{name}` | `C_MODEL` | Show when `agent.name` exists |
+| Worktree | `worktree.name` + `worktree.branch` | ON (conditional) | `[WT:{name}] {branch}` | `C_BRANCH` | Show when `worktree.name` exists; replaces Directory + Git branch |
+
+#### Token Usage Format
+
+```sh
+# Format: compact k-notation, input/output only (cache hidden in v1)
+# Canonical examples: 8.5k/1.2k  |  42.0k/8.0k  |  150.0k/12.0k  |  850 (< 1000)
+format_tokens() {
+  tokens=$1
+  if [ "$tokens" -ge 1000 ] 2>/dev/null; then
+    # awk for POSIX-safe float division, 1 decimal place
+    echo "$tokens" | awk '{printf "%.1fk", $1/1000}'
+  else
+    echo "${tokens}"
+  fi
+}
+# format_tokens 8500  → "8.5k"
+# format_tokens 1200  → "1.2k"
+# format_tokens 42000 → "42.0k"
+# format_tokens 850   → "850"
+```
+
+Threshold: always show when `current_usage` is non-null (no minimum threshold). Rationale: token counts are always informative — unlike cost, there's no "zero" state to hide.
+
+#### Worktree Behavior
+
+When `worktree.name` is present:
+1. **Replace** Directory segment with `[WT:{worktree.name}]`
+2. **Replace** Git branch segment with `worktree.branch` (if available)
+3. Rationale: worktree context supersedes regular directory/branch — showing both would be redundant
+
+When `worktree.name` is absent: standard Directory + Git branch behavior (unchanged).
+
+#### Agent Behavior
+
+When `agent.name` is present:
+1. Insert between the location slot (Git branch in normal mode, WT slot in worktree mode) and Model segment
+2. Use `C_MODEL` color (semantic: "what identity is executing")
+3. Separator: standard pipe `|`
+
+Display order (left to right):
+```
+Normal mode:    Directory | Git branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?
+Worktree mode:  [WT:name] branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?
+```
+
+#### Input Sanitization
+
+`agent.name`, `worktree.name`, and `worktree.branch` are free-text fields from JSON. Before rendering:
+- Strip control characters: `printf '%s' "$val" | tr -d '[:cntrl:]'`
+- Truncate long values: max 30 chars to prevent statusline overflow
+- Apply to all three fields before building output string
+
+### 11.5 Color Token Reuse Map
+
+| New Segment | Reuse Token | Rationale |
+|-------------|-------------|-----------|
+| Token Usage | `C_COST` | Both are session statistics; visual grouping with cost |
+| Agent | `C_MODEL` | Both indicate "what's executing"; semantically adjacent |
+| Worktree | `C_BRANCH` | Both indicate "where in the git graph"; semantically identical |
+
+No changes to `references/themes.md`.
+
+### 11.6 File Change Matrix
+
+| File | Action | Scope |
+|------|--------|-------|
+| `references/json-schema.md` | **Rewrite** | +15 entries (11 top-level + 4 sub-fields), restructure with grouping, update null handling |
+| `SKILL.md` Segments table | **Edit** | +3 rows |
+| `SKILL.md` Semantic Tokens | **No change** | Reuse existing tokens |
+| `SKILL.md` Script Rules | **Edit** | +token format rule, +conditional display rules, +worktree replace rule |
+| `SKILL.md` Script Structure | **Edit** | Add field extraction examples |
+| `SKILL.md` Example Output | **Edit** | Add v2 examples |
+| `SKILL.md` Verification | **Edit** | Update test JSON with new fields |
+| `references/themes.md` | **No change** | — |
+
+### 11.7 Backward Compatibility
+
+| Concern | Mitigation |
+|---------|-----------|
+| Existing scripts don't have new segments | New segments only appear in freshly generated scripts; existing scripts unaffected |
+| `current_usage` is null early in session | `// empty` guard hides segment until data available |
+| Worktree replaces Directory/Git branch | Only when `worktree.name` is present — standard behavior preserved otherwise |
+| Theme token count unchanged | Full reuse strategy = zero theme migration needed |
+
+### 11.8 Testing Strategy
+
+#### Verification JSON (v2)
+
+```json
+{
+  "model": {"id": "claude-opus-4-6", "display_name": "Opus 4.6"},
+  "cwd": "/tmp/test",
+  "workspace": {"current_dir": "/tmp/test", "project_dir": "/tmp/test"},
+  "context_window": {
+    "remaining_percentage": 55,
+    "used_percentage": 45,
+    "context_window_size": 200000,
+    "total_input_tokens": 85000,
+    "total_output_tokens": 12000,
+    "current_usage": {
+      "input_tokens": 8500,
+      "output_tokens": 1200,
+      "cache_creation_input_tokens": 5000,
+      "cache_read_input_tokens": 2000
+    }
+  },
+  "cost": {"total_cost_usd": 0.42, "total_duration_ms": 45000, "total_api_duration_ms": 2300, "total_lines_added": 156, "total_lines_removed": 23},
+  "exceeds_200k_tokens": false,
+  "session_id": "test-session",
+  "version": "2.1.80",
+  "output_style": {"name": "default"}
+}
+```
+
+#### Test Cases
+
+| # | Scenario | Input Override | Expected |
+|---|----------|--------------|----------|
+| T1 | All v2 segments present | + `agent.name`, `worktree.*`, `current_usage` | Worktree replaces dir/branch; agent shows; token usage shows |
+| T2 | Only `current_usage` present | Default JSON above | `8.5k/1.2k` appears after context % |
+| T3 | `current_usage` is null | `"current_usage": null` | Token segment hidden |
+| T4 | Agent only | + `"agent": {"name": "verify-app"}` | Agent name between branch and model |
+| T5 | Worktree only | + `"worktree": {"name": "fix-123", "branch": "bugfix/issue-123"}` | `[WT:fix-123] bugfix/issue-123` replaces dir + branch |
+| T6 | NO_COLOR | `NO_COLOR=1` | All segments plain text, no escape codes |
+| T7 | v1 JSON (no new fields) | Original v1 test JSON | Output identical to v1 (backward compatible) |
+
+### 11.9 Open Questions
+
+- [ ] `rate_limits` field: changelog 提及但不在官方 docs table — 可能 beta/rolled back。監控 Issue [#20636](https://github.com/anthropics/claude-code/issues/20636)
+- [ ] Cache token breakdown: v1 隱藏，未來可加 verbose mode 或 `CLAUDE_STATUSLINE_VERBOSE=1` flag
+- [ ] `workspace.added_dirs`: Agent A 發現的新欄位，暫不加 segment（低 DX 價值）
+
+### 11.10 References
+
+- [Official Statusline Docs](https://code.claude.com/docs/en/statusline) — Full JSON schema
+- [CLI Interface Guidelines](https://clig.dev/) — Information density, progressive disclosure
+- [ccstatusline](https://github.com/sirmalloc/ccstatusline) — Community token display patterns
+- [jtbr Statusline Guide](https://gist.github.com/jtbr/4f99671d1cee06b44106456958caba8b) — Rate limit display + pacing
+- Brainstorm threadId: `019d094a-f297-7852-905d-507df678e1f5`
+- Doc Review threadId: `019d0953-b1f0-7553-a775-2dd8b124d759` (3 rounds, ✅ Mergeable)
+- Request Doc: [2026-03-20-v2-json-schema-new-segments.md](./requests/2026-03-20-v2-json-schema-new-segments.md)
+- Feasibility Study: [0-feasibility-study-quota-display.md](./0-feasibility-study-quota-display.md)
