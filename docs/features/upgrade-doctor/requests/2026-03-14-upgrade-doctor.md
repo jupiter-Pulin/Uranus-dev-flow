@@ -26,7 +26,7 @@ Plugin 版本更新後，host project 的 installed assets（rules, hooks, scrip
 - Sync module S1 (version check), S2 (component classify), S3 (settings compat)
 - SessionStart drift sentinel in `namespace-hint.sh`
 - `--fix-safe` (auto-fix safe items) and `--fix` (guided remediation)
-- Rules (11), hooks (4), core scripts (6) = 21 managed files
+- Rules (12), hooks (5), core scripts (6) = 23 managed files
 
 ### Out of Scope (v2)
 
@@ -52,7 +52,7 @@ Plugin 版本更新後，host project 的 installed assets（rules, hooks, scrip
 | # | Criteria | Verification |
 |---|---------|-------------|
 | AC1 | `/claude-health --scope sync` 報告 manifest version vs plugin version mismatch | 手動驗證 with stale manifest |
-| AC2 | S2 對 21 個 managed files 各自輸出分類狀態 | 修改一個 rule 後重跑確認 `LOCAL_MODIFIED` |
+| AC2 | S2 對 23 個 managed files 各自輸出分類狀態 | 修改一個 rule 後重跑確認 `LOCAL_MODIFIED` |
 | AC3 | S3 偵測 legacy hook paths（bare `.claude/hooks/`） | 手動在 settings.json 加入 legacy path 後驗證 |
 | AC4 | SessionStart sentinel 在 version mismatch 時輸出 warning | 修改 manifest version 後開新 session |
 | AC5 | `--fix-safe` category-specific：rules OUTDATED → auto-fix via `/install-rules <names>`；hooks/scripts OUTDATED → report-only with suggested command；MISSING → auto-fix all categories | 檢查 rules 委派不帶 `--force`；hooks/scripts OUTDATED 只輸出建議指令 |

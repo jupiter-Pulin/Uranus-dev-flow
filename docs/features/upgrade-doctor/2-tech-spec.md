@@ -28,28 +28,28 @@
 | `scripts/namespace-hint.sh` | SessionStart hook | 擴展加 drift sentinel |
 | `hooks/hooks.json` | Plugin hook registry | SessionStart hook 定義 |
 
-### Current Manifest State (Real Example)
+### Current Manifest State (at proposal time, 2026-03-14)
 
 ```json
 {
   "schema_version": 1,
-  "plugin_version": "1.8.12",    // ← stale
+  "plugin_version": "1.8.12",    // ← stale at proposal time
   "rules": { "auto-loop.md": { "hash": "5de88f8..." }, ... }
-  // ← missing: hook_scripts, scripts
+  // ← missing: hook_scripts, scripts (at proposal time)
 }
 ```
 
-Plugin version: `2.0.3` — manifest 跨 major version drift（1.x → 2.x）。且只追蹤 rules，hook_scripts 和 scripts 完全未追蹤。
+At proposal time, plugin version was `2.0.3` — manifest had major version drift（1.x → 2.x）and only tracked rules; hook_scripts and scripts keys were missing. This motivated the upgrade-doctor feature.
 
 ### Drift Surface
 
 | Category | File Count | Manifest Tracked |
 |----------|-----------|-----------------|
-| Rules | 11 | ✅ Yes |
-| Hook scripts | 4 | ❌ Missing key |
+| Rules | 12 | ✅ Yes |
+| Hook scripts | 5 | ❌ Missing key |
 | Core scripts | 6 | ❌ Missing key |
 | Skill scripts | 18 | ❌ Not tracked |
-| **Total core** | **21** | **11 / 21 (52%)** |
+| **Total core** | **23** | **12 / 23 (52%)** |
 
 ### Files to Modify
 
@@ -80,8 +80,8 @@ flowchart TD
 
     S1 --> |manifest.plugin_version vs plugin version| VR[Version Report]
 
-    S2 --> R[Rules: 11 files]
-    S2 --> H[Hooks: 4 files]
+    S2 --> R[Rules: 12 files]
+    S2 --> H[Hooks: 5 files]
     S2 --> SC2[Scripts: 6 files]
     R --> HASH[Hash Classification]
     H --> HASH
@@ -150,8 +150,8 @@ plugin_hash    = git hash-object --no-filters <plugin-path>  # source of truth
 
 | Category | Expected Files | Plugin Source |
 |----------|---------------|---------------|
-| Rules | `auto-loop.md`, `codex-invocation.md`, `fix-all-issues.md`, `framework.md`, `testing.md`, `security.md`, `git-workflow.md`, `logging.md`, `docs-writing.md`, `docs-numbering.md`, `self-improvement.md` | `rules/*.md` |
-| Hooks | `pre-edit-guard.sh`, `post-edit-format.sh`, `post-tool-review-state.sh`, `stop-guard.sh` | `hooks/*.sh` |
+| Rules | `auto-loop.md`, `codex-invocation.md`, `fix-all-issues.md`, `framework.md`, `testing.md`, `security.md`, `git-workflow.md`, `logging.md`, `docs-writing.md`, `docs-numbering.md`, `self-improvement.md`, `context-management.md` | `rules/*.md` |
+| Hooks | `pre-edit-guard.sh`, `post-edit-format.sh`, `post-tool-review-state.sh`, `stop-guard.sh`, `post-compact-auto-loop.sh` | `hooks/*.sh` |
 | Scripts | `precommit-runner.js`, `verify-runner.js`, `dep-audit.sh`, `commit-msg-guard.sh`, `pre-push-gate.sh`, `lib/utils.js` | `scripts/` |
 
 #### S3: Settings Compatibility
@@ -341,7 +341,7 @@ Fix delegation 不需要額外 tools — 委派透過 Skill tool 調用 `/instal
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Hash computation adds latency | `/claude-health --scope all` 可能需 1-2s（21 files × `git hash-object`）| `--scope sync` 專用旗標讓用戶控制；SessionStart 不做 hash |
+| Hash computation adds latency | `/claude-health --scope all` 可能需 1-2s（23 files × `git hash-object`）| `--scope sync` 專用旗標讓用戶控制；SessionStart 不做 hash |
 | Plugin source repo 誤報 | 在 sd0x-dev-flow 開發環境，manifest version 故意 lag | 可接受 — 開發者理解。可加 `DOCTOR_SKIP=1` env var |
 | `--fix-safe` 覆蓋用戶有意刪除的檔案 | `MISSING` 分類可能包含用戶故意刪除的 rule | 檢查 manifest tombstone（`deleted: true`）— `TOMBSTONED` 狀態被 `--fix-safe` 排除 |
 | Skill tool delegation chain | `/claude-health` → Skill(`/install-rules`) 可能需要多層確認 | `--fix-safe` 對 rules 委派不帶 `--force`（依賴 smart merge AUTO_UPDATE）；hooks/scripts OUTDATED 為 report-only，不委派 |

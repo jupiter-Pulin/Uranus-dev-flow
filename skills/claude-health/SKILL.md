@@ -70,6 +70,7 @@ Missing → **P1**. If exists, read content and compare required items:
 | `settings.local.json` | Personal config |
 | `cache/` | Runtime cache |
 | `.tmp*` | Temp files |
+| `*.tmp` | Temp files (suffix variant) |
 | `*.zip` | Backup archives |
 | `.claude_review_state.json` | Review state tracking |
 
@@ -175,7 +176,7 @@ plugin_hash    = git hash-object --no-filters <plugin-path>  # source of truth
 | Category | Local Path | Plugin Source | Files |
 |----------|-----------|--------------|-------|
 | Rules | `.claude/rules/*.md` | `rules/*.md` | `auto-loop.md`, `codex-invocation.md`, `fix-all-issues.md`, `framework.md`, `testing.md`, `security.md`, `git-workflow.md`, `logging.md`, `docs-writing.md`, `docs-numbering.md`, `self-improvement.md`, `context-management.md` |
-| Hooks | `.claude/hooks/*.sh` | `hooks/*.sh` | `pre-edit-guard.sh`, `post-edit-format.sh`, `post-tool-review-state.sh`, `stop-guard.sh` |
+| Hooks | `.claude/hooks/*.sh` | `hooks/*.sh` | `pre-edit-guard.sh`, `post-edit-format.sh`, `post-tool-review-state.sh`, `stop-guard.sh`, `post-compact-auto-loop.sh` |
 | Scripts | `.claude/scripts/` | `scripts/` | `precommit-runner.js`, `verify-runner.js`, `dep-audit.sh`, `commit-msg-guard.sh`, `pre-push-gate.sh`, `lib/utils.js` |
 
 ### S2.5: Override Safeguard Checks
@@ -308,7 +309,7 @@ Applied to both: settings.json and settings.local.json
 - [ ] Sync: S1-S3 checks executed (when scope includes sync)
 - [ ] Each check has clear ✅/⛔ status
 - [ ] P1 issues have specific fix commands
-- [ ] S2 classification covers all 21 managed files
+- [ ] S2 classification covers all 23 managed files
 - [ ] Fix delegation uses targeted file names (not `--all`)
 
 ## References
