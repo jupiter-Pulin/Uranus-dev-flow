@@ -14,7 +14,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash
 - Review state: !`cat .claude_review_state.json 2>/dev/null || echo "{}"`
 - Git status: !`git status -sb`
 - Branch: !`git rev-parse --abbrev-ref HEAD 2>/dev/null`
-- Available rules: !`bash -c 'ls rules/*.md 2>/dev/null | sed "s|rules/||;s|\.md||" | tr "\n" ", "'`
+- Available rules: !`bash -c 'ls rules/*.md 2>/dev/null | sed "s|rules/||;s|\.md||" | paste -sd, -'`
 
 ## Task
 
