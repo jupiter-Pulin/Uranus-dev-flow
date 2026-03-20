@@ -1,0 +1,294 @@
+const { test, after } = require('node:test');
+const assert = require('node:assert/strict');
+const {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  chmodSync,
+  rmSync,
+} = require('node:fs');
+const { join, resolve } = require('node:path');
+const { tmpdir } = require('node:os');
+const { spawnSync } = require('node:child_process');
+
+const hookPath = resolve(__dirname, '../../hooks/post-compact-auto-loop.sh');
+const tempDirs = [];
+
+function makeTempDir(prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+
+function writeExecutable(filePath, content) {
+  writeFileSync(filePath, content);
+  chmodSync(filePath, 0o755);
+}
+
+function setupStubBin() {
+  const binDir = makeTempDir('sd0x-post-compact-bin-');
+  const stubJq = `#!/usr/bin/env node
+const fs = require('fs');
+const args = process.argv.slice(2);
+let query;
+let file;
+let hasExitFlag = false;
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '-r') continue;
+  if (arg === '-e') { hasExitFlag = true; continue; }
+  if (!query) { query = arg; continue; }
+  if (!file) { file = arg; continue; }
+}
+let input = '';
+try {
+  input = file ? fs.readFileSync(file, 'utf8') : fs.readFileSync(0, 'utf8');
+} catch {}
+let data = {};
+try {
+  data = input ? JSON.parse(input) : {};
+} catch {}
+
+// Handle field extraction: .field // default
+if (query) {
+  const fieldMatch = query.match(/^\\.([\\w.]+)\\s*\\/\\/\\s*(.+)$/);
+  if (fieldMatch) {
+    const path = fieldMatch[1].split('.');
+    let val = data;
+    for (const key of path) {
+      val = val && val[key];
+    }
+    if (val === undefined || val === null) {
+      process.stdout.write(fieldMatch[2].trim());
+    } else {
+      process.stdout.write(String(val));
+    }
+    process.exit(0);
+  }
+  // Handle arbitration: .. | strings | select(contains("X"))
+  const containsMatch = query.match(/contains\\("([^"]+)"\\)/);
+  if (containsMatch) {
+    const needle = containsMatch[1];
+    const str = JSON.stringify(data);
+    if (str.includes(needle)) {
+      process.stdout.write('true');
+      process.exit(0);
+    } else {
+      process.exit(1);
+    }
+  }
+}
+process.exit(0);
+`;
+  writeExecutable(join(binDir, 'jq'), stubJq);
+  return binDir;
+}
+
+function runHook({ cwd, binDir, env = {} }) {
+  return spawnSync('bash', [hookPath], {
+    cwd,
+    input: '{}',
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: binDir ? `${binDir}:${process.env.PATH}` : process.env.PATH,
+      CLAUDE_PROJECT_DIR: cwd || '',
+      ...env,
+    },
+  });
+}
+
+function writeStateFile(dir, state) {
+  writeFileSync(
+    join(dir, '.claude_review_state.json'),
+    JSON.stringify(state)
+  );
+}
+
+after(() => {
+  for (const dir of tempDirs) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- Basic functionality ---
+
+test('post-compact-auto-loop exits 0 when no state file', () => {
+  const cwd = makeTempDir('sd0x-pc-no-state-');
+  const binDir = setupStubBin();
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0, 'should exit 0');
+  assert.equal(result.stdout.trim(), '', 'should produce no output');
+});
+
+test('post-compact-auto-loop exits 0 when all passed (no output)', () => {
+  const cwd = makeTempDir('sd0x-pc-all-passed-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    has_doc_change: false,
+    code_review: { passed: true },
+    doc_review: { passed: false },
+    precommit: { passed: true },
+  });
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout.trim(), '', 'should not inject when all passed');
+});
+
+// --- Pending code review ---
+
+test('post-compact-auto-loop injects /codex-review-fast when code review pending', () => {
+  const cwd = makeTempDir('sd0x-pc-code-review-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    has_doc_change: false,
+    code_review: { passed: false },
+    doc_review: { passed: false },
+    precommit: { passed: false },
+  });
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /codex-review-fast/, 'should mention /codex-review-fast');
+  assert.match(result.stdout, /AUTO_LOOP_RESUME/, 'should have resume marker');
+  assert.match(result.stdout, /Declaring != Executing/, 'should re-inject rule 1');
+});
+
+// --- Pending precommit ---
+
+test('post-compact-auto-loop injects /precommit-fast when precommit pending', () => {
+  const cwd = makeTempDir('sd0x-pc-precommit-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    has_doc_change: false,
+    code_review: { passed: true },
+    doc_review: { passed: false },
+    precommit: { passed: false },
+  });
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /precommit-fast/, 'should mention /precommit-fast');
+});
+
+// --- Pending doc review ---
+
+test('post-compact-auto-loop injects /codex-review-doc when doc review pending', () => {
+  const cwd = makeTempDir('sd0x-pc-doc-review-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: false,
+    has_doc_change: true,
+    code_review: { passed: false },
+    doc_review: { passed: false },
+    precommit: { passed: false },
+  });
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /codex-review-doc/, 'should mention /codex-review-doc');
+});
+
+// --- No jq available ---
+
+test('post-compact-auto-loop exits 0 silently when jq unavailable', () => {
+  const cwd = makeTempDir('sd0x-pc-no-jq-');
+  // Create a bin dir with only basic system tools but no jq
+  const noJqBin = makeTempDir('sd0x-pc-nojq-bin-');
+  writeExecutable(join(noJqBin, 'jq'), '#!/bin/bash\nexit 127\n');
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+  const result = runHook({ cwd, binDir: noJqBin });
+  assert.equal(result.status, 0, 'should exit 0');
+  assert.equal(result.stdout.trim(), '', 'no output without jq');
+});
+
+// --- Arbitration: defer to local hook ---
+
+test('post-compact-auto-loop defers to local hook when installed', () => {
+  const cwd = makeTempDir('sd0x-pc-arbitration-');
+  const binDir = setupStubBin();
+
+  // Create local hook
+  mkdirSync(join(cwd, '.claude', 'hooks'), { recursive: true });
+  writeExecutable(
+    join(cwd, '.claude', 'hooks', 'post-compact-auto-loop.sh'),
+    '#!/bin/bash\necho local'
+  );
+
+  // Create settings referencing local hook
+  mkdirSync(join(cwd, '.claude'), { recursive: true });
+  writeFileSync(
+    join(cwd, '.claude', 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        PostCompact: [
+          {
+            hooks: [
+              {
+                type: 'command',
+                command: '.claude/hooks/post-compact-auto-loop.sh',
+              },
+            ],
+          },
+        ],
+      },
+    })
+  );
+
+  // Write pending state
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  // Should exit early without output (deferred to local)
+  assert.ok(
+    !result.stdout.includes('AUTO_LOOP_RESUME'),
+    'should not inject when deferring to local hook'
+  );
+});
+
+// --- Dev mode: skip arbitration ---
+
+test('post-compact-auto-loop skips arbitration in dev mode (hooks.json at root)', () => {
+  const cwd = makeTempDir('sd0x-pc-dev-mode-');
+  const binDir = setupStubBin();
+
+  // Create hooks/hooks.json at root (= plugin source repo)
+  mkdirSync(join(cwd, 'hooks'), { recursive: true });
+  writeFileSync(join(cwd, 'hooks', 'hooks.json'), '{}');
+
+  // Create local hook + settings (would normally trigger deferral)
+  mkdirSync(join(cwd, '.claude', 'hooks'), { recursive: true });
+  writeExecutable(
+    join(cwd, '.claude', 'hooks', 'post-compact-auto-loop.sh'),
+    '#!/bin/bash\necho local'
+  );
+  writeFileSync(
+    join(cwd, '.claude', 'settings.json'),
+    JSON.stringify({
+      hooks: {
+        PostCompact: [{ hooks: [{ command: '.claude/hooks/post-compact-auto-loop.sh' }] }],
+      },
+    })
+  );
+
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  // In dev mode, should NOT defer — should run and produce output
+  assert.match(
+    result.stdout,
+    /AUTO_LOOP_RESUME/,
+    'should inject in dev mode (skip arbitration)'
+  );
+});
