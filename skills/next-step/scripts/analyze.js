@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { runCapture, gitRepoRoot, gitShortHead, qualifyCommand } = require('../../../scripts/lib/utils');
+const { resolveFeatureContext: _resolveFeature } = require('../../../scripts/lib/feature-resolver');
 
 // ---------------------------------------------------------------------------
 // File classification config (language-agnostic)
@@ -175,72 +176,10 @@ function evaluateGates(reviewState, files) {
 }
 
 // ---------------------------------------------------------------------------
-// Feature context resolution (5-level fallback)
+// Feature context resolution (delegated to shared module)
 // ---------------------------------------------------------------------------
 function resolveFeatureContext(root, branch, changedPaths) {
-  const docsBase = path.join(root, 'docs', 'features');
-
-  function probe(key) {
-    const docsPath = path.join(docsBase, key);
-    try {
-      if (!fs.statSync(docsPath).isDirectory()) return null;
-    } catch { return null; }
-    let hasTechSpec = false;
-    let hasRequests = false;
-    try {
-      const entries = fs.readdirSync(docsPath);
-      hasTechSpec = entries.some(e => /^2-tech-spec/.test(e));
-      hasRequests = entries.includes('requests');
-    } catch { /* ignore */ }
-    return { key, docs_path: `docs/features/${key}`, has_tech_spec: hasTechSpec, has_requests: hasRequests };
-  }
-
-  // Validate feature key (prevent path traversal)
-  const SLUG_RE = /^[a-z0-9][a-z0-9._-]*$/i;
-
-  // Level 1: --feature CLI arg
-  if (FEATURE_KEY) {
-    if (!SLUG_RE.test(FEATURE_KEY)) {
-      return { key: null, source: 'none', confidence: null, docs_path: null, has_tech_spec: false, has_requests: false };
-    }
-    const info = probe(FEATURE_KEY);
-    if (info) return { ...info, source: 'cli', confidence: 'high' };
-    return { key: FEATURE_KEY, source: 'cli', confidence: 'high', docs_path: `docs/features/${FEATURE_KEY}`, has_tech_spec: false, has_requests: false };
-  }
-
-  // Level 2: branch feat/<key> (single segment only to prevent path issues)
-  const branchMatch = branch.match(/^feat\/([^/]+)$/);
-  if (branchMatch) {
-    const key = branchMatch[1];
-    const info = probe(key);
-    if (info) return { ...info, source: 'branch', confidence: 'high' };
-    return { key, source: 'branch', confidence: 'high', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requests: false };
-  }
-
-  // Level 3: changed paths under docs/features/<key>/
-  const featurePathMatch = changedPaths
-    .map(p => p.match(/^docs\/features\/([^/]+)\//))
-    .find(m => m);
-  if (featurePathMatch) {
-    const key = featurePathMatch[1];
-    const info = probe(key);
-    if (info) return { ...info, source: 'diff', confidence: 'medium' };
-    return { key, source: 'diff', confidence: 'medium', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requests: false };
-  }
-
-  // Level 4: single feature dir
-  try {
-    const dirs = fs.readdirSync(docsBase).filter(d => {
-      try { return fs.statSync(path.join(docsBase, d)).isDirectory(); } catch { return false; }
-    });
-    if (dirs.length === 1) {
-      const info = probe(dirs[0]);
-      if (info) return { ...info, source: 'single_dir', confidence: 'low' };
-    }
-  } catch { /* docs/features/ doesn't exist */ }
-
-  // Level 5: not found
-  return { key: null, source: 'none', confidence: null, docs_path: null, has_tech_spec: false, has_requests: false };
+  return _resolveFeature(root, branch, changedPaths, { featureKey: FEATURE_KEY });
 }
 
 // ---------------------------------------------------------------------------

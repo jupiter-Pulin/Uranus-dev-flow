@@ -8,7 +8,7 @@
 > **Created**: {YYYY-MM-DD}
 > **Status**: Pending
 > **Priority**: {P0|P1|P2}
-> **Tech Spec**: [Link](../planning/xxx.md) <- See spec for details
+> **Tech Spec**: [Link](../2-tech-spec.md) <- See spec for details
 
 ## Background
 
@@ -30,8 +30,8 @@
 
 | File                 | Action | Description          |
 | -------------------- | ------ | -------------------- |
-| `src/service/xxx.ts` | Modify | {Brief change description} |
-| `src/entity/xxx.ts`  | New    | {Brief purpose}      |
+| `skills/xxx/SKILL.md` | Modify | {Brief change description} |
+| `scripts/xxx.sh`      | New    | {Brief purpose}      |
 
 ## Acceptance Criteria
 
@@ -53,7 +53,7 @@
 
 ## References
 
-- Tech Spec: [xxx](../planning/xxx.md)
+- Tech Spec: [xxx](../2-tech-spec.md)
 - Related Request: [yyy](./yyy.md)
 ```
 

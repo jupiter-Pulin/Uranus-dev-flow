@@ -20,9 +20,21 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Write
 
 | Command         | Purpose              | When                    |
 | --------------- | -------------------- | ----------------------- |
-| `/tech-spec`    | Produce tech spec    | Starting from scratch   |
+| `/tech-spec`    | Create or update tech spec | Auto-detects create/update from filesystem state |
 | `/deep-analyze` | Deepen spec + roadmap | After initial concept   |
 | `/review-spec`  | Review tech spec     | Spec confirmation       |
+
+## Context-Aware Mode (Upsert)
+
+When invoked without a full requirement description, the skill auto-detects the target feature using the 5-level cascade from `references/feature-context-resolution.md`.
+
+| Filesystem State | Action |
+|-----------------|--------|
+| `docs/features/<key>/2-tech-spec.md` exists | **Update mode**: read existing spec, research code changes since last update, incrementally update changed sections |
+| `docs/features/<key>/2-tech-spec.md` absent | **Create mode**: generate new spec from template |
+| Feature not resolved | Gate: Need Human |
+
+In **update mode**, focus on sections affected by recent code changes (use `git diff` to identify). Preserve unchanged sections.
 
 ## Workflow
 

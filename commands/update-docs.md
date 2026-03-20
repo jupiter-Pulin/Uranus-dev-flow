@@ -1,8 +1,10 @@
 ---
 description: Research current code state then update corresponding docs, ensuring docs stay in sync with code.
-argument-hint: <docs-path | feature-keyword>
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash(ls:*), Bash(git:*), Bash(find:*)
+argument-hint: [<docs-path | feature-keyword>]
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(ls:*), Bash(git:*), Bash(find:*), Bash(node:*)
 ---
+
+@references/feature-context-resolution.md
 
 ## Auto-Trigger
 
@@ -11,57 +13,52 @@ Auto-triggered after precommit Pass, only when the change maps to a feature unde
 ## Context
 
 - Goal: Update docs based on current code state, ensuring docs stay in sync with implementation.
-- Input: Document path (e.g. `docs/features/auth`) or feature keyword (e.g. `auth`)
+- Input: Document path (e.g. `docs/features/auth`), feature keyword (e.g. `auth`), or empty (auto-detect)
 
 ## Task
 
-### Step 1: Locate Docs and Related Code (3-Level Fallback)
+### Step 1: Locate Docs and Related Code (5-Level Cascade)
 
-**Key principle: can't find target → `## Gate: ⚠️ Need Human` — don't guess.**
+**Key principle: can't find target → `## Gate: ⚠️ Need Human` — don't guess or create new docs.**
 
-| Level | Method | How |
-|-------|--------|-----|
-| 1. Context inference | feature-dev parameter or conversation feature name | Extract feature keyword from current context |
-| 2. Git diff inference | `git merge-base` + changed paths | Match changed `src/` paths against `docs/features/` directories |
-| 3. Not found | Stop and ask | Output `## Gate: ⚠️ Need Human` — do not guess or create new docs |
+Use the shared feature context resolution algorithm (see `@references/feature-context-resolution.md`):
 
 ```bash
-# Level 1: If document path provided
-ls $ARGUMENTS 2>/dev/null
+# Auto-detect feature context (5-level cascade)
+node scripts/resolve-feature-cli.js 2>/dev/null || echo '{}'
 
-# Level 1: If keyword, search related docs
-find docs -name "*.md" | xargs grep -l "<keyword>" 2>/dev/null
-
-# Level 2: Git diff inference
-git diff --name-only $(git merge-base HEAD main)..HEAD -- src/ | head -20
-# Match changed src/ paths against docs/features/ directories
-ls docs/features/ 2>/dev/null
+# If $ARGUMENTS is a docs path (starts with docs/), use path directly — skip resolver
+# If $ARGUMENTS is a keyword (no /), use as --feature override
+node scripts/resolve-feature-cli.js --feature "<keyword>" 2>/dev/null
 ```
 
-Extract from docs:
+**Path vs keyword**: If `$ARGUMENTS` starts with `docs/features/`, treat as an explicit docs path (bypass resolver). Otherwise, treat as a feature keyword and pass to `--feature`.
 
-- Feature scope described in the document
-- Involved Service / Provider / Entity
+| Confidence | Action |
+|------------|--------|
+| high/medium | Proceed with detected feature |
+| low | Proceed with warning |
+| null (not found) | Output `## Gate: ⚠️ Need Human` — do not guess |
 
 ### Step 2: Research Current Code State
 
 ```bash
-# Check related source code
-ls src/service/ | grep -i "<keyword>"
-ls src/provider/ | grep -i "<keyword>"
-ls src/entity/ | grep -i "<keyword>"
+# Find changed files for this feature (project-agnostic — no hard-coded src/ paths)
+git diff --name-only $(git merge-base HEAD main)..HEAD | head -30
 
-# Check recent changes
-git log --oneline -20 --all -- "src/**/*<keyword>*"
-git diff HEAD~10 --stat -- "src/**/*<keyword>*"
+# Search for related code using feature keyword
+grep -rl "<keyword>" skills/ commands/ scripts/ --include="*.js" --include="*.sh" --include="*.md" | head -20
+
+# Check recent changes related to the feature
+git log --oneline -20 --all -- "skills/<keyword>*" "commands/<keyword>*" "scripts/*<keyword>*"
 ```
 
 Key research items:
 
-- [ ] Any new Service / Method added?
-- [ ] Any modified logic?
-- [ ] Any new Entity / Field added?
-- [ ] Any API changes?
+- [ ] Any new scripts / skills / commands added?
+- [ ] Any modified logic in existing files?
+- [ ] Any new configuration or rules added?
+- [ ] Any API or interface changes?
 
 ### Step 3: Compare Docs vs Code Differences
 
@@ -126,13 +123,13 @@ Update document content based on differences:
 Before doc sync, snapshot the full code diff hash. After doc sync, compare to detect any code change (new files or additional hunks in existing files):
 
 ```bash
-# Before doc sync: hash the full code diff content
-PRE_HASH=$(git diff -- '*.ts' '*.js' '*.tsx' '*.jsx' | md5sum | cut -d' ' -f1)
+# Before doc sync: hash the full code diff content (project-agnostic — excludes .md docs)
+PRE_HASH=$(git diff -- ':!*.md' ':!docs/' | md5sum | cut -d' ' -f1)
 
 # ... run /update-docs + /create-request --update ...
 
 # After doc sync: compare diff hash
-POST_HASH=$(git diff -- '*.ts' '*.js' '*.tsx' '*.jsx' | md5sum | cut -d' ' -f1)
+POST_HASH=$(git diff -- ':!*.md' ':!docs/' | md5sum | cut -d' ' -f1)
 ```
 
 If `PRE_HASH != POST_HASH` (code diff changed during doc sync), return to the review loop (@rules/auto-loop.md). Doc-only changes (`.md`) do not re-trigger the code review loop.

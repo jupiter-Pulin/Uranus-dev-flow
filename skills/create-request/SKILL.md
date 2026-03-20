@@ -114,7 +114,22 @@ If incomplete info, ask:
 
 ## Update Mode Workflow
 
-**Path validation**: `--update <path>` must match `docs/features/*/requests/*.md` (or `archived/`). Reject paths outside this scope before any write action.
+**Path resolution**: `--update` supports three forms:
+
+| Form | Behavior |
+|------|----------|
+| `--update <path>` | Use explicit path (must match `docs/features/*/requests/*.md`) |
+| `--update` (no path) | Auto-detect from feature context (see `references/feature-context-resolution.md`) |
+| `--update <keyword>` | Resolve feature key, then find active request(s) |
+
+**Auto-detection logic** (when no explicit path):
+
+1. Resolve feature context using 5-level cascade (`node scripts/resolve-feature-cli.js`)
+2. Scan `docs/features/<key>/requests/*.md` for incomplete requests (Status not in `[Completed, Done, Superseded]`)
+3. If exactly 1 active request → auto-select
+4. If multiple active requests → AskUserQuestion with numbered list
+5. If 0 active requests → offer to create new via create mode
+6. If feature not resolved → Gate: Need Human
 
 ```
 Phase 1: Load      -> Read existing request document
