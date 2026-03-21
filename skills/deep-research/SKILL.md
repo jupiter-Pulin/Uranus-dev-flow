@@ -1,7 +1,7 @@
 ---
 name: deep-research
 description: "Multi-agent deep research orchestration for any topic. Use when: user wants to deeply research a topic, explore a question from multiple angles, understand industry practices, compare approaches, or needs comprehensive analysis combining web sources + codebase + community knowledge. Triggers on: 'research this', 'deep research', 'explore this topic', 'what are the best approaches for', 'investigate options for', 'comprehensive analysis of', multi-perspective research, or any question that benefits from parallel exploration across web + code + community sources. Not for: quick code lookup (use code-explore), code review (use codex-review-fast), audit-only (use best-practices), feasibility comparison (use feasibility-study)."
-allowed-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch
+allowed-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, Agent
 ---
 
 # Deep Research — Multi-Agent Research Orchestration

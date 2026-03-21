@@ -1,7 +1,7 @@
 ---
 description: Multi-agent deep research orchestration. Parallel researcher agents explore web + code + community sources, synthesize via claim registry, validate with conditional adversarial debate.
 argument-hint: <topic> [--mode exploratory|compliance|decision] [--debate auto|force|off] [--agents N] [--scope <path>] [--budget low|medium|high]
-allowed-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch
+allowed-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, Agent
 ---
 
 **Must read and follow the skill below before executing this command:**

@@ -1,7 +1,7 @@
 ---
 name: deep-explore
 description: "Multi-wave parallel code exploration orchestrator. Use when: large-scale codebase research, understanding complex cross-domain systems, deep investigation needing multiple perspectives simultaneously. Not for: quick lookup (use code-explore), dual confirmation (use code-investigate), code review (use codex-code-review). Output: unified exploration report with completeness scoring."
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Agent
 ---
 
 # Deep Explore Skill

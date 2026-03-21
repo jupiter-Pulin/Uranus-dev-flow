@@ -7,7 +7,7 @@
  * Validates all skills against routing, progressive loading, and structural criteria.
  *
  * Usage:
- *   node skill-lint.js [--skills-dir <path>] [--commands-dir <path>] [--json] [--fix-hint]
+ *   node skill-lint.js [--skills-dir <path>] [--commands-dir <path>] [--agents-dir <path>] [--json] [--fix-hint]
  *
  * Exit codes:
  *   0 = all pass
@@ -33,6 +33,7 @@ const fixHint = args.includes('--fix-hint');
 const cwd = process.cwd();
 const skillsDir = resolve(argVal('--skills-dir', join(cwd, 'skills')));
 const commandsDir = resolve(argVal('--commands-dir', join(cwd, 'commands')));
+const agentsDir = resolve(argVal('--agents-dir', join(cwd, 'agents')));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -254,6 +255,35 @@ function checkAllowedToolsSync(skillName, skillFm, commandFiles) {
   return { pass: true };
 }
 
+function checkAgentEntitlement(body, fm) {
+  if (!fm) return { pass: true };
+  // Only match explicit Agent( calls — subagent_type alone may be Task dispatch
+  const mentions = /\bAgent\s*\(/.test(body);
+  if (!mentions) return { pass: true };
+  const tools = (fm['allowed-tools'] || '').replace(/^["']|["']$/g, '');
+  if (/\bAgent\b/.test(tools)) return { pass: true };
+  return {
+    pass: false,
+    severity: 'P2',
+    message: 'Body describes Agent() dispatch but allowed-tools lacks Agent',
+    fix: 'Add Agent to allowed-tools in both SKILL.md and command.md',
+  };
+}
+
+function checkTaskEntitlement(body, fm) {
+  if (!fm) return { pass: true };
+  const mentions = /\bTask\s*\(/.test(body) || /\bTaskCreate\b/.test(body);
+  if (!mentions) return { pass: true };
+  const tools = (fm['allowed-tools'] || '').replace(/^["']|["']$/g, '');
+  if (/\bTask\b/.test(tools)) return { pass: true };
+  return {
+    pass: false,
+    severity: 'P2',
+    message: 'Body describes Task() dispatch but allowed-tools lacks Task',
+    fix: 'Add Task to allowed-tools in both SKILL.md and command.md',
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Skill-level checks
 // ---------------------------------------------------------------------------
@@ -279,8 +309,10 @@ function lintSkill(skillName, skillDir, commandFiles) {
   findings.push({ check: 'scripts-contract', ...checkScriptsContract(skillDir, body) });
   findings.push({ check: 'line-count', ...checkLineCount(content) });
   findings.push({ check: 'allowed-tools-sync', ...checkAllowedToolsSync(skillName, fm, commandFiles) });
+  findings.push({ check: 'agent-entitlement', ...checkAgentEntitlement(body, fm) });
+  findings.push({ check: 'task-entitlement', ...checkTaskEntitlement(body, fm) });
 
-  return { name: skillName, path: skillPath, fm, findings };
+  return { name: skillName, path: skillPath, fm, body, findings };
 }
 
 // ---------------------------------------------------------------------------
@@ -414,6 +446,86 @@ function detectMissingArgumentHints(skillNames, commandFiles) {
   return { findings, argHintStatus };
 }
 
+function detectInvalidAgentRefs(skillResults, commandFiles, _agentsDir) {
+  if (!isDir(_agentsDir)) return [];
+  const knownAgents = new Set(
+    readdirSync(_agentsDir).filter((f) => f.endsWith('.md')).map((f) => basename(f, '.md'))
+  );
+  const BUILTINS = new Set(['Explore', 'general-purpose', 'Plan']);
+  const findings = [];
+  // Intentionally requires quotes — bare/backtick forms in markdown tables are not code dispatch
+  const refPattern = /subagent_type[:\s]*["']([^"']+)["']/g;
+  const seen = new Set();
+
+  for (const result of skillResults) {
+    if (!result.body) continue;
+    for (const m of result.body.matchAll(refPattern)) {
+      const name = m[1];
+      if (BUILTINS.has(name) || name.includes(':') || knownAgents.has(name)) continue;
+      const key = `${result.name}:${name}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      findings.push({
+        check: 'agent-ref-validity',
+        pass: false,
+        severity: 'P1',
+        message: `subagent_type "${name}" not found in agents/ (skill: ${result.name})`,
+        fix: `Create agents/${name}.md or fix the reference`,
+      });
+    }
+  }
+
+  for (const cmdFile of commandFiles) {
+    const content = normalizeContent(readFileSync(join(commandsDir, cmdFile), 'utf8'));
+    const cmdName = basename(cmdFile, '.md');
+    for (const m of content.matchAll(refPattern)) {
+      const name = m[1];
+      if (BUILTINS.has(name) || name.includes(':') || knownAgents.has(name)) continue;
+      const key = `cmd:${cmdName}:${name}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      findings.push({
+        check: 'agent-ref-validity',
+        pass: false,
+        severity: 'P1',
+        message: `subagent_type "${name}" not found in agents/ (command: ${cmdName})`,
+        fix: `Create agents/${name}.md or fix the reference`,
+      });
+    }
+  }
+  return findings;
+}
+
+function detectAgentToolsSyntax(_agentsDir) {
+  if (!isDir(_agentsDir)) return [];
+  const CANONICAL_BARE = new Set([
+    'Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write', 'AskUserQuestion',
+    'Agent', 'Task', 'Skill', 'WebSearch', 'WebFetch', 'NotebookEdit',
+  ]);
+  const SCOPED_RE = /^Bash\([a-z-]+:\*\)$/;
+  const findings = [];
+  for (const f of readdirSync(_agentsDir).filter((x) => x.endsWith('.md'))) {
+    const content = normalizeContent(readFileSync(join(_agentsDir, f), 'utf8'));
+    const fm = parseFrontmatter(content);
+    if (!fm || !fm.tools) continue;
+    const agentName = basename(f, '.md');
+    const tools = String(fm.tools).split(/,\s*/);
+    for (const t of tools) {
+      const trimmed = t.trim();
+      if (!trimmed) continue;
+      if (CANONICAL_BARE.has(trimmed) || SCOPED_RE.test(trimmed)) continue;
+      findings.push({
+        check: 'agent-tools-syntax',
+        pass: false,
+        severity: 'P2',
+        message: `Agent "${agentName}" has non-canonical tool: "${trimmed}"`,
+        fix: 'Use canonical format: ToolName or Bash(<prefix>:*)',
+      });
+    }
+  }
+  return findings;
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -444,6 +556,8 @@ function main() {
   const orphanFindings = detectOrphans(skillDirs, commandFiles);
   const overlapFindings = detectDescriptionOverlap(skillResults);
   const { findings: argHintFindings, argHintStatus } = detectMissingArgumentHints(skillDirs, commandFiles);
+  const agentRefFindings = detectInvalidAgentRefs(skillResults, commandFiles, agentsDir);
+  const agentToolsSyntaxFindings = detectAgentToolsSyntax(agentsDir);
 
   // Aggregate
   const allFindings = [];
@@ -467,7 +581,7 @@ function main() {
     }
   }
 
-  for (const f of [...orphanFindings, ...overlapFindings, ...argHintFindings]) {
+  for (const f of [...orphanFindings, ...overlapFindings, ...argHintFindings, ...agentRefFindings, ...agentToolsSyntaxFindings]) {
     allFindings.push({ skill: '(cross-skill)', ...f });
     if (f.severity === 'P0') p0Count++;
     else if (f.severity === 'P1') p1Count++;
@@ -512,8 +626,8 @@ function main() {
 
   // Per-skill summary
   console.log('## Per-Skill Results\n');
-  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | Lines | Status |');
-  console.log('|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|');
+  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | AgEnt | TskEnt | Lines | Status |');
+  console.log('|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|-------|--------|');
   for (const result of skillResults) {
     const get = (check) => {
       const f = result.findings.find((x) => x.check === check);
@@ -527,7 +641,7 @@ function main() {
     const argHint = argHintStatus[result.name] === true ? '✅' : argHintStatus[result.name] === false ? '⚪' : '—';
     const atSync = get('allowed-tools-sync');
     console.log(
-      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${argHint} | ${atSync} | ${lines} | ${status} |`
+      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${argHint} | ${atSync} | ${get('agent-entitlement')} | ${get('task-entitlement')} | ${lines} | ${status} |`
     );
   }
   console.log();
@@ -567,4 +681,16 @@ function main() {
   process.exit(exitCode);
 }
 
-main();
+if (require.main === module) {
+  main();
+} else {
+  module.exports = {
+    normalizeContent,
+    parseFrontmatter,
+    bodyAfterFrontmatter,
+    checkAgentEntitlement,
+    checkTaskEntitlement,
+    detectInvalidAgentRefs,
+    detectAgentToolsSyntax,
+  };
+}

@@ -1,7 +1,7 @@
 ---
 description: Multi-wave parallel code exploration. Orchestrates 2-3 Explore agents across multiple waves for large-scale codebase research with completeness scoring.
 argument-hint: <query> [--agents N] [--waves N] [--areas "a, b, c"] [--quick]
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
