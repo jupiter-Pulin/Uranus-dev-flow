@@ -1,6 +1,6 @@
 ---
 description: Load GitHub PR review comments into AI session — analyze, triage, plan. Default: analysis-only (no auto-fix).
-allowed-tools: Bash(git:*), Bash(gh:*), Bash(bash:*), Bash(jq:*), Read, Grep, Glob, Edit, Write, AskUserQuestion, mcp__codex__codex
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(bash:*), Bash(jq:*), Read, Grep, Glob, Edit, Write, AskUserQuestion, mcp__codex__codex, Agent
 argument-hint: "[PR#|URL] [--mode plan|summary|fix] [--all] [--writeback] [--budget <N>] [--no-verdict]"
 ---
 

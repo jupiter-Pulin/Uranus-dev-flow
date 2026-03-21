@@ -1,7 +1,7 @@
 ---
 name: pre-pr-audit
 description: "Pre-PR confidence audit with 5-dimension scoring. Use when: final check before commit/push/PR, evaluating PR readiness, assessing test quality + risk + coverage holistically. Triggers: pre-pr, readiness check, confidence audit, final verification, ready to PR, how confident. Not for: code review (use codex-review-fast), post-deploy verification (use feature-verify), periodic health (use project-audit)."
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill, AskUserQuestion, Agent
 ---
 
 # Pre-PR Audit
@@ -56,37 +56,43 @@ sequenceDiagram
 
     U->>PA: /pre-pr-audit [--mode fast|deep]
 
-    par Phase A: Collect (parallel)
-        PA->>ST: Read precommit/verify state (freshness)
-        PA->>RA: /risk-assess --mode fast
-        PA->>PA: Detect changed files + map to tests
+    par Phase A: Collect
+        PA->>ST: [Background Agent] Read precommit/verify state (freshness)
+        PA->>RA: [Foreground — blocking] /risk-assess --mode fast
+        PA->>PA: [Background Agent] Detect changed files + map to tests
     end
 
-    par Phase B: Targeted (parallel)
-        PA->>TR: /codex-test-review (top-N risky modules)
-        PA->>CC: /check-coverage (deep mode only)
-        PA->>PA: AC trace (if request doc exists)
+    Note over PA,RA: A2 (/risk-assess) must complete before Phase B — Module Selection depends on top_affected
+
+    par Phase B: Targeted
+        PA->>TR: [Foreground] /codex-test-review (top-N risky modules)
+        PA->>CC: [Background Agent: coverage-analyst] /check-coverage (deep mode only)
+        PA->>PA: [Background Agent] AC trace (if request doc exists)
     end
 
     PA->>PA: Phase C: Aggregate + hard-fail + gate
     PA->>U: Phase D: Report + confidence index
 ```
 
-### Phase A: Collect (parallel)
+### Phase A: Collect (parallel with dispatch annotations)
 
-| Step | Action | Source |
-|------|--------|--------|
-| A1 | Read precommit/verify state file | `.claude_review_state.json` — check `precommit.passed` + freshness (HEAD match) |
-| A2 | Invoke `/risk-assess --mode fast` | Skill tool — get risk_level, top_affected, overall_score |
-| A3 | Detect changed files + map to test files | `git diff --name-only HEAD` → match against `test/` patterns |
+| Step | Dispatch | Action | Source |
+|------|----------|--------|--------|
+| A1 | Background Agent | Read precommit/verify state file | `.claude_review_state.json` — check `precommit.passed` + freshness (HEAD match) |
+| A2 | **Foreground** (blocking) | Invoke `/risk-assess --mode fast` | Skill tool — get risk_level, top_affected, overall_score |
+| A3 | Background Agent | Detect changed files + map to test files | `git diff --name-only HEAD` → match against `test/` patterns |
 
-### Phase B: Targeted (parallel, mode-dependent)
+**A2 MUST stay foreground**: Phase B Module Selection depends on `top_affected` from `/risk-assess` output. A1 and A3 dispatch as background Agents and run in parallel with A2.
 
-| Step | fast | deep | Action |
-|------|------|------|--------|
-| B1 | top-3 | top-10 + supplement | `/codex-test-review` on selected modules (see Module Selection) |
-| B2 | skip | ✅ | `/check-coverage` for pyramid balance |
-| B3 | skip | ✅ (if request doc) | AC trace: parse `## Acceptance Criteria` → map to test evidence |
+### Phase B: Targeted (parallel, mode-dependent, with dispatch annotations)
+
+| Step | Dispatch | fast | deep | Action |
+|------|----------|------|------|--------|
+| B1 | Foreground | top-3 | top-10 + supplement | `/codex-test-review` on selected modules (see Module Selection) |
+| B2 | Background Agent (`coverage-analyst`) | skip | ✅ | `/check-coverage` for pyramid balance |
+| B3 | Background Agent | skip | ✅ (if request doc) | AC trace: parse `## Acceptance Criteria` → map to test evidence |
+
+**B2 uses `coverage-analyst` agent** (`agents/coverage-analyst.md`) for background execution. B3 dispatches as a background Agent for AC parsing. B1 stays foreground as the primary assessment.
 
 ### Module Selection (deterministic)
 

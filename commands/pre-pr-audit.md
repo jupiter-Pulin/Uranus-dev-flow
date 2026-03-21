@@ -1,6 +1,6 @@
 ---
 description: Pre-PR confidence audit with 5-dimension scoring. Aggregates test quality, coverage, risk, and AC traceability into a single readiness index (0-100).
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(bash:*), Skill, AskUserQuestion, Agent
 argument-hint: "[--mode fast|deep] [--strict] [--json] [--base <ref>]"
 ---
 
