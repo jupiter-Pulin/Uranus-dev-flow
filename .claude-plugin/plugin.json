@@ -2,7 +2,9 @@
   "name": "sd0x-dev-flow",
   "description": "Development workflow plugin with 100+ tools for code review, testing, investigation, and DevOps automation.",
   "version": "2.0.22",
-  "author": { "name": "sd0xdev" },
+  "author": {
+    "name": "sd0xdev"
+  },
   "license": "MIT",
   "keywords": [
     "claude-code",
@@ -12,5 +14,231 @@
     "workflow",
     "testing",
     "security"
+  ],
+  "skills": [
+    {
+      "name": "best-practices",
+      "path": "skills/best-practices"
+    },
+    {
+      "name": "bug-fix",
+      "path": "skills/bug-fix"
+    },
+    {
+      "name": "bump-version",
+      "path": "skills/bump-version"
+    },
+    {
+      "name": "claude-health",
+      "path": "skills/claude-health"
+    },
+    {
+      "name": "code-explore",
+      "path": "skills/code-explore"
+    },
+    {
+      "name": "code-investigate",
+      "path": "skills/code-investigate"
+    },
+    {
+      "name": "codex-architect",
+      "path": "skills/codex-architect"
+    },
+    {
+      "name": "codex-brainstorm",
+      "path": "skills/codex-brainstorm"
+    },
+    {
+      "name": "codex-cli-review",
+      "path": "skills/codex-cli-review"
+    },
+    {
+      "name": "codex-code-review",
+      "path": "skills/codex-code-review"
+    },
+    {
+      "name": "codex-explain",
+      "path": "skills/codex-explain"
+    },
+    {
+      "name": "codex-implement",
+      "path": "skills/codex-implement"
+    },
+    {
+      "name": "codex-setup",
+      "path": "skills/codex-setup"
+    },
+    {
+      "name": "contract-decode",
+      "path": "skills/contract-decode"
+    },
+    {
+      "name": "create-pr",
+      "path": "skills/create-pr"
+    },
+    {
+      "name": "create-request",
+      "path": "skills/create-request"
+    },
+    {
+      "name": "de-ai-flavor",
+      "path": "skills/de-ai-flavor"
+    },
+    {
+      "name": "deep-explore",
+      "path": "skills/deep-explore"
+    },
+    {
+      "name": "deep-research",
+      "path": "skills/deep-research"
+    },
+    {
+      "name": "doc-review",
+      "path": "skills/doc-review"
+    },
+    {
+      "name": "feasibility-study",
+      "path": "skills/feasibility-study"
+    },
+    {
+      "name": "feature-dev",
+      "path": "skills/feature-dev"
+    },
+    {
+      "name": "feature-verify",
+      "path": "skills/feature-verify"
+    },
+    {
+      "name": "git-investigate",
+      "path": "skills/git-investigate"
+    },
+    {
+      "name": "git-profile",
+      "path": "skills/git-profile"
+    },
+    {
+      "name": "git-worktree",
+      "path": "skills/git-worktree"
+    },
+    {
+      "name": "issue-analyze",
+      "path": "skills/issue-analyze"
+    },
+    {
+      "name": "jira",
+      "path": "skills/jira"
+    },
+    {
+      "name": "load-pr-review",
+      "path": "skills/load-pr-review"
+    },
+    {
+      "name": "merge-prep",
+      "path": "skills/merge-prep"
+    },
+    {
+      "name": "next-step",
+      "path": "skills/next-step"
+    },
+    {
+      "name": "obsidian-cli",
+      "path": "skills/obsidian-cli"
+    },
+    {
+      "name": "op-session",
+      "path": "skills/op-session"
+    },
+    {
+      "name": "portfolio",
+      "path": "skills/portfolio"
+    },
+    {
+      "name": "post-dev-test",
+      "path": "skills/post-dev-test"
+    },
+    {
+      "name": "pr-comment",
+      "path": "skills/pr-comment"
+    },
+    {
+      "name": "pr-summary",
+      "path": "skills/pr-summary"
+    },
+    {
+      "name": "pre-pr-audit",
+      "path": "skills/pre-pr-audit"
+    },
+    {
+      "name": "project-audit",
+      "path": "skills/project-audit"
+    },
+    {
+      "name": "project-setup",
+      "path": "skills/project-setup"
+    },
+    {
+      "name": "push-ci",
+      "path": "skills/push-ci"
+    },
+    {
+      "name": "remind",
+      "path": "skills/remind"
+    },
+    {
+      "name": "repo-intake",
+      "path": "skills/repo-intake"
+    },
+    {
+      "name": "request-tracking",
+      "path": "skills/request-tracking"
+    },
+    {
+      "name": "risk-assess",
+      "path": "skills/risk-assess"
+    },
+    {
+      "name": "safe-remove",
+      "path": "skills/safe-remove"
+    },
+    {
+      "name": "security-review",
+      "path": "skills/security-review"
+    },
+    {
+      "name": "seek-verdict",
+      "path": "skills/seek-verdict"
+    },
+    {
+      "name": "skill-health-check",
+      "path": "skills/skill-health-check"
+    },
+    {
+      "name": "smart-commit",
+      "path": "skills/smart-commit"
+    },
+    {
+      "name": "smart-rebase",
+      "path": "skills/smart-rebase"
+    },
+    {
+      "name": "statusline-config",
+      "path": "skills/statusline-config"
+    },
+    {
+      "name": "tech-spec",
+      "path": "skills/tech-spec"
+    },
+    {
+      "name": "test-deep",
+      "path": "skills/test-deep"
+    },
+    {
+      "name": "test-review",
+      "path": "skills/test-review"
+    },
+    {
+      "name": "watch-ci",
+      "path": "skills/watch-ci"
+    }
   ]
 }
