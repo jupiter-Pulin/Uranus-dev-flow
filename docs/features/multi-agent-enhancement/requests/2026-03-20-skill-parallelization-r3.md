@@ -1,7 +1,7 @@
 # Skill Parallelization
 
 > **Created**: 2026-03-20
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md) Section 3.4
 > **Depends On**: [R1: Wiring Guardrails](./2026-03-20-wiring-guardrails-r1.md)
@@ -35,20 +35,20 @@
 
 ## Acceptance Criteria
 
-- [ ] `/load-pr-review` dispatches per-thread verdicts via background Agent tool
-- [ ] `/pre-pr-audit` Phase A/B use background agents for parallel execution
-- [ ] No sentinel output regression (existing auto-loop hook tests pass)
-- [ ] Untrusted PR content handling documented and enforced in parallel dispatch
-- [ ] Pass `/codex-review-fast` + `/precommit-fast`
+- [x] `/load-pr-review` dispatches per-thread verdicts via background Agent tool
+- [x] `/pre-pr-audit` Phase A/B use background agents for parallel execution
+- [x] No sentinel output regression (existing auto-loop hook tests pass)
+- [x] Untrusted PR content handling documented and enforced in parallel dispatch
+- [x] Pass `/codex-review-doc` + tests (29 pass, 1 pre-existing)
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Tech spec Section 3.4 + Codex feasibility review |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | 4 files modified (commit `a30aa38`) |
+| Testing | Done | skills-schema 9/9, skill-lint no new P1 |
+| Acceptance | Done | All AC checked, `/codex-review-doc` ✅ Mergeable |
 
 ## References
 

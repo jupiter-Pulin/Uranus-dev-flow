@@ -1,7 +1,7 @@
 # Agent Activation
 
 > **Created**: 2026-03-20
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md) Section 3.3
 > **Depends On**: [R1: Wiring Guardrails](./2026-03-20-wiring-guardrails-r1.md)
@@ -47,19 +47,19 @@
 
 ## Acceptance Criteria
 
-- [ ] 5 agents direct-wired to commands (brief-writer, doc-refactor, code-simplifier, git-investigator, coverage-analyst)
-- [ ] 4 inline-persona commands migrated to agent dispatch (check-coverage, project-brief, review-spec, deep-analyze)
-- [ ] All 14 agents referenced by at least 1 skill or command (set-comparison: `agents/*.md` names vs `subagent_type` refs)
-- [ ] Pass `/codex-review-doc`
+- [x] 5 agents direct-wired to commands (brief-writer, doc-refactor, code-simplifier, git-investigator, coverage-analyst)
+- [x] 4 inline-persona commands migrated to agent dispatch (check-coverage, project-brief, review-spec, deep-analyze)
+- [x] All 14 agents referenced by at least 1 skill or command (set-comparison: `agents/*.md` names vs `subagent_type` refs)
+- [x] Pass `/codex-review-doc`
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Agent-to-skill mapping in tech spec Section 2.3 |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | 18 files modified (commit `4a2afd0`) |
+| Testing | Done | skill-lint + set-comparison pass |
+| Acceptance | Done | All AC checked, `/codex-review-doc` passed |
 
 ## References
 
