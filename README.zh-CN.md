@@ -2,13 +2,22 @@
 
 **语言**: [English](README.md) | [繁體中文](README.zh-TW.md) | 简体中文 | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
-**[Claude Code](https://claude.com/claude-code) 的自主开发工作流引擎。**
+> AI 能快速交付，但缺乏防护机制，速度令人不安。
 
-- **零手动关卡** — 编辑代码、自动审查、自动修复、交付
-- **双 Reviewer 架构** — Codex MCP + 次要 reviewer 并行审查，fail-closed
-- **~4% context 占用** — Claude 200k window 的 96% 留给你的代码
+**AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
-73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
+73 commands · 56 skills · 14 agents — 仅占 Claude context window 的 ~4%
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## 为什么选择 sd0x-dev-flow？
+
+| 没有防护时 | 有 sd0x-dev-flow |
+|---|---|
+| Context 过长时 AI 跳过审查 | **Hook 强制**：stop-guard 阻止未完成的审查 |
+| 单一审查者遗漏问题 | **双审查分派**：Codex + 次要审查者并行 |
+| 「已修复」却没有重新验证 | **Auto-loop**：修复 → 重新审查 → 通过 → 继续 |
+| 审查状态在 compact 后丢失 | **状态追踪**：SessionStart hook 重新注入 |
 
 ## 快速开始
 
@@ -39,7 +48,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 引擎**自动执行质量关卡——任何代码编辑后，Claude 会在同一回复中触发**双 Reviewer 并行审查**（Codex MCP + 次要 reviewer 同步进行）。Findings 会去重、severity 正规化，并汇整为单一 gate。Hooks 强制 fail-closed 语义：汇整 gate 未完成时，stop-guard 会阻止停止。
+**Auto-Loop 引擎**自动执行质量关卡——代码编辑后，review 命令会分派**双 Reviewer 并行审查**（Codex MCP + 次要 reviewer 同步进行）。Findings 会去重、severity 正规化，并汇整为单一 gate。在 strict 模式下，Hooks 强制 fail-closed 语义：汇整 gate 未完成时，stop-guard 会阻止停止。详见 [docs/hooks.md](docs/hooks.md)。
 
 <details>
 <summary>详细：双 Reviewer 时序图</summary>
@@ -74,7 +83,7 @@ sequenceDiagram
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: Fail-closed: incomplete gate → blocked
+    Note over H: Strict mode: incomplete gate → blocked
 ```
 
 </details>
@@ -90,7 +99,19 @@ v2.0 并行分派两个独立 reviewer — 零单点故障：
 
 Findings 会**严重度正规化**（P0-Nit）、**去重**（file + issue key，±5 行容差），并**标记来源**（`codex` | `toolkit` | `both`）。
 
-Gate：`✅ Ready` 或 `⛔ Blocked` — fail-closed（未完成 gate = blocked）。
+Gate：`✅ Ready` 或 `⛔ Blocked` — strict 模式下，未完成 gate = blocked。
+
+## 如何比较
+
+| 能力 | sd0x-dev-flow | gstack | 通用 prompts |
+|---|---|---|---|
+| 强制审查关卡 | Hook + 行为层 | 仅建议 | 无 |
+| 双审查者 | Codex + 次要（并行） | 单一 /review | 无 |
+| 自动修复循环 | 修复 → 重新审查 → 通过 | 手动 | 无 |
+| 多 Agent 研究 | /deep-research（3 agents） | 无 | 无 |
+| 对抗式验证 | 纳什均衡辩论 | 无 | 无 |
+| 自我改进 | 教训记录 + 规则提升 | 仅 /retro 统计 | 无 |
+| 跨工具支持 | Codex/Cursor/Windsurf | Claude/Codex/Gemini/Cursor | N/A |
 
 ## 适用场景
 
@@ -327,46 +348,13 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 </details>
 
-## 规则
+## 规则与钩子
 
-| 规则 | 说明 |
-|------|------|
-| `auto-loop` | 修复 -> 重新审查 -> 修复 -> ... -> 通过（自动循环） |
-| `auto-loop-project` | 项目定制的 auto-loop 覆写规则（用户所有，不受插件管理） |
-| `codex-invocation` | Codex 必须自主调研，禁止喂结论 |
-| `fix-all-issues` | 零容忍：修复所有发现的问题 |
-| `self-improvement` | 被纠正 → 记录教训 → 防止再犯 |
-| `framework` | 框架专属规范（可自定义） |
-| `testing` | 单元/集成/端到端测试隔离 |
-| `security` | OWASP Top 10 检查清单 |
-| `git-workflow` | 分支命名、提交规范 |
-| `docs-writing` | 表格 > 段落，Mermaid > 文字 |
-| `docs-numbering` | 文档前缀规范（0-feasibility, 2-spec） |
-| `logging` | 结构化 JSON，禁止泄露敏感信息 |
+14 条规则（常驻加载的规范）+ 6 个钩子（自动化防护栏）。
 
 > **定制化**：编辑 `auto-loop-project.md` 可覆写项目的 auto-loop 行为。插件更新不会冲突 — 详见 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 
-## 钩子
-
-| 钩子 | 触发时机 | 用途 |
-|------|----------|------|
-| `namespace-hint` | SessionStart | 在 Claude context 中注入插件命令命名空间指引 |
-| `post-edit-format` | 编辑/写入之后 | 自动格式化 + 编辑后重置审查状态 |
-| `post-tool-review-state` | Bash / MCP 工具之后 | 追踪审查状态（sentinel 路由，支持命名空间命令） |
-| `pre-edit-guard` | 编辑/写入之前 | 禁止编辑 .env/.git |
-| `stop-guard` | 停止之前 | 未完成审查时阻止或告警 + stale-state git 检查（安装后 strict，plugin runtime warn） |
-
-钩子默认安全。通过环境变量自定义行为：
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `STOP_GUARD_MODE` | `strict`（安装后）/ `warn`（plugin runtime） | `strict` 在缺少审查步骤时阻止停止；`warn` 仅告警 |
-| `HOOK_NO_FORMAT` | （未设置） | 设为 `1` 禁用自动格式化 |
-| `HOOK_BYPASS` | （未设置） | 设为 `1` 跳过所有停止守卫检查 |
-| `HOOK_DEBUG` | （未设置） | 设为 `1` 输出调试信息 |
-| `GUARD_EXTRA_PATTERNS` | （未设置） | 额外保护路径的正则表达式（例如 `src/locales/.*\.json$`） |
-
-**依赖**：钩子需要 `jq`。自动格式化需要项目已装 `prettier`。缺少依赖时会自动跳过。
+完整的规则、钩子与环境变量参考，请见 [docs/rules.md](docs/rules.md) 与 [docs/hooks.md](docs/hooks.md)。
 
 ## 自定义配置
 
@@ -384,22 +372,18 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `{BUILD_COMMAND}` | 构建命令 | yarn build |
 | `{TYPECHECK_COMMAND}` | 类型检查 | yarn typecheck |
 
-## 展示：StatusLine Config
+## 展示：多 Agent 研究
 
-自定义 Claude Code 的状态栏 — 区段、主题与色彩。可单独安装：
-
-```bash
-npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config
-```
+执行 `/deep-research` 可调度 2-3 个并行研究 agent，跨越网络来源、代码库与社区知识 — 搭配 claim registry 综合与条件式对抗辩论。
 
 | 特性 | 内容 |
 |------|------|
-| Segments | Directory, Git branch, Model, Context %, Cost, >200k alert |
-| Themes | ansi-default, catppuccin-mocha, dracula, nord, none |
-| Engine | POSIX shell + JSON stdin + semantic color tokens |
-| Accessibility | WCAG AA contrast, NO\_COLOR support |
+| Agents | 2-3 个并行（web + code + community） |
+| 综合 | Claim registry 共识检测 |
+| 验证 | 条件式 /codex-brainstorm 辩论 |
+| 评分 | 4 信号完整度模型 |
 
-[完整文档](docs/features/statusline-config/2-tech-spec.md)
+[完整文档](docs/features/deep-research/)
 
 ## 架构
 

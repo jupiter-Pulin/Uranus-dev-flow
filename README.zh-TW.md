@@ -2,13 +2,22 @@
 
 **語言**: [English](README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
-**[Claude Code](https://claude.com/claude-code) 的自主開發 Workflow 引擎。**
+> AI 可以跑很快，但沒有護欄，速度令人不安。
 
-- **零手動關卡** — 編輯程式碼、自動 review、自動修正、交付
-- **雙 Reviewer 架構** — Codex MCP + 次要 reviewer 並行審查，fail-closed
-- **~4% context 佔用** — Claude 200k window 的 96% 留給你的程式碼
+**AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
-73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
+73 commands · 56 skills · 14 agents — 僅佔 Claude context window 的 ~4%
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## 為什麼選擇 sd0x-dev-flow？
+
+| 沒有護欄時 | 有 sd0x-dev-flow |
+|---|---|
+| Context 過長時 AI 跳過 review | **Hook 強制**：stop-guard 阻止未完成的 review |
+| 單一 reviewer 遺漏問題 | **雙 Reviewer 分派**：Codex + 次要 reviewer 並行 |
+| 「已修正」卻沒有重新驗證 | **Auto-loop**：修正 → 重新 review → 通過 → 繼續 |
+| Review 狀態在 compact 後遺失 | **狀態追蹤**：SessionStart hook 重新注入 |
 
 ## 快速開始
 
@@ -39,7 +48,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-loop 引擎**自動執行品質關卡——任何程式碼編輯後，Claude 在同一回覆中觸發**雙 Reviewer 並行審查**（Codex MCP + 次要 reviewer 同步進行）。Findings 會去重、severity 正規化，並彙整為單一 gate。Hooks 強制 fail-closed 語意：彙整 gate 未完成時，stop-guard 會阻止停止。
+**Auto-loop 引擎**自動執行品質關卡——程式碼編輯後，review 指令會分派**雙 Reviewer 並行審查**（Codex MCP + 次要 reviewer 同步進行）。Findings 會去重、severity 正規化，並彙整為單一 gate。在 strict 模式下，Hooks 強制 fail-closed 語意：彙整 gate 未完成時，stop-guard 會阻止停止。詳見 [docs/hooks.md](docs/hooks.md)。
 
 <details>
 <summary>詳細：雙 Reviewer 時序圖</summary>
@@ -74,7 +83,7 @@ sequenceDiagram
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: Fail-closed: incomplete gate → blocked
+    Note over H: Strict mode: incomplete gate → blocked
 ```
 
 </details>
@@ -90,7 +99,19 @@ v2.0 平行分派兩個獨立 reviewer — 零單點故障：
 
 Findings 會**嚴重度正規化**（P0-Nit）、**去重**（file + issue key，±5 行容差），並**標記來源**（`codex` | `toolkit` | `both`）。
 
-Gate：`✅ Ready` 或 `⛔ Blocked` — fail-closed（未完成 gate = blocked）。
+Gate：`✅ Ready` 或 `⛔ Blocked` — strict 模式下，未完成 gate = blocked。
+
+## 如何比較
+
+| 能力 | sd0x-dev-flow | gstack | 通用 prompts |
+|---|---|---|---|
+| 強制 review 關卡 | Hook + 行為層 | 僅建議 | 無 |
+| 雙 Reviewer | Codex + 次要（並行） | 單一 /review | 無 |
+| 自動修正迴圈 | 修正 → 重新 review → 通過 | 手動 | 無 |
+| 多 Agent 研究 | /deep-research（3 agents） | 無 | 無 |
+| 對抗式驗證 | Nash 均衡辯論 | 無 | 無 |
+| 自我改進 | 教訓記錄 + 規則提升 | 僅 /retro 統計 | 無 |
+| 跨工具支援 | Codex/Cursor/Windsurf | Claude/Codex/Gemini/Cursor | N/A |
 
 ## 適用場景
 
@@ -327,46 +348,13 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 </details>
 
-## Rules
+## Rules & Hooks
 
-| Rule | 說明 |
-|------|------|
-| `auto-loop` | 修正 -> 重新 review -> 修正 -> ... -> Pass（自動循環） |
-| `auto-loop-project` | 專案客製化的 auto-loop 覆寫規則（使用者擁有，不受 plugin 管理） |
-| `codex-invocation` | Codex 必須自主調研，禁止餵結論 |
-| `fix-all-issues` | 零容忍：修正所有發現的問題 |
-| `self-improvement` | 被修正 → 記錄教訓 → 防止再犯 |
-| `framework` | Framework 專屬慣例（可自訂） |
-| `testing` | Unit/Integration/E2E 隔離 |
-| `security` | OWASP Top 10 checklist |
-| `git-workflow` | Branch 命名、commit 慣例 |
-| `docs-writing` | 表格 > 段落，Mermaid > 文字 |
-| `docs-numbering` | 文件前綴慣例（0-feasibility, 2-spec） |
-| `logging` | 結構化 JSON，禁止 secrets |
+14 條 rules（常駐載入的慣例）+ 6 個 hooks（自動化護欄）。
 
 > **客製化**：編輯 `auto-loop-project.md` 可覆寫專案的 auto-loop 行為。Plugin 更新不會衝突 — 詳見 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 
-## Hooks
-
-| Hook | 觸發時機 | 用途 |
-|------|----------|------|
-| `namespace-hint` | SessionStart | 在 Claude context 中注入外掛指令命名空間指引 |
-| `post-edit-format` | Edit/Write 之後 | 自動 prettier + 編輯後重設 review 狀態 |
-| `post-tool-review-state` | Bash / MCP 工具之後 | 追蹤 review 狀態（sentinel routing，支援命名空間指令） |
-| `pre-edit-guard` | Edit/Write 之前 | 防止編輯 .env/.git |
-| `stop-guard` | 停止之前 | 未完成 review 時阻止或警告 + stale-state git 檢查（安裝後 strict，plugin runtime warn） |
-
-Hook 預設是安全的。使用環境變數自訂行為：
-
-| 變數 | 預設值 | 說明 |
-|------|--------|------|
-| `STOP_GUARD_MODE` | `strict`（安裝後）/ `warn`（plugin runtime） | `strict` 在缺少 review 步驟時阻止停止；`warn` 僅警告 |
-| `HOOK_NO_FORMAT` | （未設定） | 設為 `1` 停用自動 format |
-| `HOOK_BYPASS` | （未設定） | 設為 `1` 跳過所有 stop-guard 檢查 |
-| `HOOK_DEBUG` | （未設定） | 設為 `1` 輸出 debug 資訊 |
-| `GUARD_EXTRA_PATTERNS` | （未設定） | 額外保護路徑的 regex（例如 `src/locales/.*\.json$`） |
-
-**Dependencies**：Hook 需要 `jq`。自動 format 需要專案已安裝 `prettier`。缺少 dependency 時會自動略過。
+完整的 rules、hooks 與環境變數參考，請見 [docs/rules.md](docs/rules.md) 與 [docs/hooks.md](docs/hooks.md)。
 
 ## 自訂設定
 
@@ -384,22 +372,18 @@ Hook 預設是安全的。使用環境變數自訂行為：
 | `{BUILD_COMMAND}` | Build 指令 | yarn build |
 | `{TYPECHECK_COMMAND}` | Type check | yarn typecheck |
 
-## 展示：StatusLine Config
+## 展示：多 Agent 研究
 
-自訂 Claude Code 的 statusline — 區段、主題與色彩。可單獨安裝：
-
-```bash
-npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config
-```
+執行 `/deep-research` 可調度 2-3 個並行研究 agent，跨越網路來源、程式碼庫與社群知識 — 搭配 claim registry 綜合與條件式對抗辯論。
 
 | 特色 | 內容 |
 |------|------|
-| Segments | Directory, Git branch, Model, Context %, Cost, >200k alert |
-| Themes | ansi-default, catppuccin-mocha, dracula, nord, none |
-| Engine | POSIX shell + JSON stdin + semantic color tokens |
-| Accessibility | WCAG AA contrast, NO\_COLOR support |
+| Agents | 2-3 個並行（web + code + community） |
+| 綜合 | Claim registry 共識偵測 |
+| 驗證 | 條件式 /codex-brainstorm 辯論 |
+| 評分 | 4 訊號完整度模型 |
 
-[完整文件](docs/features/statusline-config/2-tech-spec.md)
+[完整文件](docs/features/deep-research/)
 
 ## 架構
 

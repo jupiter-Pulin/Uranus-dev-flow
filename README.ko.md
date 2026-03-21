@@ -2,13 +2,22 @@
 
 **언어**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md)
 
-**[Claude Code](https://claude.com/claude-code)용 자율 개발 워크플로 엔진.**
+> AI는 빠르게 코드를 작성할 수 있습니다. 하지만 가드레일 없이는, 그 속도가 두렵습니다.
 
-- **수동 게이트 제로** — 코드 편집, 자동 리뷰, 자동 수정, 배포
-- **듀얼 리뷰어 아키텍처** — Codex MCP + 보조 리뷰어 병렬 실행, fail-closed
-- **~4% 컨텍스트 사용량** — Claude 200k 윈도우의 96%를 코드에 활용
+**AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
+73 commands · 56 skills · 14 agents — Claude context window의 ~4%만 사용
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## 왜 sd0x-dev-flow인가?
+
+| 가드레일 없을 때 | sd0x-dev-flow 사용 시 |
+|---|---|
+| 컨텍스트가 길면 AI가 리뷰를 건너뜀 | **Hook 강제**: stop-guard가 미완료 리뷰를 차단 |
+| 단일 리뷰어가 문제를 놓침 | **듀얼 디스패치**: Codex + 보조 리뷰어 병렬 실행 |
+| "수정 완료"인데 재검증 없음 | **Auto-loop**: 수정 → 재리뷰 → 통과 → 계속 |
+| compact 후 리뷰 상태 소실 | **상태 추적**: SessionStart hook이 재주입 |
 
 ## 빠른 시작
 
@@ -39,7 +48,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드가 편집되면 Claude가 같은 응답 내에서 **듀얼 리뷰**(Codex MCP + 보조 리뷰어 병렬 실행)를 트리거합니다. Findings는 중복 제거, 심각도 정규화 후 단일 gate로 집계됩니다. Hooks는 fail-closed를 강제합니다: 집계 gate가 미완료이면 stop-guard가 차단합니다.
+**Auto-Loop 엔진**이 품질 Gate를 자동으로 적용합니다. 코드 편집 후 리뷰 명령어가 **듀얼 리뷰**(Codex MCP + 보조 리뷰어 병렬 실행)를 디스패치합니다. Findings는 중복 제거, 심각도 정규화 후 단일 gate로 집계됩니다. strict 모드에서 Hooks는 fail-closed를 강제합니다: 집계 gate가 미완료이면 stop-guard가 차단합니다. 자세한 내용은 [docs/hooks.md](docs/hooks.md) 참조.
 
 <details>
 <summary>상세: 듀얼 리뷰 시퀀스 다이어그램</summary>
@@ -74,7 +83,7 @@ sequenceDiagram
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: Fail-closed: incomplete gate → blocked
+    Note over H: Strict mode: incomplete gate → blocked
 ```
 
 </details>
@@ -90,7 +99,19 @@ v2.0은 두 개의 독립적인 리뷰어를 병렬로 디스패치합니다 —
 
 Findings는 **심각도 정규화** (P0-Nit), **중복 제거** (파일 + 이슈 키, ±5줄 허용), **소스 귀속** (`codex` | `toolkit` | `both`)됩니다.
 
-Gate: `✅ Ready` 또는 `⛔ Blocked` — fail-closed (미완료 gate = blocked).
+Gate: `✅ Ready` 또는 `⛔ Blocked` — strict 모드에서, 미완료 gate = blocked.
+
+## 비교표
+
+| 기능 | sd0x-dev-flow | gstack | 일반 프롬프트 |
+|---|---|---|---|
+| 강제 리뷰 게이트 | Hook + 동작 레이어 | 제안만 | 없음 |
+| 듀얼 리뷰어 | Codex + 보조 (병렬) | 단일 /review | 없음 |
+| 자동 수정 루프 | 수정 → 재리뷰 → 통과 | 수동 | 없음 |
+| 멀티 에이전트 리서치 | /deep-research (3 에이전트) | 없음 | 없음 |
+| 적대적 검증 | 내시 균형 디베이트 | 없음 | 없음 |
+| 자기 개선 | 교훈 로그 + 규칙 승격 | /retro 통계만 | 없음 |
+| 크로스 툴 지원 | Codex/Cursor/Windsurf | Claude/Codex/Gemini/Cursor | N/A |
 
 ## 사용 시나리오
 
@@ -327,46 +348,13 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 </details>
 
-## Rules
+## 규칙 & Hook
 
-| Rule | 설명 |
-|------|------|
-| `auto-loop` | 수정 -> 재리뷰 -> 수정 -> ... -> Pass (자동 순환) |
-| `auto-loop-project` | 프로젝트별 auto-loop 오버라이드 (사용자 소유, 플러그인 미관리) |
-| `codex-invocation` | Codex는 독립적으로 조사해야 하며, 결론 주입 금지 |
-| `fix-all-issues` | 제로 톨러런스: 발견된 이슈 전부 수정 |
-| `self-improvement` | 수정 사항 → 교훈 기록 → 재발 방지 |
-| `framework` | 프레임워크별 컨벤션 (커스터마이즈 가능) |
-| `testing` | Unit/Integration/E2E 격리 |
-| `security` | OWASP Top 10 체크리스트 |
-| `git-workflow` | 브랜치 네이밍, 커밋 컨벤션 |
-| `docs-writing` | 테이블 > 문단, Mermaid > 텍스트 |
-| `docs-numbering` | 문서 접두사 컨벤션 (0-feasibility, 2-spec) |
-| `logging` | 구조화된 JSON, 시크릿 금지 |
+14개 규칙 (상시 로드 컨벤션) + 6개 Hook (자동 가드레일).
 
 > **커스터마이징**: `auto-loop-project.md`를 편집하여 프로젝트별 auto-loop 동작을 오버라이드할 수 있습니다. 플러그인 업데이트와 충돌하지 않습니다 — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 참조.
 
-## Hooks
-
-| Hook | 트리거 | 용도 |
-|------|--------|------|
-| `namespace-hint` | SessionStart | Claude context에 플러그인 명령어 네임스페이스 안내를 주입 |
-| `post-edit-format` | Edit/Write 후 | 자동 prettier + 편집 시 리뷰 상태 리셋 |
-| `post-tool-review-state` | Bash / MCP 도구 후 | 리뷰 상태 트래킹 (sentinel 라우팅, 네임스페이스 명령어 지원) |
-| `pre-edit-guard` | Edit/Write 전 | .env/.git 편집 방지 |
-| `stop-guard` | 중지 전 | 리뷰 미완료 시 차단 또는 경고 + stale-state git 체크 (설치 후 strict, plugin runtime warn) |
-
-Hook은 기본적으로 안전합니다. 환경 변수로 동작을 커스터마이즈할 수 있습니다:
-
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `STOP_GUARD_MODE` | `strict` (설치 후) / `warn` (plugin runtime) | `strict`는 리뷰 단계 누락 시 중지 차단; `warn`은 경고만 |
-| `HOOK_NO_FORMAT` | (미설정) | `1`로 설정 시 자동 포맷팅 비활성화 |
-| `HOOK_BYPASS` | (미설정) | `1`로 설정 시 stop-guard 체크 전부 스킵 |
-| `HOOK_DEBUG` | (미설정) | `1`로 설정 시 디버그 정보 출력 |
-| `GUARD_EXTRA_PATTERNS` | (미설정) | 추가 보호 경로 정규식 (예: `src/locales/.*\.json$`) |
-
-**디펜던시**: Hook에는 `jq`가 필요합니다. 자동 포맷팅에는 `prettier`가 필요합니다. 없으면 자동으로 스킵됩니다.
+전체 규칙, Hook, 환경 변수 레퍼런스는 [docs/rules.md](docs/rules.md)와 [docs/hooks.md](docs/hooks.md)를 참조하세요.
 
 ## 커스터마이즈
 
@@ -384,22 +372,18 @@ Hook은 기본적으로 안전합니다. 환경 변수로 동작을 커스터마
 | `{BUILD_COMMAND}` | 빌드 명령어 | yarn build |
 | `{TYPECHECK_COMMAND}` | 타입 체크 | yarn typecheck |
 
-## 쇼케이스: StatusLine Config
+## 쇼케이스: 멀티 에이전트 리서치
 
-Claude Code의 statusline 커스터마이즈 — 세그먼트, 테마, 색상. 단독 설치 가능:
-
-```bash
-npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config
-```
+`/deep-research`를 실행하면 2-3개의 병렬 리서치 에이전트가 웹 소스, 코드베이스, 커뮤니티 지식을 횡단 조사합니다 — claim registry 통합과 조건부 적대적 디베이트를 지원합니다.
 
 | 특징 | 내용 |
 |------|------|
-| Segments | Directory, Git branch, Model, Context %, Cost, >200k alert |
-| Themes | ansi-default, catppuccin-mocha, dracula, nord, none |
-| Engine | POSIX shell + JSON stdin + semantic color tokens |
-| Accessibility | WCAG AA contrast, NO\_COLOR support |
+| 에이전트 | 2-3 병렬 (web + code + community) |
+| 통합 | Claim registry 합의 탐지 |
+| 검증 | 조건부 /codex-brainstorm 디베이트 |
+| 스코어링 | 4-시그널 완전성 모델 |
 
-[전체 문서](docs/features/statusline-config/2-tech-spec.md)
+[전체 문서](docs/features/deep-research/)
 
 ## 아키텍처
 

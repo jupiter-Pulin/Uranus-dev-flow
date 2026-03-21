@@ -2,13 +2,22 @@
 
 **言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md)
 
-**[Claude Code](https://claude.com/claude-code) 向け自律型開発ワークフローエンジン。**
+> AI は高速にコードを出力できます。しかしガードレールなしでは、その速度は恐怖です。
 
-- **手動ゲートゼロ** — コード編集、自動レビュー、自動修正、出荷
-- **デュアルレビューアーキテクチャ** — Codex MCP + セカンダリレビューアーを並列実行、fail-closed
-- **~4% のコンテキスト使用量** — Claude の 200k ウィンドウの 96% はコードに使えます
+**AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
+73 commands · 56 skills · 14 agents — Claude の context window のわずか ~4%
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## なぜ sd0x-dev-flow？
+
+| ガードレールなし | sd0x-dev-flow あり |
+|---|---|
+| コンテキストが長いと AI がレビューをスキップ | **Hook 強制**: stop-guard が未完了レビューをブロック |
+| 単一レビューアーが問題を見落とす | **デュアルディスパッチ**: Codex + セカンダリが並列実行 |
+| 「修正済み」なのに再検証なし | **Auto-loop**: 修正 → 再レビュー → パス → 続行 |
+| compact 後にレビュー状態が消失 | **状態追跡**: SessionStart hook が再注入 |
 
 ## クイックスタート
 
@@ -39,7 +48,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、Claude は同じ返答内で**デュアルレビュー**（Codex MCP + セカンダリレビューアーを並列実行）をトリガーします。Findings は重複排除・重要度正規化後、単一ゲートに集約されます。Hooks は fail-closed を強制：集約ゲートが未完了なら stop-guard がブロックします。
+**Auto-Loop エンジン**が品質ゲートを自動的に実行します。コード編集後、レビューコマンドが**デュアルレビュー**（Codex MCP + セカンダリレビューアーを並列実行）をディスパッチします。Findings は重複排除・重要度正規化後、単一ゲートに集約されます。strict モードでは、Hooks が fail-closed を強制：集約ゲートが未完了なら stop-guard がブロックします。詳細は [docs/hooks.md](docs/hooks.md) を参照。
 
 <details>
 <summary>詳細：デュアルレビュー シーケンス図</summary>
@@ -74,7 +83,7 @@ sequenceDiagram
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: Fail-closed: incomplete gate → blocked
+    Note over H: Strict mode: incomplete gate → blocked
 ```
 
 </details>
@@ -90,7 +99,19 @@ v2.0 では2つの独立したレビューアーを並列でディスパッチ�
 
 Findings は**重要度正規化**（P0-Nit）、**重複排除**（ファイル + issue キー、±5 行許容）、**ソース帰属**（`codex` | `toolkit` | `both`）されます。
 
-ゲート：`✅ Ready` または `⛔ Blocked` — fail-closed（未完了ゲート = ブロック）。
+ゲート：`✅ Ready` または `⛔ Blocked` — strict モードでは、未完了ゲート = ブロック。
+
+## 比較表
+
+| 機能 | sd0x-dev-flow | gstack | 汎用プロンプト |
+|---|---|---|---|
+| 強制レビューゲート | Hook + 動作レイヤー | 提案のみ | なし |
+| デュアルレビューアー | Codex + セカンダリ（並列） | 単一 /review | なし |
+| 自動修正ループ | 修正 → 再レビュー → パス | 手動 | なし |
+| マルチエージェントリサーチ | /deep-research（3 エージェント） | なし | なし |
+| 敵対的検証 | ナッシュ均衡ディベート | なし | なし |
+| 自己改善 | 教訓ログ + ルール昇格 | /retro 統計のみ | なし |
+| クロスツールサポート | Codex/Cursor/Windsurf | Claude/Codex/Gemini/Cursor | N/A |
 
 ## 使用に適したケース
 
@@ -327,46 +348,13 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 </details>
 
-## ルール
+## ルール & フック
 
-| ルール | 説明 |
-|--------|------|
-| `auto-loop` | 修正 -> 再レビュー -> 修正 -> ... -> Pass（自動サイクル） |
-| `auto-loop-project` | プロジェクト固有の auto-loop オーバーライド（ユーザー所有、プラグイン管理外） |
-| `codex-invocation` | Codex は独立調査必須、結論の注入禁止 |
-| `fix-all-issues` | ゼロトレランス：見つけた問題はすべて修正 |
-| `self-improvement` | 修正された → 教訓を記録 → 再発防止 |
-| `framework` | フレームワーク固有の規約（カスタマイズ可） |
-| `testing` | Unit/Integration/E2E の分離 |
-| `security` | OWASP Top 10 チェックリスト |
-| `git-workflow` | ブランチ命名・コミット規約 |
-| `docs-writing` | テーブル > 段落、Mermaid > テキスト |
-| `docs-numbering` | ドキュメント接頭辞規約（0-feasibility, 2-spec） |
-| `logging` | 構造化 JSON、シークレット禁止 |
+14 ルール（常時読み込みの規約）+ 6 フック（自動ガードレール）。
 
 > **カスタマイズ**：`auto-loop-project.md` を編集してプロジェクトの auto-loop 動作をオーバーライドできます。プラグイン更新と競合しません — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 参照。
 
-## フック
-
-| フック | トリガー | 用途 |
-|--------|----------|------|
-| `namespace-hint` | SessionStart | プラグインコマンドの名前空間ガイダンスを Claude context に注入 |
-| `post-edit-format` | Edit/Write 後 | 自動 prettier + 編集時にレビュー状態をリセット |
-| `post-tool-review-state` | Bash / MCP ツール後 | レビュー状態の追跡（sentinel ルーティング、名前空間コマンド対応） |
-| `pre-edit-guard` | Edit/Write 前 | .env/.git の編集を防止 |
-| `stop-guard` | 停止前 | 未完了レビュー時にブロックまたは警告 + stale-state git チェック（インストール後 strict、plugin runtime warn） |
-
-フックはデフォルトで安全です。環境変数で挙動をカスタマイズできます：
-
-| 変数 | デフォルト | 説明 |
-|------|------------|------|
-| `STOP_GUARD_MODE` | `strict`（インストール後）/ `warn`（plugin runtime） | `strict` はレビュー手順不足時に停止をブロック；`warn` は警告のみ |
-| `HOOK_NO_FORMAT` | （未設定） | `1` で自動フォーマットを無効化 |
-| `HOOK_BYPASS` | （未設定） | `1` で stop-guard チェックをすべてスキップ |
-| `HOOK_DEBUG` | （未設定） | `1` でデバッグ情報を出力 |
-| `GUARD_EXTRA_PATTERNS` | （未設定） | 追加で保護するパスの正規表現（例：`src/locales/.*\.json$`） |
-
-**依存関係**：フックには `jq` が必要です。自動フォーマットには `prettier` が必要です。未導入の場合は自動的にスキップされます。
+ルール、フック、環境変数の完全なリファレンスは [docs/rules.md](docs/rules.md) と [docs/hooks.md](docs/hooks.md) をご覧ください。
 
 ## カスタマイズ
 
@@ -384,22 +372,18 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `{BUILD_COMMAND}` | ビルドコマンド | yarn build |
 | `{TYPECHECK_COMMAND}` | 型チェック | yarn typecheck |
 
-## ショーケース：StatusLine Config
+## ショーケース：マルチエージェントリサーチ
 
-Claude Code の statusline をカスタマイズ — セグメント、テーマ、カラー。スタンドアロンでインストール可能：
-
-```bash
-npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config
-```
+`/deep-research` を実行すると、2-3 の並列リサーチエージェントが Web ソース、コードベース、コミュニティ知識を横断して調査します — claim registry による統合と条件付き敵対的ディベートを備えています。
 
 | 特徴 | 内容 |
 |------|------|
-| Segments | Directory, Git branch, Model, Context %, Cost, >200k alert |
-| Themes | ansi-default, catppuccin-mocha, dracula, nord, none |
-| Engine | POSIX shell + JSON stdin + semantic color tokens |
-| Accessibility | WCAG AA contrast, NO\_COLOR support |
+| エージェント | 2-3 並列（web + code + community） |
+| 統合 | Claim registry による合意検出 |
+| 検証 | 条件付き /codex-brainstorm ディベート |
+| スコアリング | 4 シグナル完全性モデル |
 
-[詳細ドキュメント](docs/features/statusline-config/2-tech-spec.md)
+[詳細ドキュメント](docs/features/deep-research/)
 
 ## アーキテクチャ
 

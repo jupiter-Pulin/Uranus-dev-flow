@@ -2,13 +2,22 @@
 
 **Language**: English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
-**The autonomous development workflow engine for [Claude Code](https://claude.com/claude-code).**
+> AI can ship fast. But without guardrails, velocity is terrifying.
 
-- **Zero manual gates** — edit code, auto-review, auto-fix, ship
-- **Dual-reviewer architecture** — Codex MCP + secondary reviewer in parallel, fail-closed
-- **~4% context footprint** — 96% of Claude's 200k window stays for your code
+**Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
+73 commands · 56 skills · 14 agents — ~4% of Claude's context window
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## Why sd0x-dev-flow?
+
+| Without guardrails | With sd0x-dev-flow |
+|---|---|
+| AI skips review when context is long | **Hook-enforced**: stop-guard blocks incomplete reviews |
+| Single reviewer misses issues | **Dual dispatch**: Codex + secondary in parallel |
+| "Fixed it" without re-verification | **Auto-loop**: fix → re-review → pass → continue |
+| Review state lost after compact | **State tracking**: SessionStart hook re-injects |
 
 ## Quick Start
 
@@ -39,7 +48,7 @@ flowchart LR
     S -.- S1["/smart-commit<br/>/push-ci<br/>/create-pr<br/>/pr-review"]
 ```
 
-The **auto-loop engine** enforces quality gates automatically — after any code edit, Claude triggers **dual review** (Codex MCP + secondary reviewer in parallel) in the same reply. Findings are deduplicated, severity-normalized, and aggregated into a single gate. Hooks enforce fail-closed semantics: if the aggregate gate is incomplete, stop-guard blocks.
+The **auto-loop engine** enforces quality gates automatically — after code edits, the review command dispatches **dual review** (Codex MCP + secondary reviewer in parallel) in the same reply. Findings are deduplicated, severity-normalized, and aggregated into a single gate. In strict mode, hooks enforce fail-closed semantics: if the aggregate gate is incomplete, stop-guard blocks. See [docs/hooks.md](docs/hooks.md) for mode and dependency details.
 
 <details>
 <summary>Detailed: Dual-Review Sequence Diagram</summary>
@@ -74,7 +83,7 @@ sequenceDiagram
     C->>C: /precommit (auto)
     C-->>D: ✅ All gates passed
 
-    Note over H: Fail-closed: incomplete gate → blocked
+    Note over H: Strict mode: incomplete gate → blocked
 ```
 
 </details>
@@ -90,7 +99,19 @@ v2.0 dispatches two independent reviewers in parallel — zero single-point-of-f
 
 Findings are **severity-normalized** (P0-Nit), **deduplicated** (file + issue key, ±5 line tolerance), and **source-attributed** (`codex` | `toolkit` | `both`).
 
-Gate: `✅ Ready` or `⛔ Blocked` — fail-closed (incomplete gate = blocked).
+Gate: `✅ Ready` or `⛔ Blocked` — in strict mode, incomplete gate = blocked.
+
+## How We Compare
+
+| Capability | sd0x-dev-flow | gstack | Generic prompts |
+|---|---|---|---|
+| Enforced review gates | Hook + behavior layer | Suggestion only | None |
+| Dual-reviewer | Codex + secondary (parallel) | Single /review | None |
+| Auto-fix loop | Fix → re-review → pass | Manual | None |
+| Multi-agent research | /deep-research (3 agents) | None | None |
+| Adversarial validation | Nash equilibrium debate | None | None |
+| Self-improvement | Lesson log + rule promotion | /retro stats only | None |
+| Cross-tool support | Codex/Cursor/Windsurf | Claude/Codex/Gemini/Cursor | N/A |
 
 ## When to Use
 
@@ -327,46 +348,13 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 </details>
 
-## Rules
+## Rules & Hooks
 
-| Rule | Description |
-|------|-------------|
-| `auto-loop` | Fix -> re-review -> fix -> ... -> Pass (auto cycle) |
-| `auto-loop-project` | Project-specific auto-loop overrides (user-owned, not plugin-managed) |
-| `codex-invocation` | Codex must independently research, never feed conclusions |
-| `fix-all-issues` | Zero tolerance: fix every issue found |
-| `self-improvement` | Corrected → record lesson → prevent recurrence |
-| `framework` | Framework-specific conventions (customizable) |
-| `testing` | Unit/Integration/E2E isolation |
-| `security` | OWASP Top 10 checklist |
-| `git-workflow` | Branch naming, commit conventions |
-| `docs-writing` | Tables > paragraphs, Mermaid > text |
-| `docs-numbering` | Document prefix convention (0-feasibility, 2-spec) |
-| `logging` | Structured JSON, no secrets |
+14 rules (always-loaded conventions) + 6 hooks (automated guardrails).
 
 > **Customization**: Edit `auto-loop-project.md` to override auto-loop behavior per project. Plugin updates won't conflict — see [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 
-## Hooks
-
-| Hook | Trigger | Purpose |
-|------|---------|---------|
-| `namespace-hint` | SessionStart | Inject plugin command namespace guidance into Claude context |
-| `post-edit-format` | After Edit/Write | Auto prettier + invalidate review state on edit |
-| `post-tool-review-state` | After Bash / MCP tools | Track review state (sentinel routing, supports namespaced commands) |
-| `pre-edit-guard` | Before Edit/Write | Prevent editing .env/.git |
-| `stop-guard` | Before stop | Block or warn on incomplete reviews + stale-state git check (strict after install, warn in plugin runtime) |
-
-Hooks are safe by default. Use environment variables to customize:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `STOP_GUARD_MODE` | `strict` (installed) / `warn` (plugin runtime) | `strict` blocks stop on missing review steps; `warn` only warns |
-| `HOOK_NO_FORMAT` | (unset) | Set `1` to disable auto-formatting |
-| `HOOK_BYPASS` | (unset) | Set `1` to skip all stop-guard checks |
-| `HOOK_DEBUG` | (unset) | Set `1` to output debug info |
-| `GUARD_EXTRA_PATTERNS` | (unset) | Regex patterns for extra protected paths (e.g. `src/locales/.*\.json$`) |
-
-**Dependencies**: Hooks require `jq`. Auto-format requires `prettier`. Missing dependencies are handled gracefully.
+For full rules, hooks, and environment variable reference, see [docs/rules.md](docs/rules.md) and [docs/hooks.md](docs/hooks.md).
 
 ## Customization
 
@@ -384,22 +372,18 @@ Run `/project-setup` to auto-detect and configure all placeholders, or manually 
 | `{BUILD_COMMAND}` | Build command | yarn build |
 | `{TYPECHECK_COMMAND}` | Type checking | yarn typecheck |
 
-## Showcase: StatusLine Config
+## Showcase: Multi-Agent Research
 
-Customize Claude Code's statusline — segments, themes, and colors. Install as a standalone skill:
-
-```bash
-npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config
-```
+Run `/deep-research` to orchestrate 2-3 parallel researcher agents across web sources, codebase, and community knowledge — with claim registry synthesis and conditional adversarial debate.
 
 | Feature | Details |
 |---------|---------|
-| Segments | Directory, Git branch, Model, Context %, Cost, >200k alert |
-| Themes | ansi-default, catppuccin-mocha, dracula, nord, none |
-| Engine | POSIX shell + JSON stdin + semantic color tokens |
-| Accessibility | WCAG AA contrast, NO\_COLOR support |
+| Agents | 2-3 parallel (web + code + community) |
+| Synthesis | Claim registry with consensus detection |
+| Validation | Conditional /codex-brainstorm debate |
+| Scoring | 4-signal completeness model |
 
-[Full documentation](docs/features/statusline-config/2-tech-spec.md)
+[Full documentation](docs/features/deep-research/)
 
 ## Architecture
 
