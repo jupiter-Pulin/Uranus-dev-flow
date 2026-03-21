@@ -10,15 +10,15 @@ const commandPath = resolve(root, 'commands/seek-verdict.md');
 // --- Helper: Policy mapping logic (extracted from spec) ---
 
 /**
- * Maps Codex verdict + confidence + evidence to a result.
- * Implements the asymmetric threshold policy from policy-mapping.md.
- *
- * @param {object} params
- * @param {string} params.verdict - ACTIONABLE | NON_ACTIONABLE | UNCERTAIN
- * @param {number} params.confidence - 0.0 to 1.0
- * @param {number} params.evidenceCount - number of evidence refs
- * @param {boolean} [params.heightened] - whether anti-abuse heightened thresholds apply
- * @returns {string} DISMISS_VERIFIED | FIX_REQUIRED | NEED_HUMAN
+* Maps Codex verdict + confidence + evidence to a result.
+* Implements the asymmetric threshold policy from policy-mapping.md.
+*
+* @param {object} params
+* @param {string} params.verdict - ACTIONABLE | NON_ACTIONABLE | UNCERTAIN
+* @param {number} params.confidence - 0.0 to 1.0
+* @param {number} params.evidenceCount - number of evidence refs
+* @param {boolean} [params.heightened] - whether anti-abuse heightened thresholds apply
+* @returns {string} DISMISS_VERIFIED | FIX_REQUIRED | NEED_HUMAN
  */
 function mapVerdict({ verdict, confidence, evidenceCount, heightened = false }) {
   const dismissThreshold = heightened ? 0.85 : 0.80;
@@ -34,10 +34,10 @@ function mapVerdict({ verdict, confidence, evidenceCount, heightened = false }) 
 }
 
 /**
- * Checks anti-abuse guard state.
- *
- * @param {number} consecutiveDismissals - current streak of DISMISS_VERIFIED
- * @returns {{ warned: boolean, heightened: boolean }}
+* Checks anti-abuse guard state.
+*
+* @param {number} consecutiveDismissals - current streak of DISMISS_VERIFIED
+* @returns {{ warned: boolean, heightened: boolean }}
  */
 function checkAntiAbuse(consecutiveDismissals) {
   const warned = consecutiveDismissals >= 3;
@@ -45,21 +45,21 @@ function checkAntiAbuse(consecutiveDismissals) {
 }
 
 /**
- * Validates that a finding is eligible for seek-verdict.
- *
- * @param {string} severity - P0 | P1 | P2 | Nit
- * @returns {boolean}
+* Validates that a finding is eligible for seek-verdict.
+*
+* @param {string} severity - P0 | P1 | P2 | Nit
+* @returns {boolean}
  */
 function isEligible(severity) {
   return severity === 'P2';
 }
 
 /**
- * Checks if a prompt contains Claude's conclusion (anti-anchoring violation).
- *
- * @param {string} prompt
- * @param {string} claudeConclusion
- * @returns {boolean} true if prompt is contaminated
+* Checks if a prompt contains Claude's conclusion (anti-anchoring violation).
+*
+* @param {string} prompt
+* @param {string} claudeConclusion
+* @returns {boolean} true if prompt is contaminated
  */
 function isAnchored(prompt, claudeConclusion) {
   return prompt.includes(claudeConclusion);

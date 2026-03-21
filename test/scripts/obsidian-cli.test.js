@@ -50,8 +50,8 @@ function linkSystemCommand(binDir, name) {
 }
 
 /**
- * Create a stub bin dir with a fake obsidian CLI and required system commands.
- * The stub obsidian prints version/vault/search output as configured.
+* Create a stub bin dir with a fake obsidian CLI and required system commands.
+* The stub obsidian prints version/vault/search output as configured.
  */
 function setupStubBin(options = {}) {
   const {
@@ -67,11 +67,15 @@ function setupStubBin(options = {}) {
   // Obsidian CLI uses key=value syntax: obsidian <command> vault="name" key=value
   if (includeObsidian) {
     const stubObsidian = `#!/bin/sh
+
 # Trace args for test verification
+
 if [ -n "\${OBSIDIAN_TRACE_FILE:-}" ]; then
   echo "$*" >> "\$OBSIDIAN_TRACE_FILE"
 fi
+
 # Extract command (first arg) — vault=<name> is a key=value option, not a flag
+
 CMD="$1"; shift
 case "\$CMD" in
   version) echo "${obsidianVersion}"; exit ${obsidianExitCode} ;;
@@ -106,7 +110,7 @@ exec "$@"
 }
 
 /**
- * Run a script with controlled PATH and HOME.
+* Run a script with controlled PATH and HOME.
  */
 // 30s timeout — obsidian shell scripts spawn multiple subprocesses; under
 // parallel test load (500+ tests) the default 10s frequently times out.

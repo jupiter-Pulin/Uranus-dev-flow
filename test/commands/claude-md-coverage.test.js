@@ -9,7 +9,7 @@ const templatePath = resolve(root, 'CLAUDE.template.md');
 const claudeMdPath = resolve(root, 'CLAUDE.md');
 
 /**
- * Extract the Command Quick Reference section from markdown content.
+* Extract the Command Quick Reference section from markdown content.
  */
 function extractCommandSection(content) {
   const start = content.indexOf('## Command Quick Reference');
@@ -20,9 +20,9 @@ function extractCommandSection(content) {
 }
 
 /**
- * Extract command names from a CLAUDE.md-style Command Quick Reference table.
- * Returns an array (preserving duplicates for detection).
- * Matches rows like: | `/some-command` | description | when |
+* Extract command names from a CLAUDE.md-style Command Quick Reference table.
+* Returns an array (preserving duplicates for detection).
+* Matches rows like: | `/some-command` | description | when |
  */
 function extractTableCommands(content) {
   const section = extractCommandSection(content);
@@ -36,7 +36,7 @@ function extractTableCommands(content) {
 }
 
 /**
- * Get all command file basenames (without .md extension) from commands/ dir.
+* Get all command file basenames (without .md extension) from commands/ dir.
  */
 function getCommandFiles() {
   return readdirSync(commandsDir)

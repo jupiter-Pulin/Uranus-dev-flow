@@ -10,10 +10,10 @@ const commandPath = resolve(root, 'commands/jira.md');
 // --- Helper: Input parser (extracted from SKILL.md spec) ---
 
 /**
- * Parses user input to extract Jira issue key and optional host.
- *
- * @param {string} input - bare key, URL, or software URL
- * @returns {{ issueKey: string, host?: string } | null}
+* Parses user input to extract Jira issue key and optional host.
+*
+* @param {string} input - bare key, URL, or software URL
+* @returns {{ issueKey: string, host?: string } | null}
  */
 function parseInput(input) {
   if (!input || typeof input !== 'string') return null;
@@ -44,23 +44,23 @@ const TYPE_PREFIX_MAP = {
 const VALID_TYPES = ['feat', 'fix', 'docs', 'refactor'];
 
 /**
- * Validates the --type override value.
- *
- * @param {string} type
- * @returns {boolean}
+* Validates the --type override value.
+*
+* @param {string} type
+* @returns {boolean}
  */
 function validateType(type) {
   return VALID_TYPES.includes(type);
 }
 
 /**
- * Generates a branch name from Jira issue details.
- *
- * @param {string} issueKey - e.g. "OK-51513"
- * @param {string} summary - issue summary text
- * @param {string} issueType - Jira issue type name
- * @param {string} [typeOverride] - --type flag value
- * @returns {string} branch name
+* Generates a branch name from Jira issue details.
+*
+* @param {string} issueKey - e.g. "OK-51513"
+* @param {string} summary - issue summary text
+* @param {string} issueType - Jira issue type name
+* @param {string} [typeOverride] - --type flag value
+* @returns {string} branch name
  */
 function generateBranchName(issueKey, summary, issueType, typeOverride) {
   const prefix = typeOverride || TYPE_PREFIX_MAP[issueType] || 'feat';
@@ -82,11 +82,11 @@ const EVENT_PATTERNS = {
 };
 
 /**
- * Matches an event to available Jira transitions.
- *
- * @param {string} event - event vocabulary name
- * @param {Array<{ id: string, name: string }>} availableTransitions
- * @returns {Array<{ id: string, name: string }>} matched transitions
+* Matches an event to available Jira transitions.
+*
+* @param {string} event - event vocabulary name
+* @param {Array<{ id: string, name: string }>} availableTransitions
+* @returns {Array<{ id: string, name: string }>} matched transitions
  */
 function matchTransition(event, availableTransitions) {
   const pattern = EVENT_PATTERNS[event];
@@ -102,13 +102,13 @@ test('T1: Bare key OK-51513 extracts correctly', () => {
 });
 
 test('T2: Full URL extracts key + host', () => {
-  const result = parseInput('https://onekeyhq.atlassian.net/browse/OK-51513');
+  const result = parseInput('<https://onekeyhq.atlassian.net/browse/OK-51513>');
   assert.deepEqual(result, { issueKey: 'OK-51513', host: 'onekeyhq.atlassian.net' });
 });
 
 test('T3: Software URL extracts key + host', () => {
   const result = parseInput(
-    'https://onekeyhq.atlassian.net/jira/software/projects/OK/boards/5/backlog?selectedIssue=OK-51513'
+    '<https://onekeyhq.atlassian.net/jira/software/projects/OK/boards/5/backlog?selectedIssue=OK-51513>'
   );
   assert.deepEqual(result, { issueKey: 'OK-51513', host: 'onekeyhq.atlassian.net' });
 });
@@ -148,7 +148,7 @@ test('T8: --type override replaces issue type mapping', () => {
 test('T9: Slug length capped at 40 characters', () => {
   const longSummary = 'This is a very long summary that should be truncated to forty characters maximum';
   const branch = generateBranchName('OK-1', longSummary, 'Story');
-  const slug = branch.split('/')[1].replace('OK-1-', '');
+  const slug = branch.split['/'](1).replace('OK-1-', '');
   assert.ok(slug.length <= 40, `Slug too long: ${slug.length}`);
 });
 

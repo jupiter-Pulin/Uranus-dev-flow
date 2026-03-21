@@ -25,8 +25,8 @@ function makeTempDir(prefix) {
 }
 
 /**
- * Build a fake main worktree with .claude/ structure.
- * Returns { mainRoot, worktreeRoot } paths.
+* Build a fake main worktree with .claude/ structure.
+* Returns { mainRoot, worktreeRoot } paths.
  */
 function setupFixture(options = {}) {
   const {
@@ -57,9 +57,9 @@ function setupFixture(options = {}) {
       env: {
         ...process.env,
         GIT_AUTHOR_NAME: 'Test',
-        GIT_AUTHOR_EMAIL: 'test@test.com',
+        GIT_AUTHOR_EMAIL: '<test@test.com>',
         GIT_COMMITTER_NAME: 'Test',
-        GIT_COMMITTER_EMAIL: 'test@test.com',
+        GIT_COMMITTER_EMAIL: '<test@test.com>',
       },
     });
   }
@@ -251,9 +251,9 @@ test('T6: non-canonical symlink target — skip with warning', () => {
     env: {
       ...process.env,
       GIT_AUTHOR_NAME: 'Test',
-      GIT_AUTHOR_EMAIL: 'test@test.com',
+      GIT_AUTHOR_EMAIL: '<test@test.com>',
       GIT_COMMITTER_NAME: 'Test',
-      GIT_COMMITTER_EMAIL: 'test@test.com',
+      GIT_COMMITTER_EMAIL: '<test@test.com>',
     },
   });
 
@@ -311,9 +311,9 @@ test('T7: symlink boundary escape — skip with warning', () => {
     env: {
       ...process.env,
       GIT_AUTHOR_NAME: 'Test',
-      GIT_AUTHOR_EMAIL: 'test@test.com',
+      GIT_AUTHOR_EMAIL: '<test@test.com>',
       GIT_COMMITTER_NAME: 'Test',
-      GIT_COMMITTER_EMAIL: 'test@test.com',
+      GIT_COMMITTER_EMAIL: '<test@test.com>',
     },
   });
 

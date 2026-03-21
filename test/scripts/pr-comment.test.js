@@ -51,7 +51,7 @@ function linkSystemCommand(binDir, name) {
 const SAMPLE_PR_META = {
   number: 42,
   title: 'Test PR',
-  url: 'https://github.com/owner/repo/pull/42',
+  url: '<https://github.com/owner/repo/pull/42>',
   headRefName: 'feat/test',
   baseRefName: 'main',
   state: 'OPEN',
@@ -82,7 +82,7 @@ const SAMPLE_PR_DETAIL = {
 
 const SUBMIT_SUCCESS_RESPONSE = {
   id: 9999,
-  html_url: 'https://github.com/owner/repo/pull/42#pullrequestreview-9999',
+  html_url: '<https://github.com/owner/repo/pull/42#pullrequestreview-9999>',
 };
 
 // ---------------------------------------------------------------------------

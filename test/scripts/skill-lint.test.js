@@ -202,7 +202,7 @@ describe('detectAgentToolsSyntax', () => {
     const findings = detectAgentToolsSyntax(tmpDir);
     assert.equal(findings.length, 1);
     assert.equal(findings[0].severity, 'P2');
-    assert.ok(findings[0].message.includes('Bash(codex *)'));
+    assert.ok(findings[0].message.includes('Bash(codex*)'));
     rmSync(tmpDir, { recursive: true });
   });
 

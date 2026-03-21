@@ -26,9 +26,9 @@ function writeExecutable(filePath, content) {
 }
 
 /**
- * Create a stub jq that handles:
- * 1. -r '.tool_input.file_path // empty' (from stdin)
- * 2. -e '.. | strings | select(contains("X"))' FILE (arbitration guard)
+* Create a stub jq that handles:
+* 1. -r '.tool_input.file_path // empty' (from stdin)
+* 1. -e '.. | strings | select(contains("X"))' FILE (arbitration guard)
  */
 function setupStubBin() {
   const binDir = makeTempDir('sd0x-pre-edit-guard-bin-');

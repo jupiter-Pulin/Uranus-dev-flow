@@ -406,7 +406,7 @@ test('intake_cached.js — legacy migration triggers once then normal flow', () 
   const legacyCacheDir = mkdtempSync(join(tmpdir(), 'sd0x-intake-legacy-'));
   tempDirs.push(newCacheDir, legacyCacheDir);
 
-  // Compute repo key matching intake_cached.js: safeSlug(basename)--sha1(repoRoot)[0:8]
+  // Compute repo key matching intake_cached.js: safeSlug(basename)--sha1[repoRoot](0:8)
   // git rev-parse --show-toplevel resolves symlinks (macOS /var -> /private/var)
   const crypto = require('crypto');
   const path = require('path');

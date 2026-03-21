@@ -89,7 +89,7 @@ function runScript(args, opts = {}) {
 function createGitRepo(opts = {}) {
   const {
     userName = 'TestUser',
-    userEmail = 'test@example.com',
+    userEmail = '<test@example.com>',
     signingKey = '',
     gpgSign = '',
   } = opts;
@@ -167,7 +167,7 @@ after(() => {
   for (const dir of tempDirs) {
     try {
       rmSync(dir, { recursive: true, force: true });
-    } catch { /* ignore */ }
+    } catch { /*ignore*/ }
   }
 });
 
@@ -177,7 +177,7 @@ describe('doctor', () => {
   test('reports ok with complete config', () => {
     const gitDir = createGitRepo({
       userName: 'SD0',
-      userEmail: '107539203+sd0xdev@users.noreply.github.com',
+      userEmail: '<107539203+sd0xdev@users.noreply.github.com>',
       signingKey: 'D7B9FB02CAEB3E7819633AD4A0EEF23730D2BE5B',
       gpgSign: 'true',
     });
@@ -194,7 +194,7 @@ describe('doctor', () => {
   });
 
   test('reports halt when user.name is missing', () => {
-    const gitDir = createGitRepo({ userName: '', userEmail: 'test@example.com' });
+    const gitDir = createGitRepo({ userName: '', userEmail: '<test@example.com>' });
     // Unset user.name explicitly
     spawnSync('git', ['config', '--unset', 'user.name'], { cwd: gitDir });
     const binDir = createStubBin();
@@ -221,7 +221,7 @@ describe('doctor', () => {
   });
 
   test('reports warn when no signing key', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@test.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@test.com>' });
     const binDir = createStubBin();
 
     const result = runScript(['doctor'], { binDir, gitDir });
@@ -235,7 +235,7 @@ describe('doctor', () => {
   test('reports warn when key is expired', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'old@example.com',
+      userEmail: '<old@example.com>',
       signingKey: 'AAAA1111BBBB2222CCCC3333EXPIRED4337E823',
       gpgSign: 'true',
     });
@@ -252,7 +252,7 @@ describe('doctor', () => {
   test('reports warn when signing key not found in GPG keyring', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'test@test.com',
+      userEmail: '<test@test.com>',
       signingKey: 'AAAA0000BBBB1111CCCC2222DDDD3333EEEE4444',
       gpgSign: 'true',
     });
@@ -268,7 +268,7 @@ describe('doctor', () => {
   });
 
   test('detects multi-value identity conflict', () => {
-    const gitDir = createGitRepo({ userName: 'LocalName', userEmail: 'local@test.com' });
+    const gitDir = createGitRepo({ userName: 'LocalName', userEmail: '<local@test.com>' });
     // Add a second different value via --add to simulate scope conflict
     spawnSync('git', ['config', '--add', 'user.name', 'OtherName'], { cwd: gitDir });
     const binDir = createStubBin();
@@ -282,7 +282,7 @@ describe('doctor', () => {
   });
 
   test('does not warn when multi-value identity has same values', () => {
-    const gitDir = createGitRepo({ userName: 'SameName', userEmail: 'same@test.com' });
+    const gitDir = createGitRepo({ userName: 'SameName', userEmail: '<same@test.com>' });
     // Add the exact same value again
     spawnSync('git', ['config', '--add', 'user.name', 'SameName'], { cwd: gitDir });
     const binDir = createStubBin();
@@ -295,7 +295,7 @@ describe('doctor', () => {
   });
 
   test('detects environment variable override', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@test.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@test.com>' });
     const binDir = createStubBin();
 
     const result = runScript(['doctor'], {
@@ -312,7 +312,7 @@ describe('doctor', () => {
   test('handles gpg unavailable gracefully', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'test@test.com',
+      userEmail: '<test@test.com>',
       signingKey: 'ABCDEF1234567890',
     });
     const binDir = makeTempDir('nobin');
@@ -335,7 +335,7 @@ describe('doctor', () => {
 
 describe('list', () => {
   test('lists profiles from registry', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@example.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@example.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -345,7 +345,7 @@ describe('list', () => {
       profiles: {
         'test-profile': {
           name: 'Test',
-          email: 'test@example.com',
+          email: '<test@example.com>',
           signingkey: 'ABCD1234',
           gpg_format: 'openpgp',
           mru: null,
@@ -364,7 +364,7 @@ describe('list', () => {
   });
 
   test('returns empty list when registry missing', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@test.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@test.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('emptycfg');
 
@@ -376,7 +376,7 @@ describe('list', () => {
   });
 
   test('marks active profile', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@example.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@example.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -415,7 +415,7 @@ describe('list', () => {
 
 describe('use (resolve + apply)', () => {
   test('resolve returns plan and hash', () => {
-    const gitDir = createGitRepo({ userName: 'OldName', userEmail: 'old@test.com' });
+    const gitDir = createGitRepo({ userName: 'OldName', userEmail: '<old@test.com>' });
     const binDir = createStubBin({ gpgOutput: GPG_ACTIVE_KEY });
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -425,7 +425,7 @@ describe('use (resolve + apply)', () => {
       profiles: {
         'target': {
           name: 'NewName',
-          email: 'new@test.com',
+          email: '<new@test.com>',
           signingkey: 'D7B9FB02CAEB3E7819633AD4A0EEF23730D2BE5B',
           gpg_format: 'openpgp',
           mru: null,
@@ -463,7 +463,7 @@ describe('use (resolve + apply)', () => {
   });
 
   test('apply writes local config and updates registry', () => {
-    const gitDir = createGitRepo({ userName: 'OldName', userEmail: 'old@test.com' });
+    const gitDir = createGitRepo({ userName: 'OldName', userEmail: '<old@test.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -473,7 +473,7 @@ describe('use (resolve + apply)', () => {
       profiles: {
         'target': {
           name: 'NewName',
-          email: 'new@test.com',
+          email: '<new@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -519,7 +519,7 @@ describe('use (resolve + apply)', () => {
   });
 
   test('apply rejects stale plan hash', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@test.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@test.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -529,7 +529,7 @@ describe('use (resolve + apply)', () => {
       profiles: {
         'target': {
           name: 'NewName',
-          email: 'new@test.com',
+          email: '<new@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -551,7 +551,7 @@ describe('use (resolve + apply)', () => {
   test('apply clears signing config when switching to keyless profile', () => {
     const gitDir = createGitRepo({
       userName: 'OldName',
-      userEmail: 'old@test.com',
+      userEmail: '<old@test.com>',
       signingKey: 'D7B9FB02CAEB3E7819633AD4A0EEF23730D2BE5B',
       gpgSign: 'true',
     });
@@ -564,7 +564,7 @@ describe('use (resolve + apply)', () => {
       profiles: {
         'keyless': {
           name: 'KeylessUser',
-          email: 'keyless@test.com',
+          email: '<keyless@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -609,7 +609,7 @@ describe('use (resolve + apply)', () => {
   });
 
   test('resolve warns about expired key', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'old@example.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<old@example.com>' });
     const binDir = createStubBin({ gpgOutput: GPG_EXPIRED_KEY });
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');
@@ -619,7 +619,7 @@ describe('use (resolve + apply)', () => {
       profiles: {
         'expired-profile': {
           name: 'olduser',
-          email: 'old@example.com',
+          email: '<old@example.com>',
           signingkey: 'AAAA1111BBBB2222CCCC3333EXPIRED4337E823',
           gpg_format: 'openpgp',
           mru: null,
@@ -650,7 +650,7 @@ describe('remove', () => {
       profiles: {
         'unused': {
           name: 'Unused',
-          email: 'unused@test.com',
+          email: '<unused@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -678,7 +678,7 @@ describe('remove', () => {
       profiles: {
         'active': {
           name: 'Active',
-          email: 'active@test.com',
+          email: '<active@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -704,7 +704,7 @@ describe('remove', () => {
       profiles: {
         'active': {
           name: 'Active',
-          email: 'active@test.com',
+          email: '<active@test.com>',
           signingkey: '',
           gpg_format: 'openpgp',
           mru: null,
@@ -737,7 +737,7 @@ describe('verify', () => {
   test('all pass returns ok', () => {
     const gitDir = createGitRepo({
       userName: 'SD0',
-      userEmail: '107539203+sd0xdev@users.noreply.github.com',
+      userEmail: '<107539203+sd0xdev@users.noreply.github.com>',
       signingKey: 'D7B9FB02CAEB3E7819633AD4A0EEF23730D2BE5B',
       gpgSign: 'true',
     });
@@ -755,7 +755,7 @@ describe('verify', () => {
   test('detects email mismatch', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'different@example.com',
+      userEmail: '<different@example.com>',
       signingKey: 'D7B9FB02CAEB3E7819633AD4A0EEF23730D2BE5B',
       gpgSign: 'true',
     });
@@ -771,7 +771,7 @@ describe('verify', () => {
   test('detects registry mismatch', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'current@test.com',
+      userEmail: '<current@test.com>',
     });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
@@ -812,7 +812,7 @@ describe('registry', () => {
   test('auto-creates registry on discover', () => {
     const gitDir = createGitRepo({
       userName: 'Test',
-      userEmail: 'test@test.com',
+      userEmail: '<test@test.com>',
     });
     const binDir = createStubBin({ gpgOutput: GPG_ACTIVE_KEY });
     const registryDir = makeTempDir('newcfg');
@@ -828,7 +828,7 @@ describe('registry', () => {
   });
 
   test('handles corrupt registry JSON', () => {
-    const gitDir = createGitRepo({ userName: 'Test', userEmail: 'test@test.com' });
+    const gitDir = createGitRepo({ userName: 'Test', userEmail: '<test@test.com>' });
     const binDir = createStubBin();
     const registryDir = makeTempDir('cfg');
     const regPath = join(registryDir, 'sd0x-dev-flow');

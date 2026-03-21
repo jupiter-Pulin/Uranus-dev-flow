@@ -51,7 +51,7 @@ const SAMPLE_GQL_RESPONSE = {
       pullRequest: {
         title: 'Test PR',
         number: 42,
-        url: 'https://github.com/owner/repo/pull/42',
+        url: '<https://github.com/owner/repo/pull/42>',
         headRefName: 'feat/test',
         baseRefName: 'main',
         reviewThreads: {
@@ -127,7 +127,7 @@ const SAMPLE_GQL_RESPONSE = {
 const SAMPLE_PR_META = {
   number: 42,
   title: 'Test PR',
-  url: 'https://github.com/owner/repo/pull/42',
+  url: '<https://github.com/owner/repo/pull/42>',
   headRefName: 'feat/test',
   baseRefName: 'main',
   state: 'OPEN',
@@ -175,7 +175,7 @@ const SAMPLE_REST_COMMENTS = [
 ];
 
 /**
- * Create stub gh binary that responds based on args.
+* Create stub gh binary that responds based on args.
  */
 function setupStubBin(options = {}) {
   const {
@@ -201,7 +201,9 @@ function setupStubBin(options = {}) {
   writeFileSync(join(dataDir, 'meta.json'), metaRaw !== null ? metaRaw : JSON.stringify(prMeta));
 
   const stubGh = `#!/bin/sh
+
 # Trace for debugging
+
 if [ -n "\${GH_TRACE_FILE:-}" ]; then
   echo "$*" >> "\$GH_TRACE_FILE"
 fi
@@ -286,8 +288,11 @@ if [ "${jqExitCode}" != "0" ]; then
   echo "jq error" >&2
   exit ${jqExitCode}
 fi
+
 # Simple jq stub — for -n --arg body <val> '{body:$body}'
+
 # Just pass through the body as JSON
+
 BODY=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -426,7 +431,7 @@ test('digest: within budget', () => {
   const inputDir = makeTempDir('input');
   const inputPath = join(inputDir, 'data.json');
   const inputData = {
-    pr: { number: 42, title: 'Test', url: 'https://example.com', head: 'feat/x', base: 'main' },
+    pr: { number: 42, title: 'Test', url: '<https://example.com>', head: 'feat/x', base: 'main' },
     summary: { total: 2, unresolved: 2, outdated: 0, loaded: 2, truncated: 0, degraded: false },
     threads: [
       { id: 'T1', path: 'a.ts', line: 1, isResolved: false, isOutdated: false, comments: [{ id: 'C1', databaseId: 1, author: 'alice', body: 'Fix this', createdAt: '2026-03-01T10:00:00Z' }] },
@@ -446,7 +451,7 @@ test('digest: over budget truncation', () => {
   const inputDir = makeTempDir('input');
   const inputPath = join(inputDir, 'data.json');
   const inputData = {
-    pr: { number: 42, title: 'Test', url: 'https://example.com', head: 'feat/x', base: 'main' },
+    pr: { number: 42, title: 'Test', url: '<https://example.com>', head: 'feat/x', base: 'main' },
     summary: { total: 3, unresolved: 3, outdated: 0, loaded: 3, truncated: 0, degraded: false },
     threads: [
       { id: 'T1', path: 'a.ts', line: 1, isResolved: false, isOutdated: false, comments: [{ id: 'C1', databaseId: 1, author: 'a', body: 'x', createdAt: '2026-03-03T10:00:00Z' }] },
@@ -590,7 +595,7 @@ test('digest: invalid --budget (negative)', () => {
   const inputDir = makeTempDir('input');
   const inputPath = join(inputDir, 'data.json');
   const inputData = {
-    pr: { number: 42, title: 'Test', url: 'https://example.com', head: 'feat/x', base: 'main' },
+    pr: { number: 42, title: 'Test', url: '<https://example.com>', head: 'feat/x', base: 'main' },
     summary: { total: 1, unresolved: 1, outdated: 0, loaded: 1, truncated: 0, degraded: false },
     threads: [
       { id: 'T1', path: 'a.ts', line: 1, isResolved: false, isOutdated: false, comments: [{ id: 'C1', databaseId: 1, author: 'a', body: 'x', createdAt: '2026-03-01T10:00:00Z' }] },
