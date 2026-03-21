@@ -56,6 +56,13 @@ Phase 6: Install Hooks (unless --no-hooks or --lite)
     ├─ Merge hook definitions into .claude/settings.json
     └─ Output hooks install report
     │
+Phase 6.5: Install Scripts (unless --lite or --detect-only)
+    │
+    ├─ Locate plugin scripts dir (3-level fallback)
+    ├─ mkdir -p .claude/scripts/lib → copy 3 scripts
+    ├─ Update manifest .sd0x/install-state.json
+    └─ Output scripts install report
+    │
 Phase 7: Final Verification Report
     │
     ├─ Summarize all phases
@@ -65,7 +72,7 @@ Phase 7: Final Verification Report
 
 ### Flag Short-Circuit Semantics
 
-| Flag | Phase 1-2 | Phase 3-4 | Phase 5-6 | Phase 7 |
+| Flag | Phase 1-2 | Phase 3-4 | Phase 5-6.5 | Phase 7 |
 |------|-----------|-----------|-----------|---------|
 | (none) | Execute | Execute | Execute | Full report |
 | `--detect-only` | Execute | Skip | Skip | Detection results only |
@@ -324,6 +331,65 @@ Merge strategy:
 **Installed**: N / **Skipped**: M / **Conflicts**: K
 ```
 
+## Phase 6.5: Install Scripts
+
+**Skip if**: `--lite` or `--detect-only`.
+
+### 6.5.1 Locate Plugin Scripts Directory
+
+Same 3-level fallback as Phase 5.1, but search for `scripts/precommit-runner.js`:
+
+1. `Glob: ~/.claude/plugins/**/sd0x-dev-flow/scripts/precommit-runner.js`
+2. `Glob: ${REPO_ROOT}/node_modules/sd0x-dev-flow/scripts/precommit-runner.js`
+3. Plugin-relative fallback: `@scripts/precommit-runner.js`
+
+**Not found** → warn + skip Phase 6.5. Phase 7 will report `⚠️ Partial`.
+
+### 6.5.2 Copy Scripts
+
+1. `mkdir -p ${REPO_ROOT}/.claude/scripts/lib`
+2. Copy 3 scripts:
+
+| Script | Purpose | Dependencies |
+|--------|---------|--------------|
+| `precommit-runner.js` | Precommit runner for `/precommit`, `/precommit-fast` | `lib/utils.js` |
+| `verify-runner.js` | Verify runner for `/verify` | `lib/utils.js` |
+| `lib/utils.js` | Shared utilities | None |
+
+3. Conflict strategy: same as Phase 5.2.
+
+| Scenario | Action |
+|----------|--------|
+| File does not exist | Install |
+| File exists, content identical | Skip |
+| File exists, content differs | Skip + warn as conflict |
+
+### 6.5.3 Update Manifest
+
+1. Read `.sd0x/install-state.json` (create `{}` if not exists)
+2. Read plugin version from `.claude-plugin/plugin.json` or `package.json`
+3. Update: `schema_version: 1`, `installed_at`, `plugin_version`, `scripts` key
+4. Compute hash per file: `git hash-object --no-filters .claude/scripts/<name>`
+5. Preserve all existing top-level keys (e.g. `rules`, `hook_scripts`, and any unknown keys)
+6. Write back to `.sd0x/install-state.json`
+
+### 6.5.4 Output Scripts Report
+
+```markdown
+## Scripts Install Report
+
+**Source**: <plugin-scripts-path>
+**Target**: <repo-root>/.claude/scripts/
+
+| Script | Status |
+|--------|--------|
+| precommit-runner.js | Installed/Skipped/Conflict |
+| verify-runner.js | Installed/Skipped/Conflict |
+| lib/utils.js | Installed/Skipped/Conflict |
+
+**Installed**: N / **Skipped**: M / **Conflicts**: K
+```
+
 ## Phase 7: Final Verification Report
 
 Summarize all phases and perform closed-loop check:
@@ -336,6 +402,7 @@ Summarize all phases and perform closed-loop check:
 | `@rules/` references | `@rules/auto-loop.md` in `.claude/CLAUDE.md` | ✅ |
 | Rule files | `.claude/rules/auto-loop.md` exists | ✅ |
 | Hook enforcement | `stop-guard` in `.claude/settings.json` | ✅ |
+| Script runners | `.claude/scripts/precommit-runner.js` exists | ✅ (unless `--lite` or `--detect-only`) |
 | Guard mode | `env.STOP_GUARD_MODE` = `strict` in settings | ✅ (unless `--guard-mode warn`) |
 
 ### Output
@@ -349,12 +416,14 @@ Summarize all phases and perform closed-loop check:
 | CLAUDE.md | ✅ Configured (0 remaining placeholders) |
 | Rules | ✅ 11/11 managed rules + 1 override template |
 | Hooks | ✅ 4/4 installed + settings merged |
+| Scripts | ✅ 3/3 runner scripts installed |
 
 ### Closed-Loop Status
 ✅ Auto-loop engine fully configured (strict mode)
 (or ⚠️ Auto-loop engine configured (warn mode — stop-guard will not block))
 (or ⚠️ Partial — missing: hooks (enforcement layer inactive))
 (or ⚠️ Partial — missing: rules)
+(or ⚠️ Partial — missing: scripts (runner not installed))
 
 ### Next Steps
 - Run `/repo-intake` for a full project scan
@@ -370,6 +439,7 @@ Summarize all phases and perform closed-loop check:
 - [ ] `.claude/rules/` contains 12 `.md` files (11 managed + 1 override template) (unless `--no-rules` or `--lite`)
 - [ ] `.claude/hooks/` contains 4 `.sh` files with execute permission (unless `--no-hooks` or `--lite`)
 - [ ] `.claude/settings.json` contains hook definitions (unless `--no-hooks` or `--lite`)
+- [ ] `.claude/scripts/` contains `precommit-runner.js`, `verify-runner.js`, and `lib/utils.js` (unless `--lite` or `--detect-only`)
 - [ ] `.claude/CLAUDE.md` contains `@rules/auto-loop.md` reference (unless `--lite`)
 
 ## References

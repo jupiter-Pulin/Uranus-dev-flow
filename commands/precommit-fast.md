@@ -31,7 +31,27 @@ Use Glob to check if `.claude/scripts/precommit-runner.js` exists in the project
 - **Found** → run: `node .claude/scripts/precommit-runner.js --mode fast --tail 60`
   - If runner succeeds, use its output and skip to the Output section.
   - If runner **fails**, treat as a real precommit failure (do not silently fallback).
-- **NOT found** → skip to Step 2 (do NOT attempt to run the runner).
+- **NOT found** → **Auto-install attempt**:
+  1. **Node.js gate**: Use Glob to check if `package.json` exists in the project root. If no `package.json` → skip auto-install, fall through to Step 2.
+  2. **Locate plugin scripts**: 3-level Glob fallback (short-circuit on first match):
+     - `Glob: ~/.claude/plugins/**/sd0x-dev-flow/scripts/precommit-runner.js`
+     - `Glob: ${REPO_ROOT}/node_modules/sd0x-dev-flow/scripts/precommit-runner.js`
+     - Plugin-relative: try reading `@scripts/precommit-runner.js` to confirm accessibility
+  3. **Plugin not found** → fall through to Step 2 (ecosystem fallback).
+  4. **Plugin found** → log `> auto-installing missing runner...` then copy using `node -e` (stays within existing `Bash(node:*)` permission):
+     - `mkdir -p .claude/scripts/lib`
+     - Copy `precommit-runner.js` and `lib/utils.js` from plugin source to `.claude/scripts/`
+     - Conflict handling per file:
+
+       | Scenario | Action |
+       |----------|--------|
+       | Target missing | Copy |
+       | Target exists, content identical | Skip (already installed) |
+       | Target exists, content differs | Skip + warn (no overwrite without `--force`) |
+
+  5. **Run newly installed runner**: `node .claude/scripts/precommit-runner.js --mode fast --tail 60`
+     - If any required file had conflict (runner or lib/utils.js not installed) → fall through to Step 2.
+     - If runner **fails** → treat as a real precommit failure (do not silently fallback).
 
 ### Step 2: Fallback (no runner script)
 
