@@ -3,24 +3,25 @@
   "installed_at": "2026-03-14T04:00:00Z",
   "plugin_version": "2.0.21",
   "rules": {
-    "auto-loop.md": { "hash": "c96fe76575d9b26fc11e6ef51c5991e978283657" },
+    "auto-loop.md": { "hash": "566d35b6433d96ccec3b85c64d2cd6483a6d81d9" },
     "codex-invocation.md": { "hash": "102948dbe364d348db2bce4ffb2494940c6ade21" },
     "docs-numbering.md": { "hash": "89eabf388badd8ce9668a77a3a8150dc5830df29" },
     "docs-writing.md": { "hash": "5a7311b22ed5f7a45964a71976090737ea9c2d81" },
-    "fix-all-issues.md": { "hash": "1752d4d40d71f93b1241b85589942877d341bf7c" },
+    "fix-all-issues.md": { "hash": "96e5b4a71677c0028e4ba6350f24a02fd26a7e63" },
     "framework.md": { "hash": "88190401bef7fe4fddb2405cb52db19014a6c8a7" },
     "git-workflow.md": { "hash": "29fc9298394ecedc9a75767100d90b16981d8d14" },
     "logging.md": { "hash": "730ef9d70812f965cd99a50b15272b2badb4f9ef" },
     "security.md": { "hash": "7f527a07c7e478ebef0e919ae1c320b926a3b990" },
     "self-improvement.md": { "hash": "92037ba27f43243f60bce3bce4bfdf734e23375d" },
-    "testing.md": { "hash": "5082626872789a1de7ef0017b1b0e2afddb1fb26" },
+    "testing.md": { "hash": "316a98f23bec9f40dfdaaa13d4412753592e4701" },
     "context-management.md": { "hash": "864e1ad1ffb2a02098cab8de169b3a686f3aec51" }
   },
   "hook_scripts": {
     "pre-edit-guard.sh": { "hash": "693ded505b858af9e9d5ac38ee39da706162b2c0" },
     "post-edit-format.sh": { "hash": "7ab7fb780565ea4acaf68cf0d86ae2fb454c6ddc" },
     "post-tool-review-state.sh": { "hash": "e1165c40306febf3cbc99d36971c72dd58221ea6" },
-    "stop-guard.sh": { "hash": "dc60704336d23c702327141dd8512797ac39764f" }
+    "stop-guard.sh": { "hash": "1a0f0c400f3ddafeb8fa9d0a8c3c1e075244bf52" },
+    "post-compact-auto-loop.sh": { "hash": "f9dce0d960d6508284fe1b42be8b86f6258103c7" }
   },
   "scripts": {
     "precommit-runner.js": { "hash": "035793420e619d00398fac4e0498028cd636ae38" },
