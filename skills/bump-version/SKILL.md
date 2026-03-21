@@ -5,7 +5,7 @@ description: "Bump package and plugin version in sync. Updates package.json, .cl
 
 # Bump Version
 
-Update `package.json`, `.claude-plugin/plugin.json`, and `.claude/.sd0x-install-state.json` versions in sync.
+Update `package.json`, `.claude-plugin/plugin.json`, and `.sd0x/install-state.json` versions in sync.
 
 ## Workflow
 
@@ -23,7 +23,7 @@ grep '"version"' package.json .claude-plugin/plugin.json
 Also check manifest:
 
 ```bash
-grep '"plugin_version"' .claude/.sd0x-install-state.json 2>/dev/null || echo "(no manifest)"
+grep '"plugin_version"' .sd0x/install-state.json 2>/dev/null || echo "(no manifest)"
 ```
 
 If versions are already out of sync, warn user before proceeding.
@@ -44,7 +44,7 @@ Use Edit tool to update version fields:
 
 1. `package.json` — `"version"` field
 2. `.claude-plugin/plugin.json` — `"version"` field
-3. `.claude/.sd0x-install-state.json` — `"plugin_version"` field (if file exists)
+3. `.sd0x/install-state.json` — `"plugin_version"` field (if file exists)
 
 All must be set to the **exact same version string**.
 
@@ -59,7 +59,7 @@ The manifest update prevents the SessionStart drift sentinel from firing false w
 |------|-------|--------|-------|
 | package.json | version | x.y.z | a.b.c |
 | .claude-plugin/plugin.json | version | x.y.z | a.b.c |
-| .claude/.sd0x-install-state.json | plugin_version | x.y.z | a.b.c |
+| .sd0x/install-state.json | plugin_version | x.y.z | a.b.c |
 ```
 
 ## Prohibited

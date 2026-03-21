@@ -34,7 +34,7 @@ function setupFixture(options = {}) {
     withRootClaudeMd = true,
     symlinks = ['agents', 'commands', 'hooks', 'rules', 'scripts', 'skills'],
     extraSymlinks = {},  // { name: target }
-    copyFiles = ['.gitignore', '.sd0x-install-state.json', 'settings.local.json'],
+    copyFiles = ['.gitignore', 'settings.local.json'],
     skipGitInit = false,
   } = options;
 
@@ -101,11 +101,6 @@ function setupFixture(options = {}) {
         writeFileSync(join(sourceDir, file), '.claude/cache/\n');
       } else if (file === 'settings.local.json') {
         writeFileSync(join(sourceDir, file), JSON.stringify({ allowedTools: [] }));
-      } else if (file === '.sd0x-install-state.json') {
-        writeFileSync(
-          join(sourceDir, file),
-          JSON.stringify({ schema_version: 1, rules: {} })
-        );
       }
     }
 
@@ -171,7 +166,7 @@ test('T1: happy path — full sync with symlinks and copies', () => {
   // Verify copies
   assert.ok(existsSync(join(worktreeRoot, '.claude', '.gitignore')));
   assert.ok(existsSync(join(worktreeRoot, '.claude', 'settings.local.json')));
-  assert.ok(existsSync(join(worktreeRoot, '.claude', '.sd0x-install-state.json')));
+  // .sd0x-install-state.json removed from copy list (now at .sd0x/install-state.json, project root)
 
   // Verify marker
   assert.ok(existsSync(join(worktreeRoot, '.claude', '.sync-complete')));
@@ -409,16 +404,16 @@ test('T11: settings.local.json is copied and isolated', () => {
   assert.equal(readFileSync(source, 'utf8'), originalSource);
 });
 
-// --- T12: .sd0x-install-state.json is copied ---
-test('T12: .sd0x-install-state.json is copied', () => {
-  const { worktreeRoot } = setupFixture();
+// --- T12: .sd0x-install-state.json no longer copied (moved to .sd0x/install-state.json at project root) ---
+test('T12: .sd0x-install-state.json is NOT copied (path unified to .sd0x/)', () => {
+  const { worktreeRoot, mainRoot } = setupFixture();
+  // Create old-path file to ensure it's NOT copied
+  const sourceDir = join(mainRoot, '.claude');
+  writeFileSync(join(sourceDir, '.sd0x-install-state.json'), '{"legacy": true}');
   runSync(worktreeRoot);
 
   const target = join(worktreeRoot, '.claude', '.sd0x-install-state.json');
-  assert.ok(existsSync(target));
-  assert.ok(!lstatSync(target).isSymbolicLink());
-  const content = JSON.parse(readFileSync(target, 'utf8'));
-  assert.equal(content.schema_version, 1);
+  assert.ok(!existsSync(target), '.sd0x-install-state.json should NOT be copied to worktree');
 });
 
 // --- T13: Staging → atomic rename succeeds ---

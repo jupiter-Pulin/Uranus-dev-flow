@@ -24,11 +24,13 @@ function createTempRepo(manifest) {
   execFileSync('git', ['config', 'user.email', 'test@test.com'], { cwd: dir });
   execFileSync('git', ['config', 'user.name', 'test'], { cwd: dir });
 
-  // Create .claude/ with manifest
+  // Create .claude/ dir + .sd0x/ with manifest
   const claudeDir = join(dir, '.claude');
   mkdirSync(claudeDir, { recursive: true });
+  const sd0xDir = join(dir, '.sd0x');
+  mkdirSync(sd0xDir, { recursive: true });
   if (manifest !== null) {
-    writeFileSync(join(claudeDir, '.sd0x-install-state.json'), manifest);
+    writeFileSync(join(sd0xDir, 'install-state.json'), manifest);
   }
 
   // Create initial commit so git rev-parse works

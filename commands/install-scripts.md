@@ -146,15 +146,15 @@ If `--dry-run`, compute the install plan without writing any files, output the p
 
 Track installed scripts in the shared manifest for future smart merge operations.
 
-1. Read `.claude/.sd0x-install-state.json` via `Read` tool (create `{}` if not exists; JSON parse fails → warn + treat as missing)
+1. Read `.sd0x/install-state.json` via `Read` tool (create `{}` if not exists; JSON parse fails → warn + treat as missing)
 2. Read plugin version: `.claude-plugin/plugin.json` → `package.json` → `"unknown"`
 3. Update in-memory:
    - `schema_version: 1`
    - `installed_at`: current ISO-8601
    - `plugin_version`: from step 2
    - `scripts`: update hash for each file in managed state — both newly copied and already-identical (skipped). Structure: `scripts[filename] = { "hash": "<sha1>" }`
-   - Preserve `rules` / `hook_scripts` keys from existing manifest
-4. Write via `Write` tool to `.claude/.sd0x-install-state.json`
+   - Preserve ALL other top-level keys from existing manifest (e.g. `rules`, `hook_scripts`, `sd0x_version`, `agents_md_hash`, `hooks_installed` — do NOT drop unknown keys)
+4. Write via `Write` tool to `.sd0x/install-state.json`
 5. Error: warn + continue (manifest is advisory; next run recovers)
 
 ### Phase 5: Output Report

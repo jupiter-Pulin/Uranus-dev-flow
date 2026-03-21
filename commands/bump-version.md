@@ -12,7 +12,7 @@ allowed-tools: Read, Edit, Grep, Glob
 
 - package.json version: !`grep '"version"' package.json | head -1`
 - plugin.json version: !`grep '"version"' .claude-plugin/plugin.json | head -1`
-- install-state version: !`grep '"plugin_version"' .claude/.sd0x-install-state.json | head -1`
+- install-state version: !`grep '"plugin_version"' .sd0x/install-state.json | head -1`
 
 ## Task
 

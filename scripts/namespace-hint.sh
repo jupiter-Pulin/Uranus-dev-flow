@@ -6,7 +6,7 @@ echo "Plugin scripts: use 'bash scripts/run-skill.sh <skill> <script> [args]' fo
 # --- Drift sentinel (< 50ms budget) ---
 # Detects plugin version mismatch with installed manifest and warns user.
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
-MANIFEST="$REPO_ROOT/.claude/.sd0x-install-state.json"
+MANIFEST="$REPO_ROOT/.sd0x/install-state.json"
 
 # Skip if no manifest (first-time user or plugin source repo without local install)
 [ -f "$MANIFEST" ] || exit 0

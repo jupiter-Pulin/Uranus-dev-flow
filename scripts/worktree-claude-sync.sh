@@ -89,7 +89,7 @@ expected_target_for() {
 }
 
 SYMLINK_DIRS=("agents" "commands" "hooks" "rules" "scripts" "skills")
-COPY_FILES=(".gitignore" ".sd0x-install-state.json" "settings.local.json")
+COPY_FILES=(".gitignore" "settings.local.json")
 
 # Counters
 SYNCED=0
@@ -265,6 +265,17 @@ done
 # 4. Atomic commit: touch marker → rename staging → .claude
 touch "$STAGING_DIR/.sync-complete"
 mv "$STAGING_DIR" "$TARGET_CLAUDE"
+
+# 5. Root-level .sd0x/ sync (install-state lives outside .claude/)
+MAIN_ROOT="$(cd "$SOURCE_CLAUDE/.." && pwd -P)"
+SD0X_SOURCE="$MAIN_ROOT/.sd0x/install-state.json"
+SD0X_TARGET="$WORKTREE_ROOT/.sd0x/install-state.json"
+if [[ -f "$SD0X_SOURCE" ]] && [[ ! -f "$SD0X_TARGET" ]]; then
+  mkdir -p "$WORKTREE_ROOT/.sd0x"
+  cp "$SD0X_SOURCE" "$SD0X_TARGET"
+  add_report ".sd0x/install-state.json" "copy (root)" "✅"
+  SYNCED=$((SYNCED + 1))
+fi
 
 # === Output Report ===
 echo ""

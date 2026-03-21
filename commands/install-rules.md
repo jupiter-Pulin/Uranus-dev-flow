@@ -20,7 +20,7 @@ Install sd0x-dev-flow plugin rules into the current project's `.claude/rules/` d
 ```mermaid
 sequenceDiagram
     participant C as Claude
-    participant M as .claude/.sd0x-install-state.json
+    participant M as .sd0x/install-state.json
     participant S as Plugin rules/
     participant T as .claude/rules/
     participant U as User (AskUserQuestion)
@@ -339,7 +339,7 @@ If `--list` is specified, output this table and **stop**.
 
 ### Phase 3.5: Read Manifest and Classify
 
-1. **Read manifest**: `Read` tool to read `.claude/.sd0x-install-state.json`
+1. **Read manifest**: `Read` tool to read `.sd0x/install-state.json`
    - Not found → `{}`
    - JSON parse fails → warn + treat as missing
 
@@ -469,8 +469,8 @@ mkdir -p ${REPO_ROOT}/.claude/rules
    - `installed_at`: current ISO-8601
    - `plugin_version`: from Phase 3.5
    - `rules`: update each processed file's hash/deleted flag
-   - Preserve `hook_scripts` / `scripts` keys from existing manifest
-3. Write via `Write` tool to `.claude/.sd0x-install-state.json`
+   - Preserve ALL other top-level keys from existing manifest (e.g. `hook_scripts`, `scripts`, `sd0x_version`, `agents_md_hash`, `hooks_installed` — do NOT drop unknown keys)
+3. Write via `Write` tool to `.sd0x/install-state.json`
 4. Error: warn + continue (next run → legacy migration)
 
 ### Phase 4.6: Backfill CLAUDE.md (Closed-Loop Guarantee)
@@ -513,7 +513,7 @@ Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine
 ## Smart Merge Dry Run
 
 **Plugin**: v<old> → v<new>
-**Manifest**: .claude/.sd0x-install-state.json (found|missing)
+**Manifest**: .sd0x/install-state.json (found|missing)
 
 | Rule | Local | Plugin | Classification | Action |
 |------|-------|--------|---------------|--------|
@@ -535,7 +535,7 @@ Ensure `.claude/CLAUDE.md` contains `@rules/` references so the auto-loop engine
 **Source**: <plugin-rules-path>
 **Target**: <repo-root>/.claude/rules/
 **Plugin**: v<old> → v<new>
-**Manifest**: .claude/.sd0x-install-state.json
+**Manifest**: .sd0x/install-state.json
 
 | Rule | Status | Detail |
 |------|--------|--------|
@@ -556,7 +556,7 @@ Status icons: ✅=Installed/Auto-updated/Merged/Adopted, ⏭️=Kept/Skipped/Enr
 - Review any conflicts or skipped items manually
 - Rules in `.claude/rules/` are auto-loaded by Claude Code for this project
 - Use `--force` to overwrite all rules with plugin versions
-- Manifest tracks installed state at `.claude/.sd0x-install-state.json`
+- Manifest tracks installed state at `.sd0x/install-state.json`
 
 ## Examples
 

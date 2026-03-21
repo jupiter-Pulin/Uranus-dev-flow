@@ -189,9 +189,9 @@ Find the plugin's `rules/` directory using this priority (short-circuit on first
 
 5. After copying, collect hashes and write manifest:
    - Compute `git hash-object --no-filters` for each managed rule (installed + already-identical skipped)
-   - Read `.claude/.sd0x-install-state.json` (create `{}` if not exists)
+   - Read `.sd0x/install-state.json` (create `{}` if not exists)
    - Update `schema_version: 1`, `installed_at`, `plugin_version` (source priority: `.claude-plugin/plugin.json` → `package.json` → `"unknown"`), `rules` key — hash for each file in managed state (both newly installed and already-identical). Structure: `rules[filename] = { "hash": "<sha1>" }`
-   - Preserve `hook_scripts` / `scripts` keys from existing manifest
+   - Preserve ALL other top-level keys from existing manifest (e.g. `hook_scripts`, `scripts`, `sd0x_version`, `agents_md_hash`, `hooks_installed` — do NOT drop unknown keys)
    - Write updated manifest via `Write` tool
 
 > **Note**: `/project-setup` uses fresh-install semantics (install new / skip identical / warn on conflict; no smart merge).
@@ -225,7 +225,7 @@ When extracting from template, remove ecosystem block markers and leave unresolv
 | ... | ... |
 
 **Installed**: N / **Skipped**: M / **Conflicts**: K
-**Manifest**: .claude/.sd0x-install-state.json
+**Manifest**: .sd0x/install-state.json
 **CLAUDE.md backfill**: ✅ @rules/ references present
 ```
 

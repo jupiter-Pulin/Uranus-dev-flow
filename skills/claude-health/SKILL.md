@@ -128,7 +128,7 @@ du -sh .claude/cache/ 2>/dev/null
 
 | # | Check | Method | Criteria |
 |---|-------|--------|----------|
-| S1.1 | Manifest exists | Read `.claude/.sd0x-install-state.json` | Missing → P1 |
+| S1.1 | Manifest exists | Read `.sd0x/install-state.json` | Missing → P1 |
 | S1.2 | Manifest parseable | JSON.parse | Parse error → P1 |
 | S1.3 | `schema_version` current | `== 1` | Mismatch → P2 |
 | S1.4 | `plugin_version` matches | manifest vs `.claude-plugin/plugin.json` or `package.json` | Mismatch → P1 |

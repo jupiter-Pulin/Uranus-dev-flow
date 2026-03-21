@@ -124,7 +124,7 @@ After `git worktree add`, the sync script (`scripts/worktree-claude-sync.sh`) au
 |-------|----------|-------|
 | `agents`, `commands`, `hooks`, `rules`, `scripts`, `skills` | Symlink (`../<dir>`) | Points to worktree's own tracked dirs |
 | `CLAUDE.md` | Symlink (`../CLAUDE.md`) | Points to worktree's tracked root file |
-| `.gitignore`, `.sd0x-install-state.json` | Copy | Isolated per worktree |
+| `.gitignore` | Copy | Isolated per worktree |
 | `settings.local.json` | Copy | Isolated (contains absolute paths) |
 | `cache/`, `.git/` | Skip | Per-worktree, auto-created |
 
