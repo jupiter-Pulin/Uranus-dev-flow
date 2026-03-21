@@ -26,21 +26,21 @@ Activate 13 idle custom agents, add wiring validation to skill-lint, and paralle
 
 | # | Criterion | Evidence Type | Status |
 |---|-----------|--------------|--------|
-| AC-1 | `skill-lint.js` validates agent ref existence | Automated test | Pending |
-| AC-2 | `skill-lint.js` validates Agent/Task tool entitlement | Automated test | Pending |
+| AC-1 | `skill-lint.js` validates agent ref existence | Automated test | Done (R1: 13c62ac) |
+| AC-2 | `skill-lint.js` validates Agent/Task tool entitlement | Automated test | Done (R1: 13c62ac) |
 | AC-3 | All 14 agents referenced by at least 1 skill or command | Set-comparison: agent names from `agents/*.md` vs `grep subagent_type skills/ commands/` | Pending |
 | AC-4 | `/load-pr-review` dispatches per-thread verdicts in parallel | Runtime verification | Pending |
 | AC-5 | `/pre-pr-audit` Phase A/B use background agents | Runtime verification | Pending |
 | AC-6 | No sentinel output regression | Existing tests pass | Pending |
-| AC-7 | `deep-explore` and `deep-research` have Agent in allowed-tools (both SKILL.md and command.md) | Lint verification | Pending |
+| AC-7 | `deep-explore` and `deep-research` have Agent in allowed-tools (both SKILL.md and command.md) | Lint verification | Done (R1: 13c62ac) |
 | AC-8 | Untrusted PR content handling documented and enforced in `/load-pr-review` parallel dispatch | Code review | Pending |
-| AC-9 | `allowed-tools` changes applied to both SKILL.md and command.md for all modified skills | Lint verification (allowed-tools-sync check passes) | Pending |
+| AC-9 | `allowed-tools` changes applied to both SKILL.md and command.md for all modified skills | Lint verification (allowed-tools-sync check passes) | Done (R1: 13c62ac) |
 
 ## Progress
 
 | Phase | Tasks | Status |
 |-------|-------|--------|
-| B0: Guardrails | B0-1 through B0-6 | Pending |
+| B0: Guardrails | B0-1 through B0-6 | Completed (13c62ac) |
 | B1-A: Agent Activation | B1-A1 through B1-A4 | Pending |
 | B1-P: Parallelization | B1-P1 through B1-P4 | Pending |
 
