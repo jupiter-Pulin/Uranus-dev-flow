@@ -73,12 +73,24 @@ These fields are only present under specific conditions.
 | `worktree.original_cwd` | string | Only during `--worktree` sessions | Directory before entering the worktree |
 | `worktree.original_branch` | string | Only during `--worktree` sessions; absent for hook-based worktrees | Branch before entering the worktree |
 
+## Rate Limits
+
+These fields are only present for OAuth users (Pro/Max plans). Added in Claude Code 2.1.80.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rate_limits` | object\|undefined | Rate limit usage (only for OAuth users) |
+| `rate_limits.five_hour.used_percentage` | number | 5-hour window usage percentage (0-100) |
+| `rate_limits.five_hour.resets_at` | string (ISO 8601) | When the 5-hour window resets |
+| `rate_limits.seven_day.used_percentage` | number | 7-day window usage percentage (0-100) |
+| `rate_limits.seven_day.resets_at` | string (ISO 8601) | When the 7-day window resets |
+
 ## Null / Undefined Handling
 
 | Pattern | Fields | jq Guard | Behavior |
 |---------|--------|----------|----------|
 | `null` before first API call | `context_window.current_usage`, `used_percentage`, `remaining_percentage` | `// empty` | Hide segment until data available |
-| Key absent (undefined) | `agent.name`, `worktree.*`, `vim.mode` | `// empty` | Hide segment when not applicable |
+| Key absent (undefined) | `agent.name`, `worktree.*`, `vim.mode`, `rate_limits.*` | `// empty` | Hide segment when not applicable |
 | Zero-value present | `cost.total_cost_usd` | `>= 0.005` threshold | Hide when negligible |
 
 Always use jq fallback for nullable fields: `jq -r '.field // empty'` (hides) or `jq -r '.field // 0'` (defaults).

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Skill Name | `statusline-config` |
-| Status | v1 implemented (stable); v2 proposed — see [Section 11](#11-v2-update-new-json-fields--segments) |
+| Status | v2 implemented (stable) — see [Section 11](#11-v2-update-new-json-fields--segments) |
 | Standalone Install | `npx skills add sd0xdev/sd0x-dev-flow --skill statusline-config` |
 | Output | `~/.claude/statusline-command.sh` (POSIX shell script) |
 | Dependencies | `jq` (required), `git` (optional, for branch segment) |
@@ -21,7 +21,7 @@ Claude Code supports custom statusline scripts via `~/.claude/statusline-command
 
 `/statusline-config` generates a production-ready statusline script with:
 
-- 6 configurable segments (directory, git branch, model, context %, cost, >200k alert)
+- 9 configurable segments (directory, git branch, agent, model, context %, token usage, cost, rate limits, worktree)
 - 5 color themes with semantic token architecture
 - WCAG AA contrast compliance (best-effort)
 - `NO_COLOR` standard support
@@ -85,10 +85,13 @@ The command `/statusline-config` becomes available immediately.
 |---------|------------|---------|-------|
 | Directory | `workspace.current_dir` | ON | Truncate deep paths: `~/.../last-dir` |
 | Git branch | shell `git` | ON | `--no-optional-locks`, cache 5s |
-| Model | `model.display_name` | ON | — |
-| Context % | `context_window.remaining_percentage` | ON | Green >40%, Yellow 20–40%, Red <=20% |
+| Agent | `agent.name` | ON (conditional) | Show when present |
+| Model | `model.display_name` + `context_window.context_window_size` | ON | Smart tier suffix: `Opus 4.6 (1M)` |
+| Context % | `context_window.remaining_percentage` + `context_window_size` | ON | Green >40%, Yellow 20-40%, Red <=20% |
+| Token Usage | `context_window.total_input_tokens` + `total_output_tokens` | ON (conditional) | `{in}k/{out}k` session cumulative |
 | Cost | `cost.total_cost_usd` | ON | Show when >= $0.005, `est $X.XX` |
-| >200k alert | `exceeds_200k_tokens` | ON | Show only when `true` |
+| Rate Limits | `rate_limits.five_hour.used_percentage` + `seven_day.used_percentage` | ON (conditional) | `5h: 85% left · 7d: 82% left` remaining %; OAuth only |
+| Worktree | `worktree.name` + `worktree.branch` | ON (conditional) | Replaces Directory + Git branch when present |
 
 ## 5. Theme System
 
@@ -115,7 +118,7 @@ Scripts use semantic tokens instead of hardcoded colors. Each theme maps these 1
 | `C_CTX_WARN` | Context 21–40% | yellow |
 | `C_CTX_BAD` | Context <= 20% | red |
 | `C_COST` | Cost display | muted text |
-| `C_ALERT` | >200k token warning | orange/peach + bold |
+| `C_ALERT` | >200k token warning (legacy, segment removed) | orange/peach + bold |
 | `C_SEP` | Pipe separator `\|` | dim/overlay |
 | `C_MUTED` | Secondary info | subtext |
 | `C_TEXT` | General text | foreground |
@@ -165,7 +168,7 @@ sequenceDiagram
 
 ## 7. JSON Schema
 
-> **Source of truth**: `skills/statusline-config/references/json-schema.md`. The table below reflects the **v1 schema** (currently implemented). For v2 additions, see [Section 11.3](#113-new-json-fields).
+> **Source of truth**: `skills/statusline-config/references/json-schema.md`. The table below reflects the **core schema**. For v2 additions (token usage, agent, worktree, rate limits), see [Section 11.3](#113-new-json-fields).
 
 Claude Code pipes this JSON to the script's stdin on every update:
 
@@ -202,7 +205,7 @@ Always use jq fallback: `jq -r '.field // 0'`
 
 ```
 ~/.../my-project | feat/auth | Opus 4.6 | ctx 48% left · est $0.12
-~/.../my-project | main | Opus 4.6 | ctx 18% left · est $1.23 · >200k
+~/.../my-project | main | Opus 4.6 | ctx 18% left · est $1.23
 ```
 
 With `NO_COLOR=1` (separators rendered as plain `·`):
@@ -242,13 +245,13 @@ commands/
 
 ### 11.1 Background
 
-Claude Code 2.1.80+ 的 statusline JSON 新增了多個欄位（11 個 top-level 欄位 + 4 個 `current_usage` sub-fields = 15 entries）。本次更新將 skill 對齊官方 schema 並新增 3 個 conditional segments。
+Claude Code 2.1.80+ 的 statusline JSON 新增了多個欄位（16 個 top-level 欄位 + 4 個 `current_usage` sub-fields = 20 entries）。本次更新將 skill 對齊官方 schema 並新增 4 個 conditional segments。
 
-> **v2 Completion Checklist** — 以下項目全部完成後，status 可改為 `v2 implemented`：
-> - [ ] `references/json-schema.md` updated with all new fields
-> - [ ] `SKILL.md` Segments table + Script Rules + Examples updated
-> - [ ] Verification JSON updated and tested
-> - [ ] User script regenerated and verified
+> **v2 Completion Checklist** (all completed):
+> - [x] `references/json-schema.md` updated with all new fields
+> - [x] `SKILL.md` Segments table + Script Rules + Examples updated
+> - [x] Verification JSON updated and tested
+> - [x] User script regenerated and verified
 
 ### 11.2 Design Decisions (Nash Equilibrium)
 
@@ -263,23 +266,28 @@ Claude Code 2.1.80+ 的 statusline JSON 新增了多個欄位（11 個 top-level
 
 ### 11.3 New JSON Fields
 
-以下欄位需加入 `references/json-schema.md`（11 top-level + 4 sub-fields = 15 entries）：
+以下欄位需加入 `references/json-schema.md`（16 個 top-level 欄位 + 4 個 `current_usage` sub-fields = 20 entries）：
 
-#### Top-level Fields (11)
+#### Top-level Fields (16)
 
 | Field | Type | Description | Segment? |
 |-------|------|-------------|:--------:|
 | `cwd` | string | Alias for `workspace.current_dir` | No (redundant) |
 | `transcript_path` | string | Path to conversation transcript | No |
-| `context_window.total_input_tokens` | number | Cumulative input tokens | No (session-level) |
-| `context_window.total_output_tokens` | number | Cumulative output tokens | No (session-level) |
-| `context_window.current_usage` | object\|null | Last API call token breakdown | **Yes** |
+| `context_window.total_input_tokens` | number | Cumulative input tokens | **Yes** (Token Usage) |
+| `context_window.total_output_tokens` | number | Cumulative output tokens | **Yes** (Token Usage) |
+| `context_window.current_usage` | object\|null | Last API call token breakdown | No (diagnostic) |
 | `agent.name` | string\|undefined | Agent name (only with `--agent`) | **Yes** |
 | `worktree.name` | string\|undefined | Worktree name | **Yes** |
 | `worktree.path` | string\|undefined | Worktree absolute path | No |
 | `worktree.branch` | string\|undefined | Worktree git branch | (sub-display) |
 | `worktree.original_cwd` | string\|undefined | Pre-worktree directory | No |
 | `worktree.original_branch` | string\|undefined | Pre-worktree branch | No |
+| `rate_limits` | object\|undefined | Rate limit usage (OAuth users only, added 2.1.80) | **Yes** |
+| `rate_limits.five_hour.used_percentage` | number | 5-hour window usage % (0-100) | (sub-display) |
+| `rate_limits.five_hour.resets_at` | string | 5-hour window reset time (ISO 8601) | No (v1) |
+| `rate_limits.seven_day.used_percentage` | number | 7-day window usage % (0-100) | (sub-display) |
+| `rate_limits.seven_day.resets_at` | string | 7-day window reset time (ISO 8601) | No (v1) |
 
 #### `current_usage` Sub-fields (4)
 
@@ -303,11 +311,11 @@ Claude Code 2.1.80+ 的 statusline JSON 新增了多個欄位（11 個 top-level
 
 | Mode | Condition | Max Segments | Segment Slots (? = conditional) |
 |------|-----------|:------------:|---------------|
-| Normal | `worktree.name` absent | 8 | Directory, Git branch, Agent?, Model, Context %, Token Usage?, Cost?, >200k? |
-| Worktree | `worktree.name` present | 7 | [WT:name] branch, Agent?, Model, Context %, Token Usage?, Cost?, >200k? |
+| Normal | `worktree.name` absent | 9 | Directory, Git branch, Agent?, Model, Context %, Token Usage?, Cost?, Rate Limits? |
+| Worktree | `worktree.name` present | 8 | [WT:name] branch, Agent?, Model, Context %, Token Usage?, Cost?, Rate Limits? |
 
-> Worktree mode replaces Directory + Git branch with a single `[WT:{name}] {branch}` slot (8 - 2 + 1 = 7).
-> Always-on slots: 4 in normal (Directory, Git branch, Model, Context %), 3 in worktree (WT slot, Model, Context %). Conditional slots: Agent, Token Usage, Cost, >200k.
+> Worktree mode replaces Directory + Git branch with a single `[WT:{name}] {branch}` slot (9 - 2 + 1 = 8).
+> Always-on slots: 4 in normal (Directory, Git branch, Model, Context %), 3 in worktree (WT slot, Model, Context %). Conditional slots: Agent, Token Usage, Cost, Rate Limits.
 
 #### Example Output
 
@@ -320,16 +328,17 @@ v2 normal mode (token usage + agent):
 ~/.../my-project | feat/auth | security-reviewer | Opus 4.6 | ctx 48% left · est $0.12
 
 v2 worktree mode:
-[WT:fix-123] bugfix/issue-123 | Opus 4.6 | ctx 22% left · 42.0k/8.0k · est $1.23 · >200k
+[WT:fix-123] bugfix/issue-123 | Opus 4.6 | ctx 22% left · 42.0k/8.0k · est $1.23
 ```
 
 #### Segment Definitions
 
 | Segment | JSON Field | Default | Display Format | Color Token | Condition |
 |---------|-----------|---------|---------------|-------------|-----------|
-| Token Usage | `context_window.current_usage` | ON (conditional) | `{in}k/{out}k` | `C_COST` | Show when `current_usage` is non-null |
+| Token Usage | `context_window.total_input_tokens` + `total_output_tokens` | ON (conditional) | `{in}k/{out}k` | `C_COST` | Show when `total_input_tokens` is present |
 | Agent | `agent.name` | ON (conditional) | `{name}` | `C_MODEL` | Show when `agent.name` exists |
 | Worktree | `worktree.name` + `worktree.branch` | ON (conditional) | `[WT:{name}] {branch}` | `C_BRANCH` | Show when `worktree.name` exists; replaces Directory + Git branch |
+| Rate Limits | `rate_limits.five_hour.used_percentage` + `seven_day.used_percentage` | ON (conditional) | `5h: {rem}% left · 7d: {rem}% left` | `C_CTX_OK`/`C_CTX_WARN`/`C_CTX_BAD` | Show when `rate_limits` present (OAuth users); color by worst remaining window: Green >40%, Yellow 20-40%, Red <=20% |
 
 #### Token Usage Format
 
@@ -351,7 +360,7 @@ format_tokens() {
 # format_tokens 850   → "850"
 ```
 
-Threshold: always show when `current_usage` is non-null (no minimum threshold). Rationale: token counts are always informative — unlike cost, there's no "zero" state to hide.
+Threshold: always show when `total_input_tokens` is present (no minimum threshold). Rationale: token counts are always informative — unlike cost, there's no "zero" state to hide.
 
 #### Worktree Behavior
 
@@ -372,8 +381,8 @@ When `agent.name` is present:
 Display order (left to right):
 
 ```
-Normal mode:    Directory | Git branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?
-Worktree mode:  [WT:name] branch | Agent? | Model | Context % | Token Usage? · Cost? · >200k?
+Normal mode:    Directory | Git branch | Agent? | Model | Context % | Token Usage? · Cost? · Rate Limits?
+Worktree mode:  [WT:name] branch | Agent? | Model | Context % | Token Usage? · Cost? · Rate Limits?
 ```
 
 #### Input Sanitization
@@ -390,6 +399,7 @@ Worktree mode:  [WT:name] branch | Agent? | Model | Context % | Token Usage? · 
 | Token Usage | `C_COST` | Both are session statistics; visual grouping with cost |
 | Agent | `C_MODEL` | Both indicate "what's executing"; semantically adjacent |
 | Worktree | `C_BRANCH` | Both indicate "where in the git graph"; semantically identical |
+| Rate Limits | `C_CTX_OK`/`C_CTX_WARN`/`C_CTX_BAD` | Resource remaining % — threshold-based coloring same as context % |
 
 No changes to `references/themes.md`.
 
@@ -397,8 +407,8 @@ No changes to `references/themes.md`.
 
 | File | Action | Scope |
 |------|--------|-------|
-| `references/json-schema.md` | **Rewrite** | +15 entries (11 top-level + 4 sub-fields), restructure with grouping, update null handling |
-| `SKILL.md` Segments table | **Edit** | +3 rows |
+| `references/json-schema.md` | **Rewrite** | +20 entries (16 top-level + 4 sub-fields), restructure with grouping, update null handling |
+| `SKILL.md` Segments table | **Edit** | +4 rows (Agent, Token Usage, Rate Limits, Worktree) |
 | `SKILL.md` Semantic Tokens | **No change** | Reuse existing tokens |
 | `SKILL.md` Script Rules | **Edit** | +token format rule, +conditional display rules, +worktree replace rule |
 | `SKILL.md` Script Structure | **Edit** | Add field extraction examples |
@@ -411,7 +421,7 @@ No changes to `references/themes.md`.
 | Concern | Mitigation |
 |---------|-----------|
 | Existing scripts don't have new segments | New segments only appear in freshly generated scripts; existing scripts unaffected |
-| `current_usage` is null early in session | `// empty` guard hides segment until data available |
+| `total_input_tokens` absent early in session | `// empty` guard hides Token Usage segment until data available |
 | Worktree replaces Directory/Git branch | Only when `worktree.name` is present — standard behavior preserved otherwise |
 | Theme token count unchanged | Full reuse strategy = zero theme migration needed |
 
@@ -449,17 +459,21 @@ No changes to `references/themes.md`.
 
 | # | Scenario | Input Override | Expected |
 |---|----------|--------------|----------|
-| T1 | All v2 segments present | + `agent.name`, `worktree.*`, `current_usage` | Worktree replaces dir/branch; agent shows; token usage shows |
-| T2 | Only `current_usage` present | Default JSON above | `8.5k/1.2k` appears after context % |
-| T3 | `current_usage` is null | `"current_usage": null` | Token segment hidden |
+| T1 | All v2 segments present | + `agent.name`, `worktree.*`, `total_input/output_tokens` | Worktree replaces dir/branch; agent shows; token usage shows |
+| T2 | Token usage present | Default JSON above | `8.5k/1.2k` appears after context % |
+| T3 | Token usage absent | No `total_input_tokens` field | Token segment hidden |
 | T4 | Agent only | + `"agent": {"name": "verify-app"}` | Agent name between branch and model |
 | T5 | Worktree only | + `"worktree": {"name": "fix-123", "branch": "bugfix/issue-123"}` | `[WT:fix-123] bugfix/issue-123` replaces dir + branch |
 | T6 | NO_COLOR | `NO_COLOR=1` | All segments plain text, no escape codes |
 | T7 | v1 JSON (no new fields) | Original v1 test JSON | Output identical to v1 (backward compatible) |
+| T8 | Rate limits present (green) | + `"rate_limits": {"five_hour": {"used_percentage": 42.5, "resets_at": "..."}, "seven_day": {"used_percentage": 18.2, "resets_at": "..."}}` | `5h: 58% left · 7d: 82% left` in green |
+| T9 | Rate limits absent (non-OAuth) | No `rate_limits` key | No rate limits segment shown |
+| T10 | Rate limits warning (yellow) | `five_hour.used_percentage: 75` | Yellow color for segment (remaining 25%) |
+| T11 | Rate limits critical (red) | `five_hour.used_percentage: 92` | Red color for segment (remaining 8%) |
 
 ### 11.9 Open Questions
 
-- [ ] `rate_limits` field: changelog 提及但不在官方 docs table — 可能 beta/rolled back。監控 Issue [#20636](https://github.com/anthropics/claude-code/issues/20636)
+- [x] `rate_limits` field: **Resolved** — Claude Code 2.1.80 (2026-03-19) officially added `rate_limits` to statusline JSON. Structure: `rate_limits.five_hour.{used_percentage, resets_at}` + `rate_limits.seven_day.{used_percentage, resets_at}`. Feasibility study Option B (Wait for Official Support) realized. See SKILL.md Rate Limits segment.
 - [ ] Cache token breakdown: v1 隱藏，未來可加 verbose mode 或 `CLAUDE_STATUSLINE_VERBOSE=1` flag
 - [ ] `workspace.added_dirs`: Agent A 發現的新欄位，暫不加 segment（低 DX 價值）
 

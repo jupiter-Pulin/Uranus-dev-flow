@@ -26,6 +26,7 @@ Customize `~/.claude/statusline-command.sh` — segments, themes, and colors.
 | Context %   | `context_window.remaining_percentage` + `context_window_size` | ON | `ctx 60% left (600k/1M)` — Green >40%, Yellow 20-40%, Red <=20% |
 | Token Usage | `context_window.total_input_tokens` + `total_output_tokens` | ON (conditional) | `{in}k/{out}k` session cumulative; color: `C_COST` |
 | Cost        | `cost.total_cost_usd`                 | ON               | Show when >= $0.005, `est $X.XX`      |
+| Rate Limits | `rate_limits.five_hour.used_percentage` + `seven_day.used_percentage` | ON (conditional) | `5h: 85% left · 7d: 82% left` — displays remaining (100 - used); color thresholds match context %: Green >40%, Yellow 20-40%, Red <=20%; OAuth users only |
 | Worktree    | `worktree.name` + `worktree.branch`   | ON (conditional) | `[WT:{name}] {branch}` or `[WT:{name}]` if branch absent; **replaces** Directory + Git branch when present; color: `C_BRANCH` |
 
 For full JSON schema, see [json-schema.md](references/json-schema.md).
@@ -57,7 +58,7 @@ Scripts use semantic tokens instead of hardcoded colors:
 | `C_CTX_WARN` | Context 21-40%       | yellow              |
 | `C_CTX_BAD`  | Context <= 20%       | red                 |
 | `C_COST`     | Cost display         | muted text          |
-| `C_ALERT`    | >200k token warning  | orange/peach + bold |
+| `C_ALERT`    | >200k token warning (legacy, segment removed) | orange/peach + bold |
 | `C_SEP`      | Pipe separator `\|`  | dim/overlay         |
 | `C_MUTED`    | Secondary info       | subtext             |
 | `C_TEXT`     | General text         | foreground          |
@@ -100,8 +101,10 @@ Scripts use semantic tokens instead of hardcoded colors:
 - Context absolute: `ctx 60% left (600k/1M)` — remaining tokens calculated from `remaining_percentage * context_window_size / 100`
 - Sanitize free-text: strip control chars (`tr -d '[:cntrl:]'`) + truncate 30 chars for `agent.name`, `worktree.name`, `worktree.branch`
 - Worktree replace: when `worktree.name` present, replace Directory + Git branch with `[WT:{name}] {branch}` (or `[WT:{name}]` if `worktree.branch` absent — hook-based worktrees)
-- Render order (normal): `Directory | Git branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost?`
-- Render order (worktree): `[WT:name] branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost?`
+- Rate limits: show when `rate_limits` present; display remaining % (`100 - used_percentage`) with "left" suffix; format `5h: {rem}% left · 7d: {rem}% left`; color by worst remaining — Green >40% (`C_CTX_OK`), Yellow 20-40% (`C_CTX_WARN`), Red <=20% (`C_CTX_BAD`); thresholds match context %; OAuth users only
+- Rate limits `resets_at`: extracted but not displayed in v1 (too verbose for statusline)
+- Render order (normal): `Directory | Git branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost? · Rate Limits?`
+- Render order (worktree): `[WT:name] branch | Agent? | Model (tier) | Context % (abs) · Token Usage? · Cost? · Rate Limits?`
 
 ## Script Structure
 
@@ -144,6 +147,15 @@ With agent:
 Worktree mode:
 [WT:fix-123] bugfix/issue-123 | Opus 4.6 (1M) | ctx 22% left (220k/1M) · 42.0k/8.0k · est $1.23
 
+With rate limits (OAuth user, green):
+~/.../my-project | feat/auth | Opus 4.6 (1M) | ctx 60% left (600k/1M) · 85.0k/12.0k · est $18.12 · 5h: 58% left · 7d: 82% left
+
+Rate limits warning (yellow):
+~/.../my-project | main | Opus 4.6 (1M) | ctx 30% left (300k/1M) · 5h: 25% left · 7d: 35% left
+
+Rate limits critical (red):
+~/.../my-project | main | Opus 4.6 (1M) | ctx 30% left (300k/1M) · 5h: 8% left · 7d: 55% left
+
 display_name already has context info (no duplicate suffix):
 ~/.../my-project | main | Opus 4.6 (1M context) | ctx 60% left (600k/1M) · est $18.12
 ```
@@ -159,10 +171,12 @@ display_name already has context info (no duplicate suffix):
 After generating the script, verify:
 
 - [ ] `~/.claude/statusline-command.sh` exists and is executable (`chmod +x`)
-- [ ] v2 test passes: `echo '{"model":{"display_name":"Opus 4.6"},"cwd":"/tmp/test","workspace":{"current_dir":"/tmp/test","project_dir":"/tmp/test"},"context_window":{"remaining_percentage":55,"used_percentage":45,"context_window_size":200000,"total_input_tokens":85000,"total_output_tokens":12000,"current_usage":{"input_tokens":8500,"output_tokens":1200,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false,"session_id":"test","version":"2.1.80","output_style":{"name":"default"}}' | ~/.claude/statusline-command.sh`
+- [ ] v2 test passes: `echo '{"model":{"display_name":"Opus 4.6"},"cwd":"/tmp/test","workspace":{"current_dir":"/tmp/test","project_dir":"/tmp/test"},"context_window":{"remaining_percentage":55,"used_percentage":45,"context_window_size":200000,"total_input_tokens":85000,"total_output_tokens":12000,"current_usage":{"input_tokens":8500,"output_tokens":1200,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false,"session_id":"test","version":"2.1.80","output_style":{"name":"default"},"rate_limits":{"five_hour":{"used_percentage":42.5,"resets_at":"2026-03-21T14:30:00Z"},"seven_day":{"used_percentage":18.2,"resets_at":"2026-03-25T00:00:00Z"}}}' | ~/.claude/statusline-command.sh`
 - [ ] Output contains expected segments (directory, model, context %, token usage `8.5k/1.2k`)
 - [ ] Agent test: `echo '{"model":{"display_name":"Opus 4.6"},"workspace":{"current_dir":"/tmp/test"},"context_window":{"remaining_percentage":55},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false,"agent":{"name":"security-reviewer"}}' | ~/.claude/statusline-command.sh` shows `security-reviewer` segment
 - [ ] Worktree test: `echo '{"model":{"display_name":"Opus 4.6"},"worktree":{"name":"fix-123","branch":"bugfix/issue-123"},"context_window":{"remaining_percentage":55},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false}' | ~/.claude/statusline-command.sh` shows `[WT:fix-123] bugfix/issue-123` replacing directory/branch
+- [ ] Rate limits test: output contains `5h: 58% left · 7d: 82% left` with green color
+- [ ] Rate limits absent: `echo '{"model":{"display_name":"Opus 4.6"},"workspace":{"current_dir":"/tmp/test"},"context_window":{"remaining_percentage":55},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false}' | ~/.claude/statusline-command.sh` produces valid output without rate limits segment (no errors)
 - [ ] v1 backward compat: `echo '{"model":{"display_name":"Opus 4.6"},"workspace":{"current_dir":"/tmp/test"},"context_window":{"remaining_percentage":55},"cost":{"total_cost_usd":0.42},"exceeds_200k_tokens":false}' | ~/.claude/statusline-command.sh` produces valid output without errors
 - [ ] Theme matches user selection (check color codes in script)
 - [ ] `NO_COLOR=1` produces uncolored output

@@ -1,5 +1,7 @@
 # StatusLine Quota Display — Feasibility Study
 
+> **Resolved (2026-03-21)**: Claude Code 2.1.80 (2026-03-19) officially added `rate_limits` to statusline JSON. **Option B (Wait for Official Support) realized** — no background fetch needed. The field provides `five_hour` and `seven_day` windows with `used_percentage` and `resets_at` directly in stdin JSON.
+
 ## 1. Problem Essence
 
 ### 1.1 Surface Requirement
@@ -221,35 +223,29 @@ statusline-quota-fetch.sh (background, async)
 
 ## 7. Recommendation
 
-**Recommended**: Option A（Lazy Background Fetch）
+> **Update (2026-03-21)**: Option B 已實現 — Claude Code 2.1.80 官方加入 `rate_limits` 欄位。以下為原始推薦記錄，僅供歷史參考。
 
-**Rationale**:
+~~**Recommended**: Option A（Lazy Background Fetch）~~
 
-- 立即可交付，不需等待上游
-- 社群已驗證可行性（多個獨立實作）
-- Experimental flag 限制爆炸半徑
-- 官方支援後可無痛遷移（precedence logic: official JSON > cache > hide）
-- Codex 同意此架構（Nash Equilibrium）
-
-**Backup**: Option B（Wait for Official）
-
-**Applicable scenario**: 如果 Issue #20636 被合併且 statusline JSON 包含 quota 欄位，可直接跳過 Option A。觸發條件：官方 release notes 明確列出 quota 欄位。
+**Realized**: Option B（Wait for Official Support） — Claude Code 2.1.80 (2026-03-19) added `rate_limits` to statusline JSON. No background fetch, no undocumented API, no cache infrastructure needed. Direct stdin JSON reading via `jq`.
 
 ## 8. Open Questions
 
-- [ ] Claude Code 是否計畫在 statusline JSON 加入 quota 欄位？（Issue #20636 無官方回應）
+- [x] Claude Code 是否計畫在 statusline JSON 加入 quota 欄位？ — **Resolved**: 2.1.80 added `rate_limits` field.
 - [ ] OAuth token refresh 是否需要在 fetch helper 中處理？（token 過期 → 401 → 需 refresh）
 - [ ] Linux credential 路徑是否穩定？（`~/.claude/.credentials.json` 是 implementation detail）
 - [ ] Max plan 的 `seven_day_opus` / `seven_day_sonnet` 分模型額度是否需要顯示？
 
 ## 9. Next Steps
 
-| Step | Command | When |
-|------|---------|------|
-| Tech spec（如決定實作） | `/tech-spec` | 決策後 |
-| Architecture deep-dive | `/deep-analyze` | Tech spec 完成後 |
-| 監控上游 | Issue [#20636](https://github.com/anthropics/claude-code/issues/20636) | 持續 |
-| Request doc | `/create-request` | 如需追蹤 |
+> **Resolved**: All steps below are superseded. `rate_limits` segment has been added to SKILL.md, json-schema.md, and tech spec. Run `/statusline-config` to regenerate script with rate limits support.
+
+| Step | Status | Notes |
+|------|--------|-------|
+| ~~Tech spec~~ | Done | Section 11 updated with rate_limits segment |
+| ~~Architecture deep-dive~~ | N/A | No background fetch needed (official JSON) |
+| ~~Monitor upstream~~ | Resolved | Issue #20636 — 2.1.80 shipped `rate_limits` |
+| Run `/statusline-config` | Pending | Regenerate user script with rate limits |
 
 ## References
 
