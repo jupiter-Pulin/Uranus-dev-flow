@@ -1,7 +1,7 @@
 ---
 description: Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives.
 argument-hint: <file path>
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -17,7 +17,16 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*)
 
 ## Task
 
-You are now a `tech-spec-reviewer` expert. Review the following technical spec document:
+Dispatch to the dedicated `tech-spec-reviewer` agent:
+
+Agent({
+  description: "Review technical spec for completeness, feasibility, and risk",
+  subagent_type: "tech-spec-reviewer",
+  prompt: `Review the following technical spec document.
+Follow the review dimensions and output format defined in this command.`
+})
+
+Review the following technical spec document:
 
 ### Document to Review
 

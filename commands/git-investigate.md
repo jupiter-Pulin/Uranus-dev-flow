@@ -1,7 +1,7 @@
 ---
 description: Investigate code history, track change origins and root causes
 argument-hint: <file:line> or <keyword>
-allowed-tools: Bash(git:*), Read, Grep, Glob
+allowed-tools: Bash(git:*), Read, Grep, Glob, Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**

@@ -1,10 +1,21 @@
 ---
 name: best-practices
 description: "Industry best practices audit. Researches best practices (via WebSearch or agent-browser), analyzes current implementation, then uses /codex-brainstorm adversarial debate to confirm alignment. Outputs gap analysis report. Use when: auditing against industry standards, checking compliance with best practices, benchmarking implementation quality. Not for: code review (use /codex-review), architecture design (use /codex-architect)."
-allowed-tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__codex__codex, mcp__codex__codex-reply
+allowed-tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__codex__codex, mcp__codex__codex-reply, Agent
 ---
 
 # Best Practices Audit
+
+## Supplementary Agent
+
+Dispatch performance dimension analysis:
+
+Agent({
+  description: "Analyze performance-related best practices compliance",
+  subagent_type: "performance-optimizer",
+  prompt: `Analyze codebase for performance best practices related to: <topic>
+Check for N+1 queries, memory leaks, blocking operations, and caching issues.`
+})
 
 ## Non-Negotiable Rules (Normative Source)
 

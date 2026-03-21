@@ -1,8 +1,19 @@
 ---
 description: Refactor documents — simplify without losing information, visualize flows with sequenceDiagram.
 argument-hint: <file path>
-allowed-tools: Read, Grep, Glob, Edit
+allowed-tools: Read, Grep, Glob, Edit, Agent
 ---
+
+## Agent Dispatch
+
+Dispatch to the dedicated `doc-refactor` agent:
+
+Agent({
+  description: "Refactor document — simplify without losing information",
+  subagent_type: "doc-refactor",
+  prompt: `Refactor the document at: $ARGUMENTS
+Follow the task steps and simplification standards defined in this command.`
+})
 
 ## Task
 

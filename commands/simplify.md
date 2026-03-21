@@ -1,8 +1,30 @@
 ---
 description: Wrap-up refactoring — simplify code, eliminate duplication, preserve behavior
 argument-hint: <file or directory>
-allowed-tools: Read, Grep, Glob, Edit, Bash(TEST_ENV=unit npx jest:*)
+allowed-tools: Read, Grep, Glob, Edit, Bash(TEST_ENV=unit npx jest:*), Agent
 ---
+
+## Agent Dispatch
+
+### Primary: Code Simplification
+
+Agent({
+  description: "Simplify code, eliminate duplication, preserve behavior",
+  subagent_type: "code-simplifier",
+  prompt: `Simplify the code at: $ARGUMENTS
+Follow the task steps and constraints defined in this command.`
+})
+
+### Secondary: Refactoring Risk Review
+
+After simplification, dispatch risk assessment:
+
+Agent({
+  description: "Review refactoring risk and verify behavior preservation",
+  subagent_type: "refactor-reviewer",
+  prompt: `Review the refactoring changes just applied.
+Check behavior preservation, dependency impact, test coverage, and rollback risk.`
+})
 
 ## Task
 

@@ -1,7 +1,7 @@
 ---
 description: Deep-dive analysis of an initial proposal — research code implementation, produce an actionable roadmap and alternatives
 argument-hint: <initial proposal description or file path>
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Write
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Write, Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -17,7 +17,16 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Write
 
 ## Task
 
-You are now a `solution-architect` expert. Perform a deep analysis of the following initial proposal:
+Dispatch to the dedicated `solution-architect` agent:
+
+Agent({
+  description: "Deep-dive analysis with actionable roadmap and alternatives",
+  subagent_type: "solution-architect",
+  prompt: `Perform a deep analysis of the following initial proposal.
+Follow the analysis framework and output format defined in this command.`
+})
+
+Perform a deep analysis of the following initial proposal:
 
 ### Input
 

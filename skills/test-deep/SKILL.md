@@ -1,10 +1,22 @@
 ---
 name: test-deep
 description: "Context-aware test orchestration. Use when: smart test selection, failure triage, progressive test ladder, test failure analysis. Not for: writing tests (use post-dev-test), reviewing tests (use codex-test-review), generating tests (use codex-test-gen), full manual run (use verify). Output: test results + triage report + fixer actions."
-allowed-tools: Read, Grep, Glob, Bash, Write
+allowed-tools: Read, Grep, Glob, Bash, Write, Agent
 ---
 
 # Test Deep — Context-Aware Test Orchestration
+
+## Supplementary Agent
+
+When test failures occur, dispatch background triage:
+
+Agent({
+  description: "Analyze test failure root cause and suggest fixes",
+  subagent_type: "verify-app",
+  prompt: `Analyze the following test failure:
+<failure output>
+Identify root cause and suggest minimal fix.`
+})
 
 ## Trigger
 

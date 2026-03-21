@@ -1,7 +1,7 @@
 ---
 description: Context-aware test orchestration. Maps git changes to tests, runs progressive ladder (unit→integration→e2e), triages failures, applies safety-gated fixers.
 argument-hint: [--all] [--layer <unit|integration|e2e>] [--no-fail-fast] [--no-fix] [--focus <path>] [--branch]
-allowed-tools: Read, Grep, Glob, Bash, Write
+allowed-tools: Read, Grep, Glob, Bash, Write, Agent
 ---
 
 **Must read and follow the skill below before executing this command:**

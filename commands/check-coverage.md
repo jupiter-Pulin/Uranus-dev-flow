@@ -1,7 +1,7 @@
 ---
 description: Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable recommendations.
 argument-hint: <docs-path>
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*)
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*), Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -13,7 +13,15 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(find:*), Bash(wc:*)
 
 ## Context
 
-- You are now a `coverage-analyst` agent.
+- Dispatch to the dedicated `coverage-analyst` agent:
+
+Agent({
+  description: "Assess three-layer test coverage and identify gaps",
+  subagent_type: "coverage-analyst",
+  prompt: `Assess Unit / Integration / E2E test coverage for the feature docs at: $ARGUMENTS
+Follow the steps defined in this command.`
+})
+
 - Goal: Based on feature documentation, **comprehensively assess Unit / Integration / E2E three-layer test** coverage, identify gaps and provide actionable recommendations.
 
 ## Task

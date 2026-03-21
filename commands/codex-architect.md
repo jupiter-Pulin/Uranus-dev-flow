@@ -1,7 +1,7 @@
 ---
 description: Get architecture/design advice from Codex (third brain)
 argument-hint: "<question>" [--context <files>] [--mode design|review|compare]
-allowed-tools: Read, Grep, Glob, mcp__codex__codex, mcp__codex__codex-reply
+allowed-tools: Read, Grep, Glob, mcp__codex__codex, mcp__codex__codex-reply, Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**

@@ -1,7 +1,7 @@
 ---
 description: Convert a technical spec into a PM/CTO-readable executive summary. Simplify technical details, focus on business value.
 argument-hint: <tech spec path> [--output <output path>]
-allowed-tools: Read, Grep, Glob, Write
+allowed-tools: Read, Grep, Glob, Write, Agent
 ---
 
 ## Context
@@ -10,7 +10,14 @@ allowed-tools: Read, Grep, Glob, Write
 
 ## Task
 
-You are now a `brief-writer` expert. Convert the technical spec into a PM/CTO-readable executive summary.
+Dispatch to the dedicated `brief-writer` agent:
+
+Agent({
+  description: "Convert technical spec into PM/CTO executive summary",
+  subagent_type: "brief-writer",
+  prompt: `Convert the following tech spec into a PM/CTO-readable executive summary.
+Follow the conversion rules and execution flow defined in this command.`
+})
 
 ### Input
 
