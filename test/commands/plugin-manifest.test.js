@@ -3,11 +3,8 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { resolve } = require('node:path');
 
-const { readdirSync, existsSync } = require('node:fs');
-
 const pluginJsonPath = resolve(__dirname, '../../.claude-plugin/plugin.json');
 const packageJsonPath = resolve(__dirname, '../../package.json');
-const skillsDir = resolve(__dirname, '../../skills');
 
 const ALLOWED_FIELDS = new Set([
   'name', 'version', 'description', 'author', 'homepage',
@@ -56,7 +53,7 @@ test('T4: no unknown fields', () => {
   );
 });
 
-test('T5: component path values start with ./ or skills/', () => {
+test('T5: component path values start with ./', () => {
   const plugin = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
 
   for (const field of COMPONENT_FIELDS) {
@@ -70,17 +67,10 @@ test('T5: component path values start with ./ or skills/', () => {
       );
     } else if (Array.isArray(val)) {
       for (const item of val) {
-        if (typeof item === 'object' && item !== null && item.path) {
-          assert.ok(
-            typeof item.path === 'string',
-            `plugin.json "${field}" object item must have string "path"`
-          );
-        } else {
-          assert.ok(
-            typeof item === 'string' && item.startsWith('./'),
-            `plugin.json "${field}" array item "${item}" must be a string starting with "./"`
-          );
-        }
+        assert.ok(
+          typeof item === 'string' && item.startsWith('./'),
+          `plugin.json "${field}" array item "${item}" must be a string starting with "./"`
+        );
       }
     }
   }
@@ -95,12 +85,9 @@ test('T6: component fields are string, string[], or object[]', () => {
 
     const isString = typeof val === 'string';
     const isStringArray = Array.isArray(val) && val.every((v) => typeof v === 'string');
-    const isObjectArray = Array.isArray(val) && val.every((v) =>
-      typeof v === 'object' && v !== null && typeof v.name === 'string' && typeof v.path === 'string'
-    );
     assert.ok(
-      isString || isStringArray || isObjectArray,
-      `plugin.json "${field}" must be string, string[], or {name,path}[], got ${typeof val}`
+      isString || isStringArray,
+      `plugin.json "${field}" must be string or string[], got ${typeof val}`
     );
   }
 });
@@ -129,35 +116,5 @@ test('T9: keywords is string array [recommended]', () => {
   assert.ok(
     Array.isArray(plugin.keywords) && plugin.keywords.every((k) => typeof k === 'string'),
     '[recommended] plugin.json "keywords" must be an array of strings'
-  );
-});
-
-test('T10: skills array matches skills/ directory', () => {
-  const plugin = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
-  assert.ok(Array.isArray(plugin.skills), 'plugin.json missing "skills" array');
-  assert.ok(plugin.skills.length > 0, 'plugin.json "skills" array is empty');
-
-  const manifestNames = plugin.skills.map(s => s.name).sort();
-
-  const diskDirs = readdirSync(skillsDir, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .filter(d => existsSync(resolve(skillsDir, d.name, 'SKILL.md')))
-    .map(d => d.name)
-    .sort();
-
-  const missing = diskDirs.filter(d => !manifestNames.includes(d));
-  const extra = manifestNames.filter(n => !diskDirs.includes(n));
-
-  assert.equal(
-    missing.length, 0,
-    `Skills on disk but missing from manifest: ${missing.join(', ')}`
-  );
-  assert.equal(
-    extra.length, 0,
-    `Skills in manifest but missing from disk: ${extra.join(', ')}`
-  );
-  assert.equal(
-    plugin.skills.length, diskDirs.length,
-    `Manifest has ${plugin.skills.length} skills but disk has ${diskDirs.length}`
   );
 });
