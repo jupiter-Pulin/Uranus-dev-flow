@@ -8,7 +8,7 @@
 - **Dual-reviewer architecture** — Codex MCP + secondary reviewer in parallel, fail-closed
 - **~4% context footprint** — 96% of Claude's 200k window stays for your code
 
-65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
+73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
 
 ## Quick Start
 
@@ -115,8 +115,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (65 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (49 skills) |
+| Plugin install | Claude Code | Full (73 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (56 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional, for `/codex-*` commands)
@@ -183,12 +183,12 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
+| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature, generate-skills-manifest |
 
 ### Minimal Context Footprint
 
@@ -224,7 +224,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>All 65 commands</summary>
+<summary>All 73 commands</summary>
 
 ### Development
 
@@ -256,6 +256,11 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/git-worktree` | Manage git worktrees (auto-syncs .claude/) |
 | `/merge-prep` | Pre-merge analysis and preparation |
 | `/smart-rebase` | Smart partial rebase for squash-merge repos |
+| `/deep-explore` | Multi-wave parallel code exploration |
+| `/remind` | Lightweight model correction with rule loading |
+| `/bump-version` | Bump package + plugin version in sync |
+| `/watch-ci` | Monitor GitHub Actions CI runs |
+| `/jira` | Jira integration (view/branch/transition) |
 
 ### Review (Codex MCP)
 
@@ -283,6 +288,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/project-audit` | Project health audit (deterministic scoring) |
 | `/best-practices` | Industry best practices audit with adversarial debate |
 | `/risk-assess` | Uncommitted code risk assessment |
+| `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) |
+| `/test-deep` | Context-aware test orchestration |
 
 ### Planning
 
@@ -294,6 +301,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/review-spec` | Review tech spec |
 | `/deep-analyze` | Deep analysis + roadmap |
 | `/project-brief` | PM/CTO executive summary |
+| `/deep-research` | Multi-agent deep research orchestration |
 
 ### Documentation & Tooling
 
@@ -306,7 +314,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/simplify` | Code simplification |
 | `/de-ai-flavor` | Remove AI-generated artifacts from documents |
 | `/safe-remove` | Safely remove plugin assets |
-| `/skill-creator` | Create new skills (external plugin) |
+
 | `/pr-review` | PR self-review |
 | `/pr-summary` | PR status summary (grouped by ticket) |
 | `/contract-decode` | EVM contract error/calldata decoder |

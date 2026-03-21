@@ -8,7 +8,7 @@
 - **Arquitectura dual-reviewer** — Codex MCP + reviewer secundario en paralelo, fail-closed
 - **~4% de context footprint** — el 96% de la ventana de 200k de Claude queda para tu código
 
-65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
+73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
 
 ## Inicio rápido
 
@@ -115,8 +115,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (65 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (49 skills) |
+| Instalar plugin | Claude Code | Completa (73 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (56 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional, para comandos `/codex-*`)
@@ -183,12 +183,12 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
+| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature, generate-skills-manifest |
 
 ### Mínimo consumo de context
 
@@ -224,7 +224,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-security` | Auditoría OWASP Top 10 |
 
 <details>
-<summary>Los 65 comandos</summary>
+<summary>Los 73 comandos</summary>
 
 ### Desarrollo
 
@@ -256,6 +256,11 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/git-worktree` | Gestionar git worktrees (sincronización automática de .claude/) |
 | `/merge-prep` | Análisis y preparación pre-merge |
 | `/smart-rebase` | Rebase parcial inteligente para repos con squash-merge |
+| `/deep-explore` | Exploración de código paralela multi-onda |
+| `/remind` | Corrección ligera de modelo (recarga de reglas) |
+| `/bump-version` | Actualizar versión de paquete + plugin en sincronía |
+| `/watch-ci` | Monitorear ejecuciones de GitHub Actions CI |
+| `/jira` | Integración Jira (ver/crear rama/transición de estado) |
 
 ### Review (Codex MCP)
 
@@ -283,6 +288,8 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/project-audit` | Auditoría de salud del proyecto (puntuación determinista) |
 | `/best-practices` | Auditoría de mejores prácticas de la industria (con debate adversarial) |
 | `/risk-assess` | Evaluación de riesgos de código no commiteado |
+| `/pre-pr-audit` | Auditoría de confianza pre-PR (puntuación 5 dimensiones) |
+| `/test-deep` | Orquestación de tests con contexto |
 
 ### Planificación
 
@@ -294,6 +301,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/review-spec` | Revisar tech spec |
 | `/deep-analyze` | Análisis profundo + roadmap |
 | `/project-brief` | Resumen ejecutivo para PM/CTO |
+| `/deep-research` | Orquestación de investigación profunda multi-agente |
 
 ### Documentación y herramientas
 
@@ -306,7 +314,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/simplify` | Simplificar código |
 | `/de-ai-flavor` | Eliminar artefactos generados por IA de documentos |
 | `/safe-remove` | Eliminación segura de activos del plugin |
-| `/skill-creator` | Crear nuevos skills (plugin externo) |
+
 | `/pr-review` | Self-review de PR |
 | `/pr-summary` | Resumen de estado de PRs (agrupados por ticket) |
 | `/contract-decode` | Decodificador de errores/calldata de contratos EVM |

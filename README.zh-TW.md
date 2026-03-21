@@ -8,7 +8,7 @@
 - **雙 Reviewer 架構** — Codex MCP + 次要 reviewer 並行審查，fail-closed
 - **~4% context 佔用** — Claude 200k window 的 96% 留給你的程式碼
 
-65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
+73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
 
 ## 快速開始
 
@@ -115,8 +115,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（65 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（49 skills） |
+| Plugin 安裝 | Claude Code | 完整（73 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（56 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用，供 `/codex-*` 指令使用）
@@ -183,12 +183,12 @@ flowchart TD
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
+| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature, generate-skills-manifest |
 
 ### 極小的 Context 佔用
 
@@ -224,7 +224,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>全部 65 個指令</summary>
+<summary>全部 73 個指令</summary>
 
 ### 開發
 
@@ -256,6 +256,11 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/git-worktree` | 管理 git worktree（自動同步 .claude/） |
 | `/merge-prep` | 合併前分析與準備 |
 | `/smart-rebase` | 智慧局部 rebase（squash-merge 倉庫適用） |
+| `/deep-explore` | 多波段平行程式碼探索 |
+| `/remind` | 輕量模型修正（載入規則） |
+| `/bump-version` | 同步升級套件與 plugin 版本 |
+| `/watch-ci` | 監控 GitHub Actions CI 執行 |
+| `/jira` | Jira 整合（查看/建立分支/轉換狀態） |
 
 ### Review（Codex MCP）
 
@@ -283,6 +288,8 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/project-audit` | 專案健康審計（確定性評分） |
 | `/best-practices` | 業界最佳實踐審計（含對抗式辯論） |
 | `/risk-assess` | 未提交程式碼風險評估 |
+| `/pre-pr-audit` | PR 前信心審計（5 維度評分） |
+| `/test-deep` | 情境感知測試編排 |
 
 ### 規劃
 
@@ -294,6 +301,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/review-spec` | Review tech spec |
 | `/deep-analyze` | 深度分析 + roadmap |
 | `/project-brief` | PM/CTO 執行摘要 |
+| `/deep-research` | 多 agent 深度研究編排 |
 
 ### 文件與工具
 
@@ -306,7 +314,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/simplify` | Code 簡化 |
 | `/de-ai-flavor` | 移除 AI 痕跡 |
 | `/safe-remove` | 安全移除 plugin 資產 |
-| `/skill-creator` | 建立新 skill（外部 plugin） |
+
 | `/pr-review` | PR self-review |
 | `/pr-summary` | PR 狀態摘要（依 ticket 分組） |
 | `/contract-decode` | EVM 合約錯誤/calldata 解碼器 |

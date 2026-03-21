@@ -8,7 +8,7 @@
 - **デュアルレビューアーキテクチャ** — Codex MCP + セカンダリレビューアーを並列実行、fail-closed
 - **~4% のコンテキスト使用量** — Claude の 200k ウィンドウの 96% はコードに使えます
 
-65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
+73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
 
 ## クイックスタート
 
@@ -115,8 +115,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（65 コマンド、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（49 スキル） |
+| プラグインインストール | Claude Code | フル（73 コマンド、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（56 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション、`/codex-*` コマンド用）
@@ -183,12 +183,12 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| スキル | 49 | project-setup, code-explore, smart-commit, contract-decode |
+| コマンド | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| スキル | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
-| フック | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| ルール | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
-| スクリプト | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
+| フック | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
+| スクリプト | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature, generate-skills-manifest |
 
 ### 極小の Context 使用量
 
@@ -224,7 +224,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-security` | OWASP Top 10 監査 |
 
 <details>
-<summary>全 65 コマンド</summary>
+<summary>全 73 コマンド</summary>
 
 ### 開発
 
@@ -256,6 +256,11 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/git-worktree` | git worktree の管理（.claude/ 自動同期） |
 | `/merge-prep` | マージ前の分析と準備 |
 | `/smart-rebase` | squash-merge リポジトリ向けスマート部分 rebase |
+| `/deep-explore` | マルチウェーブ並列コード探索 |
+| `/remind` | 軽量モデル修正（ルール再読み込み） |
+| `/bump-version` | パッケージ＋プラグインバージョン同期更新 |
+| `/watch-ci` | GitHub Actions CI 実行モニタリング |
+| `/jira` | Jira 連携（閲覧/ブランチ作成/ステータス遷移） |
 
 ### レビュー（Codex MCP）
 
@@ -283,6 +288,8 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/project-audit` | プロジェクトヘルス監査（決定論的スコアリング） |
 | `/best-practices` | 業界ベストプラクティス監査（敵対的ディベート付き） |
 | `/risk-assess` | 未コミットコードのリスク評価 |
+| `/pre-pr-audit` | PR 前信頼度監査（5次元スコアリング） |
+| `/test-deep` | コンテキスト対応テストオーケストレーション |
 
 ### プランニング
 
@@ -294,6 +301,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/review-spec` | 技術仕様書のレビュー |
 | `/deep-analyze` | 深堀り分析 + ロードマップ |
 | `/project-brief` | PM/CTO 向けエグゼクティブサマリー |
+| `/deep-research` | マルチエージェント深層リサーチオーケストレーション |
 
 ### ドキュメント・ツール
 
@@ -306,7 +314,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/simplify` | コードの簡素化 |
 | `/de-ai-flavor` | AI 生成の痕跡を除去 |
 | `/safe-remove` | プラグインアセットの安全な削除 |
-| `/skill-creator` | 新しいスキルの作成（外部プラグイン） |
+
 | `/pr-review` | PR セルフレビュー |
 | `/pr-summary` | PR ステータスサマリー（チケット別グループ） |
 | `/contract-decode` | EVM コントラクトエラー/calldata デコーダー |

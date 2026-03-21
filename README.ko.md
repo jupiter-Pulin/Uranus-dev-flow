@@ -8,7 +8,7 @@
 - **듀얼 리뷰어 아키텍처** — Codex MCP + 보조 리뷰어 병렬 실행, fail-closed
 - **~4% 컨텍스트 사용량** — Claude 200k 윈도우의 96%를 코드에 활용
 
-65 commands | 49 skills | 14 agents | 5 hooks | 12 rules | 11 scripts
+73 commands | 56 skills | 14 agents | 6 hooks | 14 rules | 13 scripts
 
 ## 빠른 시작
 
@@ -115,8 +115,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (65 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (49 skills) |
+| 플러그인 설치 | Claude Code | 전체 (73 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (56 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (선택 사항, `/codex-*` 명령어용)
@@ -183,12 +183,12 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 65 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit` |
-| Skills | 49 | project-setup, code-explore, smart-commit, contract-decode |
+| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 5 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint |
-| Rules | 12 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement |
-| Scripts | 11 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts |
+| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature, generate-skills-manifest |
 
 ### 최소한의 Context 사용량
 
@@ -224,7 +224,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-security` | OWASP Top 10 감사 |
 
 <details>
-<summary>전체 65개 명령어</summary>
+<summary>전체 73개 명령어</summary>
 
 ### 개발
 
@@ -256,6 +256,11 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/git-worktree` | git worktree 관리 (.claude/ 자동 동기화) |
 | `/merge-prep` | 병합 전 분석 및 준비 |
 | `/smart-rebase` | squash-merge 리포지토리용 스마트 부분 rebase |
+| `/deep-explore` | 멀티웨이브 병렬 코드 탐색 |
+| `/remind` | 경량 모델 교정 (규칙 재로딩) |
+| `/bump-version` | 패키지 + 플러그인 버전 동기 업데이트 |
+| `/watch-ci` | GitHub Actions CI 실행 모니터링 |
+| `/jira` | Jira 연동 (조회/브랜치 생성/상태 전환) |
 
 ### 리뷰 (Codex MCP)
 
@@ -283,6 +288,8 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/project-audit` | 프로젝트 헬스 감사 (결정론적 스코어링) |
 | `/best-practices` | 업계 모범 사례 감사 (적대적 토론 포함) |
 | `/risk-assess` | 미커밋 코드 리스크 평가 |
+| `/pre-pr-audit` | PR 전 신뢰도 감사 (5차원 스코어링) |
+| `/test-deep` | 컨텍스트 인식 테스트 오케스트레이션 |
 
 ### 기획
 
@@ -294,6 +301,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/review-spec` | 기술 스펙 리뷰 |
 | `/deep-analyze` | 심층 분석 + 로드맵 |
 | `/project-brief` | PM/CTO용 요약 보고서 |
+| `/deep-research` | 멀티 에이전트 심층 리서치 오케스트레이션 |
 
 ### 문서 & 도구
 
@@ -306,7 +314,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/simplify` | 코드 간소화 |
 | `/de-ai-flavor` | AI 생성 흔적 제거 |
 | `/safe-remove` | 플러그인 에셋 안전 제거 |
-| `/skill-creator` | 새 스킬 생성 (외부 플러그인) |
+
 | `/pr-review` | PR 셀프 리뷰 |
 | `/pr-summary` | PR 상태 요약 (티켓별 그룹) |
 | `/contract-decode` | EVM 컨트랙트 에러/calldata 디코더 |
