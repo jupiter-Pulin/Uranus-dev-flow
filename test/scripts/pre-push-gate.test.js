@@ -96,7 +96,7 @@ test('non-fast-forward push detected in real git repo', () => {
   const tmpDir = mkdtempSync(resolve(tmpdir(), 'pre-push-test-'));
   try {
     execSync(
-      'git init && git -c user.name=test -c user.email=<test@test.com> commit --allow-empty -m "init"',
+      'git init && git -c user.name=test -c user.email=test@test.com commit --allow-empty -m "init"',
       { cwd: tmpDir, encoding: 'utf8', stdio: 'pipe' }
     );
     const sha1 = execSync('git rev-parse HEAD', { cwd: tmpDir, encoding: 'utf8' }).trim();
@@ -131,7 +131,7 @@ test('ALLOW_FORCE_WITH_LEASE bypasses non-fast-forward check', () => {
   const tmpDir = mkdtempSync(resolve(tmpdir(), 'pre-push-test-'));
   try {
     execSync(
-      'git init && git -c user.name=test -c user.email=<test@test.com> commit --allow-empty -m "init"',
+      'git init && git -c user.name=test -c user.email=test@test.com commit --allow-empty -m "init"',
       { cwd: tmpDir, encoding: 'utf8', stdio: 'pipe' }
     );
     const sha1 = execSync('git rev-parse HEAD', { cwd: tmpDir, encoding: 'utf8' }).trim();

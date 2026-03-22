@@ -148,7 +148,7 @@ test('T8: --type override replaces issue type mapping', () => {
 test('T9: Slug length capped at 40 characters', () => {
   const longSummary = 'This is a very long summary that should be truncated to forty characters maximum';
   const branch = generateBranchName('OK-1', longSummary, 'Story');
-  const slug = branch.split['/'](1).replace('OK-1-', '');
+  const slug = branch.split('/')[1].replace('OK-1-', '');
   assert.ok(slug.length <= 40, `Slug too long: ${slug.length}`);
 });
 
