@@ -89,6 +89,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/project-audit` | Project health audit with scoring | Quality |
 | `/best-practices` | Industry best practices audit | Quality |
 | `/dep-audit` | Dependency vulnerability audit | Periodic / PR |
+| `/generate-runner` | Generate customized precommit runner | Tooling |
 | `/update-docs` | Sync docs with code | Doc changes |
 | `/doc-refactor` | Simplify documents | Doc changes |
 | `/create-request` | Create/update request docs | Planning |
