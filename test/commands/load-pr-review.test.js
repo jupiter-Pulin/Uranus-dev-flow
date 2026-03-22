@@ -66,11 +66,11 @@ test('V6 prohibited behaviors includes seek-verdict skipping', () => {
   );
 });
 
-// --- V7: Correct pattern shows Skill tool invocation ---
-test('V7 correct pattern shows Skill tool invocation', () => {
+// --- V7: Correct pattern shows Agent tool dispatch ---
+test('V7 correct pattern shows Agent tool dispatch for seek-verdict', () => {
   assert.ok(
-    skillContent.includes('Skill tool: /seek-verdict'),
-    'Correct pattern must show actual Skill tool: /seek-verdict invocation'
+    skillContent.includes('Agent tool: background seek-verdict'),
+    'Correct pattern must show background Agent dispatch for seek-verdict'
   );
 });
 
