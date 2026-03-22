@@ -11,12 +11,12 @@ Plugin 提供通用 precommit-runner.js，但使用者在 `/project-setup` 後�
 
 ### Phase 1: Auto-Install
 
-- [ ] AC1: `/project-setup` 新增 scripts 安裝 phase（Phase 6.5），自動安裝 `precommit-runner.js` + `verify-runner.js` + `lib/utils.js`
-- [ ] AC2: `/precommit-fast` 偵測到 runner 不存在時，自動從 plugin 複製 runner 並執行（僅限 Node.js 專案）
-- [ ] AC3: `/precommit`（full mode）同上行為
-- [ ] AC4: Auto-install 時輸出明確 log（`> auto-installing missing runner...`）
-- [ ] AC5: Auto-install 不使用 `--force`，遇到衝突 skip + warn
-- [ ] AC6: 測試覆蓋：project-setup scripts phase + precommit auto-install fallback
+- [x] AC1: `/project-setup` 新增 scripts 安裝 phase（Phase 6.5） — `skills/project-setup/SKILL.md:334`
+- [x] AC2: `/precommit-fast` 偵測到 runner 不存在時自動安裝 — `commands/precommit-fast.md:34-54`
+- [x] AC3: `/precommit`（full mode）同上行為 — `commands/precommit.md:40-60`
+- [x] AC4: Auto-install 時輸出明確 log — 兩個 command 都包含 log string
+- [x] AC5: Auto-install 不使用 `--force`，遇到衝突 skip + warn — conflict handling table
+- [x] AC6: 測試覆蓋 — `test/commands/runner-auto-install.test.js` (10/10 pass)
 
 ### Phase 2: Harden Generic Runner
 
@@ -41,6 +41,6 @@ Phase 3: P2 — 提供 non-Node 支援和客製化能力
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 1 | 🔲 Not started | |
-| Phase 2 | 🔲 Not started | |
-| Phase 3 | 🔲 Not started | |
+| Phase 1 | ✅ Completed | commit `3fd9630`, 10 tests pass |
+| Phase 2 | 🔲 Not started | lint globs + Jest recipes still hardcoded |
+| Phase 3 | 🔲 Not started | `/generate-runner` skill not created |
