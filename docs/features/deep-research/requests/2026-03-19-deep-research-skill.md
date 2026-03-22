@@ -1,7 +1,7 @@
 # Multi-Agent Deep Research Skill (`/deep-research`)
 
 > **Created**: 2026-03-19
-> **Status**: Design
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 > **Best Practices Audit**: Phase 4 Gap Report (conversation 2026-03-19)
@@ -51,56 +51,56 @@
 
 ### AC1: Pipeline Architecture
 
-- [ ] 4-phase workflow: Scope → Parallel Research → Synthesis+GapDetect → Conditional Validation
-- [ ] Phase 0 produces research plan with shard assignments + token budget
-- [ ] Phase 1 dispatches 2-3 researcher agents in parallel (background)
-- [ ] Phase 2 synthesizer merges results via claim registry + computes provisional score
+- [x] 4-phase workflow: Scope → Parallel Research → Synthesis+GapDetect → Conditional Validation
+- [x] Phase 0 produces research plan with shard assignments + token budget
+- [x] Phase 1 dispatches 2-3 researcher agents in parallel (background)
+- [x] Phase 2 synthesizer merges results via claim registry + computes provisional score
 
 ### AC2: Role System
 
-- [ ] 3 distinct role templates: researcher, synthesizer, validator
-- [ ] Researcher outputs evidence-first findings (not conclusions)
-- [ ] Synthesizer handles dedup, conflict resolution, gap detection
-- [ ] Validator runs dispute-specific checks on contested claims
+- [x] 3 distinct role templates: researcher, synthesizer, validator
+- [x] Researcher outputs evidence-first findings (not conclusions)
+- [x] Synthesizer handles dedup, conflict resolution, gap detection
+- [x] Validator runs dispute-specific checks on contested claims
 
 ### AC3: Claim Registry
 
-- [ ] Unified evidence model supports both URL (web) and file:line (code)
-- [ ] Dedup by canonical key (source + claim text normalization)
-- [ ] Conflict resolution by evidence weight (High > Medium > Low)
-- [ ] Unresolved conflicts escalated to validation phase
+- [x] Unified evidence model supports both URL (web) and file:line (code)
+- [x] Dedup by canonical key (source + claim text normalization)
+- [x] Conflict resolution by evidence weight (High > Medium > Low)
+- [x] Unresolved conflicts escalated to validation phase
 
 ### AC4: Completeness Scoring
 
-- [ ] 4-signal model: source_diversity + cross_verification + gap_coverage + question_closure
-- [ ] Confidence cap applied (1.0 / 0.9 / 0.75 based on tool availability)
-- [ ] Score threshold gates Phase 3 debate trigger
+- [x] 4-signal model: source_diversity + cross_verification + gap_coverage + question_closure
+- [x] Confidence cap applied (1.0 / 0.9 / 0.75 based on tool availability)
+- [x] Score threshold gates Phase 3 debate trigger
 
 ### AC5: Mode System
 
-- [ ] `--mode exploratory` (default): uses exploratory scoring weights (diversity 30%, verification 30%, gap 25%, closure 15%)
-- [ ] `--mode compliance`: forces debate (`--debate force` implied), uses `best-practices` web research cascade
-- [ ] `--mode decision`: higher debate trigger threshold (any unresolved conflict triggers debate)
+- [x] `--mode exploratory` (default): uses exploratory scoring weights (diversity 30%, verification 30%, gap 25%, closure 15%)
+- [x] `--mode compliance`: forces debate (`--debate force` implied), uses `best-practices` web research cascade
+- [x] `--mode decision`: higher debate trigger threshold (any unresolved conflict triggers debate)
 
 ### AC6: Conditional Debate
 
-- [ ] `--debate auto` (default): trigger on P0/P1 conflict, low verification, high blast-radius
-- [ ] `--debate force`: always invoke `/codex-brainstorm`
-- [ ] `--debate off`: skip validation phase entirely
-- [ ] Debate uses `/codex-brainstorm` via Skill tool (not raw MCP)
+- [x] `--debate auto` (default): trigger on P0/P1 conflict, low verification, high blast-radius
+- [x] `--debate force`: always invoke `/codex-brainstorm`
+- [x] `--debate off`: skip validation phase entirely
+- [x] Debate uses `/codex-brainstorm` via Skill tool (not raw MCP)
 
 ### AC7: Composable Reuse
 
-- [ ] Claim registry follows `deep-explore/references/synthesis.md` schema (adapted for URL evidence)
-- [ ] Web research uses `best-practices` Phase 1 tool cascade (agent-browser > WebSearch > WebFetch)
-- [ ] Adversarial debate delegates to `/codex-brainstorm` (not reimplemented)
+- [x] Claim registry follows `deep-explore/references/synthesis.md` schema (adapted for URL evidence)
+- [x] Web research uses `best-practices` Phase 1 tool cascade (agent-browser > WebSearch > WebFetch)
+- [x] Adversarial debate delegates to `/codex-brainstorm` (not reimplemented)
 
 ### AC8: Infrastructure
 
-- [ ] `commands/deep-research.md` frontmatter with correct allowed-tools
-- [ ] CLAUDE.md command tables updated (3 files)
-- [ ] Tests pass (schema + content validation)
-- [ ] `skills-schema.test.js` passes (no dangling refs)
+- [x] `commands/deep-research.md` frontmatter with correct allowed-tools
+- [x] CLAUDE.md command tables updated (3 files)
+- [x] Tests pass (schema + content validation) — 14/14 tests
+- [x] `skills-schema.test.js` passes (no dangling refs)
 
 ## Design Decisions (from Brainstorm)
 
@@ -117,6 +117,6 @@
 - [x] Best practices audit (Phase 1-4, 5 independent sources)
 - [x] Adversarial brainstorm (3 rounds, Pure Strategy Equilibrium)
 - [x] Tech spec — `docs/features/deep-research/2-tech-spec.md`
-- [ ] Implementation
-- [ ] Testing
-- [ ] Documentation
+- [x] Implementation — commit `7f19a57`
+- [x] Testing — 14/14 tests pass (`test/commands/deep-research.test.js`)
+- [x] Documentation — SKILL.md (294 lines) + 3 references + CLAUDE.md updated
