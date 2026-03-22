@@ -356,7 +356,7 @@ Same 3-level fallback as Phase 5.1, but search for `scripts/precommit-runner.js`
 | `verify-runner.js` | Verify runner for `/verify` | `lib/utils.js` |
 | `lib/utils.js` | Shared utilities | None |
 
-3. Conflict strategy: same as Phase 5.2.
+1. Conflict strategy: same as Phase 5.2.
 
 | Scenario | Action |
 |----------|--------|

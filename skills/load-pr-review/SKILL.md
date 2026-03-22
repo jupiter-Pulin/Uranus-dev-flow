@@ -175,6 +175,7 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
    - `original_finding_text`: reviewer's comment body
    - `relevant_diff`: `git diff HEAD -- <thread.path>`
 3. Dispatch `/seek-verdict` per thread via **background Agent** (Agent-as-Skill-runner pattern):
+
    ```
    Agent({
      description: "Seek verdict for <thread.path>:<thread.line>",
@@ -189,6 +190,7 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
        relevant_diff: git diff HEAD -- <thread.path>`
    })
    ```
+
    - Each background Agent invokes `/seek-verdict` independently (fresh Codex per thread)
    - Orchestrator dispatches all agents, then waits for completion and collects results
    - Concurrency: 1-5 all parallel; 6-15 parallel; 16-30 parallel + warn cost; 30+ recommend `--no-verdict`
