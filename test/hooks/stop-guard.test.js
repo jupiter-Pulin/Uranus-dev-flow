@@ -220,13 +220,17 @@ process.stdout.write('');
 }
 
 function runHook({ cwd, binDir, input, env = {} }) {
+  // Strip inherited STOP_GUARD_MODE to isolate tests from host session config.
+  // Tests that need strict mode set it explicitly via env parameter.
+  const { STOP_GUARD_MODE: _dropped, ...cleanEnv } = process.env;
   return spawnSync('bash', [hookPath], {
     cwd,
     input: JSON.stringify(input),
     encoding: 'utf8',
     env: {
-      ...process.env,
+      ...cleanEnv,
       PATH: `${binDir}:${process.env.PATH}`,
+      CLAUDE_PROJECT_DIR: cwd,
       ...env,
     },
   });
