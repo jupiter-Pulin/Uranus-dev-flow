@@ -34,6 +34,8 @@ const {
   readPackageJson,
   hasScript,
   pmCommand,
+  loadLintGlobs,
+  buildRecipes,
 } = require('./lib/utils');
 
 function readText(p) {
@@ -126,22 +128,15 @@ async function main() {
   let changedAfterLint = [];
   const results = [];
   let summaryError = '';
+  const pm = detectPackageManager(repoRoot);
+  const pkg = readPackageJson(repoRoot);
 
   try {
     statusBefore = await gitStatusSB(repoRoot);
-
-    const pm = detectPackageManager(repoRoot);
-    const pkg = readPackageJson(repoRoot);
     process.stdout.write(`> package manager: ${pm}\n`);
 
     const steps = [];
-    const lintGlobs = [
-      'src/**/*.{ts,tsx,js,jsx}',
-      'test/**/*.{ts,tsx,js,jsx}',
-      'migrations/**/*.{ts,tsx,js,jsx}',
-      'loadtest/**/*.{ts,tsx,js,jsx}',
-      '*.{ts,js}',
-    ];
+    const lintGlobs = loadLintGlobs(repoRoot);
 
     // lint:fix
     if (hasScript(pkg, 'lint:fix')) {
@@ -298,11 +293,10 @@ async function main() {
   lines.push(`## Overall: ${summary.overallPass ? '✅ PASS' : '❌ FAIL'}`);
   lines.push('');
   lines.push('## Single-test recipes (this repo)');
-  lines.push('- Unit: `npx jest test/unit/provider/yourchain.test.ts`');
-  lines.push(
-    '- Integration: `TEST_ENV=integration npx jest test/integration/chains/yourchain.test.ts -i`'
-  );
-  lines.push('- E2E: `TEST_ENV=e2e npx jest test/e2e/yourchain.test.ts`');
+  const recipes = buildRecipes(pkg, pm);
+  for (const r of recipes) {
+    lines.push(r);
+  }
   lines.push('');
 
   const summaryMd = lines.join('\n');

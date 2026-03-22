@@ -29,6 +29,8 @@ const {
   readPackageJson,
   hasScript,
   pmCommand,
+  loadLintGlobs,
+  DEFAULT_VERIFY_LINT_GLOBS,
 } = require('./lib/utils');
 
 function formatStepLine(step) {
@@ -107,12 +109,7 @@ async function main() {
   const pm = detectPackageManager(repoRoot);
   const pkg = readPackageJson(repoRoot);
 
-  const lintGlobs = [
-    'src/**/*.{ts,tsx,js,jsx}',
-    'test/**/*.{ts,tsx,js,jsx}',
-    'migrations/**/*.{ts,tsx,js,jsx}',
-    '*.{ts,js}',
-  ];
+  const lintGlobs = loadLintGlobs(repoRoot, DEFAULT_VERIFY_LINT_GLOBS);
   const lintExtraArgs = [
     '--ignore-pattern',
     'node_modules/**',

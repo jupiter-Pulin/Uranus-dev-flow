@@ -322,6 +322,70 @@ function pmCommand(pm, script, extraArgs = []) {
   return ['npm', ['run', script, '--', ...extraArgs]];
 }
 
+const DEFAULT_LINT_GLOBS = [
+  'src/**/*.{ts,tsx,js,jsx}',
+  'test/**/*.{ts,tsx,js,jsx}',
+  'migrations/**/*.{ts,tsx,js,jsx}',
+  'loadtest/**/*.{ts,tsx,js,jsx}',
+  '*.{ts,js}',
+];
+
+const DEFAULT_VERIFY_LINT_GLOBS = [
+  'src/**/*.{ts,tsx,js,jsx}',
+  'test/**/*.{ts,tsx,js,jsx}',
+  'migrations/**/*.{ts,tsx,js,jsx}',
+  '*.{ts,js}',
+];
+
+function loadLintGlobs(repoRoot, fallbackGlobs) {
+  // Priority 1: .claude/runner-config.json → lintGlobs
+  try {
+    const cfgPath = path.join(repoRoot, '.claude', 'runner-config.json');
+    const raw = fs.readFileSync(cfgPath, 'utf8');
+    const cfg = JSON.parse(raw);
+    if (Array.isArray(cfg.lintGlobs) && cfg.lintGlobs.length > 0 && cfg.lintGlobs.every(g => typeof g === 'string')) {
+      return cfg.lintGlobs;
+    }
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      process.stderr.write(`[runner] Warning: failed to parse .claude/runner-config.json: ${e.message}\n`);
+    }
+  }
+  // Priority 2: package.json → sd0x.lintGlobs
+  try {
+    const pkg = readPackageJson(repoRoot);
+    if (pkg && pkg.sd0x && Array.isArray(pkg.sd0x.lintGlobs) && pkg.sd0x.lintGlobs.length > 0 && pkg.sd0x.lintGlobs.every(g => typeof g === 'string')) {
+      return pkg.sd0x.lintGlobs;
+    }
+  } catch {}
+  // Fallback
+  return [...(fallbackGlobs || DEFAULT_LINT_GLOBS)];
+}
+
+function buildRecipes(pkg, pm) {
+  const recipes = [];
+  if (!pkg || !pkg.scripts) {
+    recipes.push(`- Test: \`${pm === 'npm' ? 'npm test -- <path>' : pm + ' test <path>'}\``);
+    return recipes;
+  }
+  const scriptNames = ['test:unit', 'test:integration', 'test:e2e', 'test:fast', 'test:ci'];
+  const labels = { 'test:unit': 'Unit', 'test:integration': 'Integration', 'test:e2e': 'E2E', 'test:fast': 'Fast', 'test:ci': 'CI' };
+  for (const name of scriptNames) {
+    if (pkg.scripts[name]) {
+      const [cmd, args] = pmCommand(pm, name, ['<path>']);
+      recipes.push(`- ${labels[name]}: \`${cmd} ${args.join(' ')}\``);
+    }
+  }
+  if (recipes.length === 0) {
+    if (pkg.scripts.test) {
+      recipes.push(`- Test: \`${pm === 'npm' ? 'npm test -- <path>' : pm + ' test <path>'}\``);
+    } else {
+      recipes.push('- (no test scripts detected in package.json)');
+    }
+  }
+  return recipes;
+}
+
 module.exports = {
   nowISO,
   sha1,
@@ -347,4 +411,8 @@ module.exports = {
   readPackageJson,
   hasScript,
   pmCommand,
+  DEFAULT_LINT_GLOBS,
+  DEFAULT_VERIFY_LINT_GLOBS,
+  loadLintGlobs,
+  buildRecipes,
 };

@@ -21,6 +21,9 @@ const {
   appendLog,
   getPluginName,
   qualifyCommand,
+  DEFAULT_LINT_GLOBS,
+  loadLintGlobs,
+  buildRecipes,
 } = require('../../../scripts/lib/utils');
 
 const tempDirs = [];
@@ -304,4 +307,95 @@ test('qualifyCommand returns non-slash inputs unchanged', () => {
   assert.equal(qualifyCommand('foo'), 'foo');
   assert.equal(qualifyCommand(''), '');
   assert.equal(qualifyCommand(null), null);
+});
+
+// --- loadLintGlobs ---
+
+test('loadLintGlobs returns defaults when no config exists', () => {
+  const dir = makeTempDir('lint-globs-');
+  writeFileSync(join(dir, 'package.json'), '{}');
+  const globs = loadLintGlobs(dir);
+  assert.deepEqual(globs, DEFAULT_LINT_GLOBS);
+});
+
+test('loadLintGlobs reads from runner-config.json', () => {
+  const dir = makeTempDir('lint-globs-cfg-');
+  ensureDir(join(dir, '.claude'));
+  writeFileSync(join(dir, '.claude', 'runner-config.json'), JSON.stringify({
+    lintGlobs: ['custom/**/*.ts'],
+  }));
+  writeFileSync(join(dir, 'package.json'), '{}');
+  const globs = loadLintGlobs(dir);
+  assert.deepEqual(globs, ['custom/**/*.ts']);
+});
+
+test('loadLintGlobs reads from package.json sd0x field', () => {
+  const dir = makeTempDir('lint-globs-pkg-');
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({
+    sd0x: { lintGlobs: ['lib/**/*.js'] },
+  }));
+  const globs = loadLintGlobs(dir);
+  assert.deepEqual(globs, ['lib/**/*.js']);
+});
+
+test('loadLintGlobs prefers runner-config.json over package.json', () => {
+  const dir = makeTempDir('lint-globs-prio-');
+  ensureDir(join(dir, '.claude'));
+  writeFileSync(join(dir, '.claude', 'runner-config.json'), JSON.stringify({
+    lintGlobs: ['from-config/**/*.ts'],
+  }));
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({
+    sd0x: { lintGlobs: ['from-pkg/**/*.ts'] },
+  }));
+  const globs = loadLintGlobs(dir);
+  assert.deepEqual(globs, ['from-config/**/*.ts']);
+});
+
+// --- buildRecipes ---
+
+test('buildRecipes derives from package.json scripts', () => {
+  const pkg = { scripts: { 'test:unit': 'jest test/unit', 'test:integration': 'jest test/int' } };
+  const recipes = buildRecipes(pkg, 'npm');
+  assert.equal(recipes.length, 2);
+  assert.ok(recipes[0].includes('test:unit'));
+  assert.ok(recipes[1].includes('test:integration'));
+  // No double -- for npm
+  assert.ok(!recipes[0].includes('-- --'));
+});
+
+test('buildRecipes includes test:fast and test:ci', () => {
+  const pkg = { scripts: { 'test:fast': 'jest --bail', 'test:ci': 'jest --ci' } };
+  const recipes = buildRecipes(pkg, 'yarn');
+  assert.equal(recipes.length, 2);
+  assert.ok(recipes[0].includes('test:fast'));
+  assert.ok(recipes[1].includes('test:ci'));
+});
+
+test('buildRecipes falls back to test script', () => {
+  const pkg = { scripts: { test: 'node --test' } };
+  const recipes = buildRecipes(pkg, 'npm');
+  assert.equal(recipes.length, 1);
+  assert.ok(recipes[0].includes('npm test'));
+});
+
+test('buildRecipes with no pkg returns generic recipe', () => {
+  const recipes = buildRecipes(null, 'npm');
+  assert.equal(recipes.length, 1);
+  assert.ok(recipes[0].includes('npm test'));
+});
+
+test('buildRecipes with no scripts shows no-scripts message', () => {
+  const pkg = { scripts: {} };
+  const recipes = buildRecipes(pkg, 'npm');
+  assert.equal(recipes.length, 1);
+  assert.ok(recipes[0].includes('no test scripts'));
+});
+
+test('loadLintGlobs warns on malformed config', () => {
+  const dir = makeTempDir('lint-globs-bad-');
+  ensureDir(join(dir, '.claude'));
+  writeFileSync(join(dir, '.claude', 'runner-config.json'), 'NOT JSON');
+  writeFileSync(join(dir, 'package.json'), '{}');
+  const globs = loadLintGlobs(dir);
+  assert.deepEqual(globs, DEFAULT_LINT_GLOBS);
 });
