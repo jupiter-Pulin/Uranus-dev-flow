@@ -1,12 +1,29 @@
 ---
 name: remind
 description: "Lightweight model correction with context-aware rule loading. Use when: model forgot a rule, skipped a required step, edited code/docs without running review, needs to re-read CLAUDE.md or rules. Triggers on: 'you forgot', 'remind', 'check rules', 'what did you miss', '你忘了', 'did you skip review', 'why didn't you run precommit', or /remind. Also use PROACTIVELY after editing files if unsure whether auto-loop was followed — running /remind costs nothing and catches drift early. Not for: full code review (use codex-review-fast), next step advice (use next-step), workflow progression (use feature-dev)."
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash:*), Skill
 ---
 
 # Remind — Lightweight Model Correction
 
-Detect what rules or steps the model forgot, auto-load the relevant rule files, and output corrections with quoted rule text. Think of this as a "conscience check" that reads the actual rules rather than relying on memory.
+Detect what rules or steps the model forgot, auto-load the relevant rule files, and **execute the correction immediately**. Think of this as a "conscience check" that reads the actual rules rather than relying on memory.
+
+## ⚠️ CRITICAL: Execute, Don't Report
+
+`/remind` is an **executor**, not a reporter. After detecting a violation:
+
+1. Output the findings table (for traceability)
+2. **Invoke the correction command via Skill tool in the same reply** — e.g., `Skill: /codex-review-doc`
+3. Do NOT stop after outputting findings
+
+| Prohibited | Correct |
+|-----------|---------|
+| ❌ "要執行 /codex-review-doc 嗎？" | ✅ Output findings → immediately invoke `/codex-review-doc` |
+| ❌ Output table then stop | ✅ Output table → invoke correction Skill → report result |
+| ❌ "建議執行..." / "Next step: run..." | ✅ Execute the correction, don't suggest it |
+| ❌ Ask user for permission | ✅ Auto-loop rules mandate execution without permission |
+
+**Exception**: Only stop without executing when findings are `### All Clear ✅` (nothing to fix).
 
 ## Trigger
 
@@ -130,16 +147,24 @@ This is the "nuclear option" — high token cost but guarantees the model re-ing
 | State file missing | Git-only checks + suggest starting review loop |
 | Rule file not found | List available rules via `Glob("rules/*.md")` |
 
-## After Receiving Reminder Output
+## Execution Contract (reinforces top-level CRITICAL section)
 
-The reminder output isn't just informational — it's a **correction directive**. When `/remind` outputs findings:
+The reminder output isn't just informational — it's a **correction directive with mandatory execution**:
 
-1. **Execute the correction commands immediately** in the same reply — do not ask for permission or output a summary
+1. **Invoke the correction Skill immediately** in the same reply — do not ask for permission, do not output a summary and stop
 2. **Re-read the quoted rule text** — it was loaded from the actual rule file specifically because the model drifted from it
 3. **Do not dismiss findings** with "I already did that" unless you can point to the specific tool invocation in this conversation
-4. If findings say "run `/codex-review-fast`" — invoke it now, not later
+4. If findings say "run `/codex-review-fast`" — invoke `Skill: /codex-review-fast` now, not later
 
 The whole point of `/remind` is that the model's memory of rules has drifted. The quoted rule text is the source of truth, not the model's recollection of what the rules say.
+
+**Correct flow**:
+
+```
+/remind → detect doc-no-review → output findings table → invoke Skill(/codex-review-doc) → report result
+/remind → detect code-no-review → output findings table → invoke Skill(/codex-review-fast) → report result
+/remind → no findings → output "### All Clear ✅" → stop (no correction needed)
+```
 
 ## Examples
 

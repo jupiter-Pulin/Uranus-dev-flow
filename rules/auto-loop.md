@@ -7,6 +7,7 @@
 ❌ **Fixing ≠ Verifying**: Claiming "issue fixed" or "already addressed" without running re-review is a violation. Every fix must be verified by invoking the review command — self-assessment does not count.
 ❌ **Skipping dual dispatch**: Code review commands must launch both Codex + secondary reviewer in parallel on every iteration (first pass AND loop re-reviews). Secondary is always dispatched in v1.
 ❌ Asking "Should I re-review?" or "Continue?" after fixing
+❌ Asking "要執行嗎？" / "should I execute?" / any confirmation before required review steps — auto-loop mandates execution, not permission
 ❌ Stopping after outputting a summary without executing review
 ❌ Waiting for user instructions
 ❌ **Declaring as executing**: Saying "need to run X" without actually invoking the tool

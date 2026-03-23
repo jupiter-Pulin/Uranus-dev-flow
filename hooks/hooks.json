@@ -49,6 +49,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-review-state.sh"
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-skill-auto-loop.sh"
+          }
+        ]
       }
     ],
     "Stop": [

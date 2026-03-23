@@ -1,7 +1,7 @@
 ---
-description: Lightweight model correction with context-aware rule loading. Detects skipped steps, loads relevant rules, outputs corrections.
+description: Lightweight model correction with context-aware rule loading. Detects skipped steps, loads relevant rules, executes corrections immediately.
 argument-hint: [<rule-name>] [--all]
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash:*), Skill
 ---
 
 **Must read and follow the skill below before executing this command:**
@@ -16,9 +16,15 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(cat:*), Bash(jq:*), Bash(bash
 - Branch: !`git rev-parse --abbrev-ref HEAD 2>/dev/null`
 - Available rules: !`bash -c 'ls rules/*.md 2>/dev/null | sed "s|rules/||;s|\.md||" | paste -sd, -'`
 
+## ⚠️ CRITICAL: This skill EXECUTES corrections, not just reports them
+
+After detecting a violation, you MUST invoke the correction command via Skill tool in this same reply.
+Do NOT ask "要執行嗎？" — auto-loop rules mandate immediate execution without permission.
+Do NOT output findings and stop — the findings are traceability, not the final output.
+
 ## Task
 
-Run model correction based on mode:
+Run model correction based on mode, then **execute the correction**:
 
 ### Arguments
 
