@@ -26,7 +26,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, Skill, AskUserQuestion, mcp_
 Requirements → Design → Implement → Test + Review → Precommit Gate → Doc Sync
                 │          │            │                  │               │
                 ▼          ▼            ▼                  ▼               ▼
-           /codex-     /codex-    /verify              /precommit-fast  /update-docs
+           /codex-     /codex-    /verify              /precommit  /update-docs
            architect   implement  /codex-test-review   (or /precommit)  /create-request --update
                                   /codex-review-fast
 ```

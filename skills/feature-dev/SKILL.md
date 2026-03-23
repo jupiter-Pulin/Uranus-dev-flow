@@ -23,7 +23,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, Skill, AskUserQuestion, mcp_
 ❌ git add | git commit | git push — per @rules/git-workflow.md
 ```
 
-This skill implements features but does **not** commit. `/precommit-fast` and `/precommit` are quality gates only. To commit, the user must invoke `/smart-commit --execute` separately.
+This skill implements features but does **not** commit. `/precommit` is a quality gate only. To commit, the user must invoke `/smart-commit --execute` separately.
 
 ## Workflow
 
@@ -31,7 +31,7 @@ This skill implements features but does **not** commit. `/precommit-fast` and `/
 Requirements → Design → Implement → Test + Review → Precommit Gate → Doc Sync
                 │          │            │                  │               │
                 ▼          ▼            ▼                  ▼               ▼
-           /codex-     /codex-    /verify              /precommit-fast  /update-docs
+           /codex-     /codex-    /verify              /precommit  /update-docs
            architect   implement  /codex-test-review   (or /precommit)  /create-request --update
                                   /codex-review-fast
 ```
@@ -47,8 +47,7 @@ Requirements → Design → Implement → Test + Review → Precommit Gate → D
 | Test: Generate | `/codex-test-gen` | Generate unit tests for gaps |
 | Test: Integration | `/post-dev-test` | Write missing integration/e2e tests |
 | Review | `/codex-review-fast` | Code review (auto-loop) |
-| Precommit | `/precommit-fast` | lint + test (auto-loop canonical path) |
-| Precommit (full) | `/precommit` | lint + typecheck + test (important PRs) |
+| Precommit | `/precommit` | lint + build + test (auto-loop canonical path) |
 | Doc Sync | `/update-docs` | Sync docs with code |
 | Doc Sync | `/create-request --update` | Update request progress |
 | Refactor | `/simplify` | Final refactoring |
@@ -128,7 +127,7 @@ Use project convention from `@rules/testing-project.md`. If no override is defin
 - [ ] All tests pass (`/verify`)
 - [ ] Test adequacy reviewed (`/codex-test-review`)
 - [ ] Code review passed (`/codex-review-fast` ✅ Ready)
-- [ ] Precommit passed (`/precommit-fast` ✅ All Pass)
+- [ ] Precommit passed (`/precommit` ✅ All Pass)
 - [ ] No `git add/commit/push` executed
 
 ## Doc Sync (after precommit Pass)
@@ -158,12 +157,12 @@ Review → Issues found → Fix → Re-review → ... → ✅ Pass → Next step
 
 ```
 Input: Implement a fee calculation method
-Action: /codex-architect → /codex-implement → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
+Action: /codex-architect → /codex-implement → /verify → /codex-test-review → /codex-review-fast → /precommit
 ```
 
 ```
 Input: This code needs refactoring
-Action: /simplify → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
+Action: /simplify → /verify → /codex-test-review → /codex-review-fast → /precommit
 ```
 
 ```

@@ -4,7 +4,7 @@
 
 | Change Type | Must Run | Can Skip |
 |-------------|----------|----------|
-| code files | `/codex-review-fast` -> `/precommit-fast` | - |
+| code files | `/codex-review-fast` -> `/precommit` | - |
 | `.md` docs | `/codex-review-doc` | `/codex-review-fast` |
 | Comments only | - | All |
 
@@ -23,7 +23,7 @@ After editing code or docs, you **MUST** run the review command **in the same re
 
 | After editing... | Immediately run | Then on pass |
 |------------------|----------------|--------------|
-| code files | `/codex-review-fast` | `/precommit-fast` |
+| code files | `/codex-review-fast` | `/precommit` |
 | `.md` docs | `/codex-review-doc` | (done) |
 | Review found issues | Fix all → re-run same review | — |
 

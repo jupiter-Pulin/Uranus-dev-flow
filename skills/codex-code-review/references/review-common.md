@@ -55,7 +55,7 @@ When review returns Ready with P2/Nit findings, auto-loop triggers a quality swe
 
 1. **Batch-fix** all P2/Nit items (1 attempt)
 2. **Re-review** using `--continue <threadId>` with P2/Nit verification
-3. **Evaluate**: unresolved P2 → ⚠️ Need Human; unresolved Nit → exempt with `[NIT_DEFERRED]` log; all resolved → `/precommit-fast`
+3. **Evaluate**: unresolved P2 → ⚠️ Need Human; unresolved Nit → exempt with `[NIT_DEFERRED]` log; all resolved → `/precommit`
 
 ### P2/Nit Judgment
 

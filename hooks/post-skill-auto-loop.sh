@@ -70,7 +70,7 @@ NEXT=""
 if [[ "$HAS_CODE" == "true" && "$CODE_PASSED" != "true" ]]; then
   NEXT="/codex-review-fast"
 elif [[ "$HAS_CODE" == "true" && "$CODE_PASSED" == "true" && "$PRE_PASSED" != "true" ]]; then
-  NEXT="/precommit-fast"
+  NEXT="/precommit"
 elif [[ "$HAS_DOC" == "true" && "$DOC_PASSED" != "true" ]]; then
   NEXT="/codex-review-doc"
 fi

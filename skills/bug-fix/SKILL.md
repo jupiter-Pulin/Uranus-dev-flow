@@ -22,7 +22,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash
 ❌ git add | git commit | git push — per @rules/git-workflow.md
 ```
 
-This skill fixes bugs but does **not** commit. `/precommit-fast` and `/precommit` are quality gates only. To commit, the user must invoke `/smart-commit --execute` separately.
+This skill fixes bugs but does **not** commit. `/precommit` is a quality gate only. To commit, the user must invoke `/smart-commit --execute` separately.
 
 ## Workflow
 
@@ -30,7 +30,7 @@ This skill fixes bugs but does **not** commit. `/precommit-fast` and `/precommit
 Investigate → Locate → Fix → Test + Review → Precommit Gate
   │             │       │         │                │
   ▼             ▼       ▼         ▼                ▼
-gh issue      Grep    Edit     /verify          /precommit-fast
+gh issue      Grep    Edit     /verify          /precommit
 /git-investigate  Read  tests  /codex-test-review
                                /codex-review-fast
 ```
@@ -137,17 +137,17 @@ Doc Sync is governed by `@rules/auto-loop.md` (behavior-layer rule). After preco
 - [ ] All tests pass (`/verify`)
 - [ ] Test adequacy reviewed (`/codex-test-review`)
 - [ ] Code review passed (`/codex-review-fast` ✅ Ready)
-- [ ] Precommit passed (`/precommit-fast` ✅ All Pass)
+- [ ] Precommit passed (`/precommit` ✅ All Pass)
 - [ ] No `git add/commit/push` executed
 
 ## Examples
 
 ```
 Input: Fix issue #123 - calculation error
-Action: gh issue view → locate → fix → write Unit Test → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
+Action: gh issue view → locate → fix → write Unit Test → /verify → /codex-test-review → /codex-review-fast → /precommit
 ```
 
 ```
 Input: API returning 500 error
-Action: Grep error → read code → fix → write Integration Test → /verify → /codex-test-review → /codex-review-fast → /precommit-fast
+Action: Grep error → read code → fix → write Integration Test → /verify → /codex-test-review → /codex-review-fast → /precommit
 ```

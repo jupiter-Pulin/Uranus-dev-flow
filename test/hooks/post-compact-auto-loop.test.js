@@ -157,7 +157,7 @@ test('post-compact-auto-loop injects /codex-review-fast when code review pending
 
 // --- Pending precommit ---
 
-test('post-compact-auto-loop injects /precommit-fast when precommit pending', () => {
+test('post-compact-auto-loop injects /precommit when precommit pending', () => {
   const cwd = makeTempDir('sd0x-pc-precommit-');
   const binDir = setupStubBin();
   writeStateFile(cwd, {
@@ -169,7 +169,7 @@ test('post-compact-auto-loop injects /precommit-fast when precommit pending', ()
   });
   const result = runHook({ cwd, binDir });
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /precommit-fast/, 'should mention /precommit-fast');
+  assert.match(result.stdout, /\/precommit/, 'should mention /precommit');
 });
 
 // --- Pending doc review ---

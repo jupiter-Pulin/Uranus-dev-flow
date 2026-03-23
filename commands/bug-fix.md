@@ -41,7 +41,7 @@ Follow the workflow in the skill:
 | Fix | `Edit` minimal changes |
 | Test | Add regression test at appropriate level (see bug-type matrix in skill) |
 | Verify | `/verify` → `/codex-test-review` (mandatory) |
-| Review | `/codex-review-fast` → `/precommit-fast` |
+| Review | `/codex-review-fast` → `/precommit` |
 
 ### Test Requirements ⚠️
 

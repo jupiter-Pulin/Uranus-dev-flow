@@ -21,7 +21,7 @@ Or use: /install-rules --customize auto-loop --add-section
 | Change Type | Event              | Execute Immediately  |
 | ----------- | ------------------ | -------------------- |
 | code files  | Fix P0/P1/P2       | `/codex-review-fast` |
-| code files  | review Ready       | `/precommit-fast`    |
+| code files  | review Ready       | `/precommit`    |
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |
 
 -->

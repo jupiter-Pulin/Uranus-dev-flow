@@ -20,7 +20,7 @@
 | ----------- | ------------------ | -------------------- |
 | code files  | Fix P0/P1/P2       | `/codex-review-fast` |
 | code files  | review Ready + P2/Nit | P2/Nit Quality Sweep |
-| code files  | review Ready (no P2/Nit) | `/precommit-fast` |
+| code files  | review Ready (no P2/Nit) | `/precommit` |
 | code files  | precommit Pass     | Adequacy Gate (if request doc) → Doc Sync |
 | code files  | precommit failure  | Fix -> re-run        |
 | `.md`       | Fix doc issues     | `/codex-review-doc`  |
@@ -36,7 +36,7 @@ Code review commands dispatch two reviewers in parallel. This section defines th
 | Non-blocking secondary | Secondary reviewer runs in background and does not block initial gate emission |
 | Late P0/P1 | Within same review session, late secondary P0/P1 re-opens fix→re-review loop |
 | Loop re-review | `--continue` loops re-dispatch both reviewers (Codex `--continue` + secondary fresh). Secondary is always dispatched in v1 (no skip exception). |
-| Pre-precommit checkpoint | Before `/precommit-fast`, reconcile any pending secondary result; if late P0/P1, re-enter review loop |
+| Pre-precommit checkpoint | Before `/precommit`, reconcile any pending secondary result; if late P0/P1, re-enter review loop |
 | Cycle reset | Any code edit resets the review cycle — both reviewers must re-run regardless of prior pass status |
 
 ## P2/Nit Quality Sweep
@@ -50,7 +50,7 @@ When Codex review returns `✅ Ready` but findings include P2 or Nit items:
 | 1 | Batch-fix | Fix all P2/Nit in one pass (1 attempt) |
 | 2 | Verify | 1 batched Codex `--continue` re-review |
 | 3 | Evaluate | Check resolution status |
-| 4 | Continue | Proceed to `/precommit-fast` or stop |
+| 4 | Continue | Proceed to `/precommit` or stop |
 
 ### Resolution Evaluation
 
@@ -58,7 +58,7 @@ When Codex review returns `✅ Ready` but findings include P2 or Nit items:
 |----------|-----------|--------|
 | 1 | Unresolved P2 | ⚠️ Need Human — stop, report reason |
 | 2 | Unresolved Nit only | Continue — Nit exemption with log |
-| 3 | All resolved | `/precommit-fast` |
+| 3 | All resolved | `/precommit` |
 
 ### Nit Exemption Log
 
@@ -70,7 +70,7 @@ When unresolved Nit items are exempted, output structured log:
 
 ### No P2/Nit Path
 
-Gate ✅ Ready + no P2/Nit → directly `/precommit-fast` (unchanged behavior).
+Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 
 ## Exit Conditions (Only)
 
@@ -86,7 +86,7 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit-fast` (unchanged behavior).
 ```
 "Fixed 3 issues, running /codex-review-fast..."
 [Execute: Codex --continue + Secondary fresh — parallel dispatch]
-"Codex: ✅ Ready. Secondary: ✅ Ready. Running /precommit-fast..."
+"Codex: ✅ Ready. Secondary: ✅ Ready. Running /precommit..."
 [Execute]
 "All passed ✅"
 ```

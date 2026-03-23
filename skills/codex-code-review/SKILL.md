@@ -188,7 +188,7 @@ Codex gate is authoritative for timing. Secondary runs non-blocking in backgroun
 
 ### Pre-precommit Checkpoint
 
-Before triggering `/precommit-fast`, reconcile any pending secondary result:
+Before triggering `/precommit`, reconcile any pending secondary result:
 
 | Condition | Action |
 |-----------|--------|
