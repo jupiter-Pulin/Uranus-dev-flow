@@ -343,7 +343,7 @@ function loadLintGlobs(repoRoot, fallbackGlobs) {
     const cfgPath = path.join(repoRoot, '.claude', 'runner-config.json');
     const raw = fs.readFileSync(cfgPath, 'utf8');
     const cfg = JSON.parse(raw);
-    if (Array.isArray(cfg.lintGlobs) && cfg.lintGlobs.length > 0 && cfg.lintGlobs.every(g => typeof g === 'string')) {
+    if (Array.isArray(cfg.lintGlobs) && cfg.lintGlobs.every(g => typeof g === 'string')) {
       return cfg.lintGlobs;
     }
   } catch (e) {
@@ -354,7 +354,7 @@ function loadLintGlobs(repoRoot, fallbackGlobs) {
   // Priority 2: package.json → sd0x.lintGlobs
   try {
     const pkg = readPackageJson(repoRoot);
-    if (pkg && pkg.sd0x && Array.isArray(pkg.sd0x.lintGlobs) && pkg.sd0x.lintGlobs.length > 0 && pkg.sd0x.lintGlobs.every(g => typeof g === 'string')) {
+    if (pkg && pkg.sd0x && Array.isArray(pkg.sd0x.lintGlobs) && pkg.sd0x.lintGlobs.every(g => typeof g === 'string')) {
       return pkg.sd0x.lintGlobs;
     }
   } catch {}
