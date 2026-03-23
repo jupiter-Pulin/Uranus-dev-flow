@@ -1,6 +1,6 @@
 # Runner Auto-Install + Generation
 
-## Status: In Progress
+## Status: Completed
 
 ## Background
 
@@ -20,16 +20,16 @@ Plugin 提供通用 precommit-runner.js，但使用者在 `/project-setup` 後�
 
 ### Phase 2: Harden Generic Runner
 
-- [ ] AC7: lint globs 可從 `.claude/runner-config.json` 或 package.json `sd0x` field 讀取，有預設 fallback
-- [ ] AC8: 移除 hardcoded Jest recipe block，改為從 package.json scripts 推導
-- [ ] AC9: 測試覆蓋：config-driven lint globs + dynamic test recipes
+- [x] AC7: lint globs 可從 `.claude/runner-config.json` 或 package.json `sd0x` field 讀取，有預設 fallback — `scripts/lib/utils.js:loadLintGlobs()`
+- [x] AC8: 移除 hardcoded Jest recipe block，改為從 package.json scripts 推導 — `scripts/lib/utils.js:buildRecipes()`
+- [x] AC9: 測試覆蓋：config-driven lint globs + dynamic test recipes — `test/scripts/lib/utils.test.js` (10 tests)
 
 ### Phase 3: Generate Runner (optional, eject pattern)
 
-- [ ] AC10: 新 `/generate-runner` skill，分析目標專案產生客製化 runner
-- [ ] AC11: 生成的 runner 標記 `generated_at` + `plugin_version` header
-- [ ] AC12: Per-ecosystem templates（Node.js, Python, Rust, Go）
-- [ ] AC13: 測試覆蓋：generate-runner schema + template validation
+- [x] AC10: 新 `/generate-runner` skill，分析目標專案產生客製化 runner — `skills/generate-runner/SKILL.md`
+- [x] AC11: 生成的 runner 標記 `generated_at` + `plugin_version` header — `skills/generate-runner/references/templates.md` eject header contract
+- [x] AC12: Per-ecosystem templates（Node.js, Python, Rust, Go）— `skills/generate-runner/references/templates.md` 4 templates
+- [x] AC13: 測試覆蓋：generate-runner schema + template validation — `test/commands/generate-runner.test.js` (8 tests)
 
 ## Priority
 
@@ -42,5 +42,5 @@ Phase 3: P2 — 提供 non-Node 支援和客製化能力
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1 | ✅ Completed | commit `3fd9630`, 10 tests pass |
-| Phase 2 | 🔲 Not started | lint globs + Jest recipes still hardcoded |
-| Phase 3 | 🔲 Not started | `/generate-runner` skill not created |
+| Phase 2 | ✅ Completed | `444a549` — loadLintGlobs + buildRecipes, 10 tests |
+| Phase 3 | ✅ Completed | `b23544f` — /generate-runner skill + 4 ecosystem templates, 8 tests |
