@@ -100,6 +100,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/review-spec` | Review tech spec | Design |
 | `/deep-analyze` | Deep analysis + roadmap | Design |
 | `/project-brief` | PM/CTO executive summary | Design |
+| `/fp-brief` | First-principles briefing | Understanding |
 | `/codex-architect` | Architecture advice | Design |
 | `/codex-implement` | Codex writes code | Development |
 | `/bug-fix` | Bug fix workflow | Bug fixing |
