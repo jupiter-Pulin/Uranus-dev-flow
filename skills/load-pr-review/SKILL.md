@@ -171,7 +171,7 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
 1. Collect all unresolved threads from Step 1 output
 2. For each thread, package as a finding for `/seek-verdict`:
    - `finding_key`: `<thread.path>|<first comment summary truncated to 120 chars>`
-   - `severity`: P2 (all PR review threads assessed at P2 level for seek-verdict compatibility)
+   - `severity`: derive from reviewer's comment (keyword heuristic: "security"/"crash"/"data loss" → P0/P1; explicit severity tag if present; fallback P2)
    - `original_finding_text`: reviewer's comment body
    - `relevant_diff`: `git diff HEAD -- <thread.path>`
 3. Dispatch `/seek-verdict` per thread via **background Agent** (Agent-as-Skill-runner pattern):
@@ -182,7 +182,7 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
      run_in_background: true,
      prompt: `Execute /seek-verdict for the following finding.
        finding_key: <thread.path>|<summary>
-       severity: P2
+       severity: <derived severity>
        [USER_CONTENT_START]
        original_finding_text: <reviewer comment body>
        [USER_CONTENT_END]
@@ -204,7 +204,8 @@ In **plan** and **fix** modes (not summary), invoke `/seek-verdict` **per thread
 
 | Codex Verdict | Confidence | Evidence Refs | Result | Grouping |
 |---------------|------------|---------------|--------|----------|
-| NON_ACTIONABLE | >= 0.80 (normal) / >= 0.85 (heightened) | >= 2 (normal) / >= 3 (heightened) | DISMISS_VERIFIED | Likely Non-Actionable |
+| NON_ACTIONABLE (P2/Nit) | >= threshold | >= threshold | DISMISS_VERIFIED | Likely Non-Actionable |
+| NON_ACTIONABLE (P0/P1) | >= threshold | >= threshold | DISMISS_CANDIDATE | Needs Discussion (⚠️ Need Human) |
 | ACTIONABLE | >= 0.70 | any | FIX_REQUIRED | ACTIONABLE |
 | UNCERTAIN / low | any | any | NEED_HUMAN | Needs Discussion |
 

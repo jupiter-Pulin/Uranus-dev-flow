@@ -296,7 +296,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/codex-test-gen` | 生成单元测试 | - |
 | `/codex-test-review` | 审查测试覆盖率 | `--continue <threadId>` |
 | `/codex-explain` | 解释复杂代码 | - |
-| `/seek-verdict` | P2 dismiss 盲审验证 | - |
+| `/seek-verdict` | 独立发现验证（dismiss/confirm/clarify） | - |
 
 ### 验证
 

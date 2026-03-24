@@ -7,25 +7,75 @@ const root = resolve(__dirname, '../..');
 const skillDir = resolve(root, 'skills/seek-verdict');
 const commandPath = resolve(root, 'commands/seek-verdict.md');
 
-// --- Helper: Policy mapping logic (extracted from spec) ---
+// --- Helper: v2 policy mapping logic (extracted from policy-mapping.md) ---
 
 /**
-* Maps Codex verdict + confidence + evidence to a result.
-* Implements the asymmetric threshold policy from policy-mapping.md.
-*
-* @param {object} params
-* @param {string} params.verdict - ACTIONABLE | NON_ACTIONABLE | UNCERTAIN
-* @param {number} params.confidence - 0.0 to 1.0
-* @param {number} params.evidenceCount - number of evidence refs
-* @param {boolean} [params.heightened] - whether anti-abuse heightened thresholds apply
-* @returns {string} DISMISS_VERIFIED | FIX_REQUIRED | NEED_HUMAN
+ * v2: All severities are eligible for all intents.
+ *
+ * @param {string} severity - P0 | P1 | P2 | Nit
+ * @param {string} [intent] - dismiss | confirm | clarify
+ * @returns {boolean}
  */
-function mapVerdict({ verdict, confidence, evidenceCount, heightened = false }) {
-  const dismissThreshold = heightened ? 0.85 : 0.80;
-  const dismissEvidenceMin = heightened ? 3 : 2;
+function isEligible(severity, intent = 'dismiss') {
+  const validSeverities = ['P0', 'P1', 'P2', 'Nit'];
+  const validIntents = ['dismiss', 'confirm', 'clarify'];
+  return validSeverities.includes(severity) && validIntents.includes(intent);
+}
 
-  if (verdict === 'NON_ACTIONABLE' && confidence >= dismissThreshold && evidenceCount >= dismissEvidenceMin) {
-    return 'DISMISS_VERIFIED';
+/**
+ * v2: Returns dismiss authorization level for a severity.
+ * P0/P1 require human confirmation; P2/Nit are automated.
+ *
+ * @param {string} severity
+ * @returns {'human-required' | 'automated'}
+ */
+function getDismissAuthorization(severity) {
+  return (severity === 'P0' || severity === 'P1') ? 'human-required' : 'automated';
+}
+
+/**
+ * v2: Graduated dismiss thresholds by severity.
+ *
+ * @param {string} severity
+ * @param {boolean} [heightened]
+ * @returns {{ confidence: number, evidence: number }}
+ */
+function getDismissThresholds(severity, heightened = false) {
+  const normal = {
+    P0: { confidence: 0.95, evidence: 4 },
+    P1: { confidence: 0.90, evidence: 3 },
+    P2: { confidence: 0.80, evidence: 2 },
+    Nit: { confidence: 0.70, evidence: 1 },
+  };
+  const afterWarning = {
+    P0: { confidence: 1.00, evidence: 5 },
+    P1: { confidence: 0.95, evidence: 4 },
+    P2: { confidence: 0.85, evidence: 3 },
+    Nit: { confidence: 0.75, evidence: 2 },
+  };
+  const table = heightened ? afterWarning : normal;
+  return table[severity] || table.P2;
+}
+
+/**
+ * v2: Maps Codex verdict to dismiss result with graduated thresholds.
+ * P0/P1 that meet threshold → DISMISS_CANDIDATE (never auto-verified).
+ * P2/Nit that meet threshold → DISMISS_VERIFIED.
+ *
+ * @param {object} params
+ * @param {string} params.verdict - ACTIONABLE | NON_ACTIONABLE | UNCERTAIN
+ * @param {number} params.confidence
+ * @param {number} params.evidenceCount
+ * @param {string} [params.severity] - P0 | P1 | P2 | Nit (default P2)
+ * @param {boolean} [params.heightened]
+ * @returns {string}
+ */
+function mapVerdict({ verdict, confidence, evidenceCount, severity = 'P2', heightened = false }) {
+  const thresholds = getDismissThresholds(severity, heightened);
+  const auth = getDismissAuthorization(severity);
+
+  if (verdict === 'NON_ACTIONABLE' && confidence >= thresholds.confidence && evidenceCount >= thresholds.evidence) {
+    return auth === 'automated' ? 'DISMISS_VERIFIED' : 'DISMISS_CANDIDATE';
   }
   if (verdict === 'ACTIONABLE' && confidence >= 0.70) {
     return 'FIX_REQUIRED';
@@ -34,10 +84,39 @@ function mapVerdict({ verdict, confidence, evidenceCount, heightened = false }) 
 }
 
 /**
-* Checks anti-abuse guard state.
-*
-* @param {number} consecutiveDismissals - current streak of DISMISS_VERIFIED
-* @returns {{ warned: boolean, heightened: boolean }}
+ * v2: Confirm intent mapping.
+ *
+ * @param {object} params
+ * @param {string} params.verdict - ACTIONABLE | NON_ACTIONABLE | UNCERTAIN
+ * @param {number} params.confidence
+ * @returns {string} CONFIRMED | DISPUTED | UNCERTAIN
+ */
+function mapConfirmVerdict({ verdict, confidence }) {
+  if (verdict === 'ACTIONABLE' && confidence >= 0.70) return 'CONFIRMED';
+  if (verdict === 'NON_ACTIONABLE' && confidence >= 0.70) return 'DISPUTED';
+  return 'UNCERTAIN';
+}
+
+/**
+ * v2: Clarify intent mapping.
+ *
+ * @param {object} params
+ * @param {string} params.assessment - HIGH_IMPACT | LOW_IMPACT
+ * @param {number} params.confidence
+ * @returns {string} HIGH_IMPACT | LOW_IMPACT | UNCERTAIN
+ */
+function mapClarifyVerdict({ assessment, confidence }) {
+  if (confidence < 0.70) return 'UNCERTAIN';
+  if (assessment === 'HIGH_IMPACT') return 'HIGH_IMPACT';
+  if (assessment === 'LOW_IMPACT') return 'LOW_IMPACT';
+  return 'UNCERTAIN';
+}
+
+/**
+ * Checks anti-abuse guard state.
+ *
+ * @param {number} consecutiveDismissals
+ * @returns {{ warned: boolean, heightened: boolean }}
  */
 function checkAntiAbuse(consecutiveDismissals) {
   const warned = consecutiveDismissals >= 3;
@@ -45,27 +124,32 @@ function checkAntiAbuse(consecutiveDismissals) {
 }
 
 /**
-* Validates that a finding is eligible for seek-verdict.
-*
-* @param {string} severity - P0 | P1 | P2 | Nit
-* @returns {boolean}
+ * v2: Per-finding cap check for confirm/clarify intents.
+ * Same finding + same commit + same intent = max 1.
+ *
+ * @param {Object<string, number>} counters - usage counters
+ * @param {string} findingKey
+ * @param {string} headSha
+ * @param {string} intent - confirm | clarify
+ * @returns {boolean} true if cap exceeded (should reject)
  */
-function isEligible(severity) {
-  return severity === 'P2';
+function checkPerFindingCap(counters, findingKey, headSha, intent) {
+  const key = `${findingKey}|${headSha}|${intent}`;
+  return (counters[key] || 0) >= 1;
 }
 
 /**
-* Checks if a prompt contains Claude's conclusion (anti-anchoring violation).
-*
-* @param {string} prompt
-* @param {string} claudeConclusion
-* @returns {boolean} true if prompt is contaminated
+ * Checks if a prompt contains Claude's conclusion (anti-anchoring violation).
+ *
+ * @param {string} prompt
+ * @param {string} claudeConclusion
+ * @returns {boolean} true if prompt is contaminated
  */
 function isAnchored(prompt, claudeConclusion) {
   return prompt.includes(claudeConclusion);
 }
 
-// --- T1-T13: Policy mapping + anti-abuse tests ---
+// --- T1-T4: P2 dismiss policy mapping (v1 preserved, severity defaults to P2) ---
 
 test('T1: P2 + NON_ACTIONABLE + confidence 0.90 → DISMISS_VERIFIED', () => {
   const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.90, evidenceCount: 3 });
@@ -87,12 +171,56 @@ test('T4: P2 + NON_ACTIONABLE + confidence 0.70 (below threshold) → NEED_HUMAN
   assert.equal(result, 'NEED_HUMAN');
 });
 
-test('T5: P0 finding → Rejected (P2 only)', () => {
-  assert.equal(isEligible('P0'), false);
-  assert.equal(isEligible('P1'), false);
-  assert.equal(isEligible('Nit'), false);
-  assert.equal(isEligible('P2'), true);
+// --- T5: v2 eligibility (all severities eligible, authorization varies) ---
+
+test('T5: v2 eligibility — all severities eligible, P0/P1 human-required', () => {
+  // v2: all severities eligible for all intents
+  assert.equal(isEligible('P0', 'dismiss'), true);
+  assert.equal(isEligible('P1', 'dismiss'), true);
+  assert.equal(isEligible('P2', 'dismiss'), true);
+  assert.equal(isEligible('Nit', 'dismiss'), true);
+  assert.equal(isEligible('P0', 'confirm'), true);
+  assert.equal(isEligible('P1', 'clarify'), true);
+
+  // Authorization: P0/P1 human-required, P2/Nit automated
+  assert.equal(getDismissAuthorization('P0'), 'human-required');
+  assert.equal(getDismissAuthorization('P1'), 'human-required');
+  assert.equal(getDismissAuthorization('P2'), 'automated');
+  assert.equal(getDismissAuthorization('Nit'), 'automated');
+
+  // Invalid severity/intent rejected
+  assert.equal(isEligible('P3', 'dismiss'), false);
+  assert.equal(isEligible('P2', 'reject'), false);
 });
+
+// --- T5v2-T16: v2 graduated thresholds (P0/P1 → DISMISS_CANDIDATE) ---
+
+test('T5v2: P0 + dismiss + NON_ACTIONABLE 0.95 + 4 evidence → DISMISS_CANDIDATE', () => {
+  const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.95, evidenceCount: 4, severity: 'P0' });
+  assert.equal(result, 'DISMISS_CANDIDATE');
+});
+
+test('T14: P1 + dismiss + NON_ACTIONABLE 0.90 + 3 evidence → DISMISS_CANDIDATE', () => {
+  const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.90, evidenceCount: 3, severity: 'P1' });
+  assert.equal(result, 'DISMISS_CANDIDATE');
+});
+
+test('T15: P1 + dismiss + NON_ACTIONABLE 0.85 (below 0.90 threshold) → NEED_HUMAN', () => {
+  const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.85, evidenceCount: 3, severity: 'P1' });
+  assert.equal(result, 'NEED_HUMAN');
+});
+
+test('T16: P0 + dismiss + confidence 0.94 (below 0.95 threshold) → NEED_HUMAN', () => {
+  const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.94, evidenceCount: 5, severity: 'P0' });
+  assert.equal(result, 'NEED_HUMAN');
+});
+
+test('T21: Nit + dismiss + NON_ACTIONABLE 0.70 + 1 evidence → DISMISS_VERIFIED', () => {
+  const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.70, evidenceCount: 1, severity: 'Nit' });
+  assert.equal(result, 'DISMISS_VERIFIED');
+});
+
+// --- T6-T13: Anti-abuse + boundary + rebuttal (v1 preserved) ---
 
 test('T6: 3 consecutive DISMISS_VERIFIED → warning emitted', () => {
   const { warned } = checkAntiAbuse(3);
@@ -126,10 +254,8 @@ test('T10: NON_ACTIONABLE + confidence 0.79 → NEED_HUMAN (below threshold)', (
 });
 
 test('T11: Rebuttal still FIX_REQUIRED after 1 rebuttal → no more rounds', () => {
-  // After 1 rebuttal, if Codex still says ACTIONABLE, result must be FIX_REQUIRED (no retry)
   const rebuttalResult = mapVerdict({ verdict: 'ACTIONABLE', confidence: 0.80, evidenceCount: 3 });
   assert.equal(rebuttalResult, 'FIX_REQUIRED');
-  // maxRebuttals is 1 — this is a behavioral contract
   const MAX_REBUTTALS = 1;
   assert.equal(MAX_REBUTTALS, 1);
 });
@@ -138,19 +264,64 @@ test('T12: Anti-abuse: 4th DISMISS_VERIFIED after warning → requires heightene
   const { heightened } = checkAntiAbuse(4);
   assert.equal(heightened, true);
 
-  // Under heightened: confidence 0.82 + 2 evidence → NEED_HUMAN (needs 0.85 + 3)
+  // Under heightened: P2 needs 0.85 + 3 evidence (normal: 0.80 + 2)
   const result = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.82, evidenceCount: 2, heightened: true });
   assert.equal(result, 'NEED_HUMAN');
 
-  // Under heightened: confidence 0.85 + 3 evidence → DISMISS_VERIFIED
   const result2 = mapVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.85, evidenceCount: 3, heightened: true });
   assert.equal(result2, 'DISMISS_VERIFIED');
 });
 
 test('T13: Anti-abuse: branch switch resets streak → counter = 0', () => {
-  // After branch switch, streak resets to 0
   const { warned } = checkAntiAbuse(0);
   assert.equal(warned, false);
+});
+
+// --- T17-T19: Confirm and clarify intents (v2 new) ---
+
+test('T17: P2 + confirm + ACTIONABLE 0.85 → CONFIRMED', () => {
+  const result = mapConfirmVerdict({ verdict: 'ACTIONABLE', confidence: 0.85 });
+  assert.equal(result, 'CONFIRMED');
+});
+
+test('T18: P1 + confirm + NON_ACTIONABLE 0.80 → DISPUTED', () => {
+  const result = mapConfirmVerdict({ verdict: 'NON_ACTIONABLE', confidence: 0.80 });
+  assert.equal(result, 'DISPUTED');
+});
+
+test('T19: P0 + clarify + HIGH_IMPACT assessment → HIGH_IMPACT', () => {
+  const result = mapClarifyVerdict({ assessment: 'HIGH_IMPACT', confidence: 0.85 });
+  assert.equal(result, 'HIGH_IMPACT');
+
+  // LOW_IMPACT path
+  const result2 = mapClarifyVerdict({ assessment: 'LOW_IMPACT', confidence: 0.75 });
+  assert.equal(result2, 'LOW_IMPACT');
+
+  // Below confidence threshold
+  const result3 = mapClarifyVerdict({ assessment: 'HIGH_IMPACT', confidence: 0.60 });
+  assert.equal(result3, 'UNCERTAIN');
+});
+
+// --- T20: Per-finding cap (v2 new) ---
+
+test('T20: per-finding cap — 2nd confirm on same finding+commit rejected', () => {
+  const counters = {};
+  const findingKey = 'src/auth.ts|shell injection risk';
+  const headSha = 'abc1234';
+
+  // First confirm: not capped
+  assert.equal(checkPerFindingCap(counters, findingKey, headSha, 'confirm'), false);
+  counters[`${findingKey}|${headSha}|confirm`] = 1;
+
+  // First clarify: not capped (different intent)
+  assert.equal(checkPerFindingCap(counters, findingKey, headSha, 'clarify'), false);
+  counters[`${findingKey}|${headSha}|clarify`] = 1;
+
+  // Second confirm: capped
+  assert.equal(checkPerFindingCap(counters, findingKey, headSha, 'confirm'), true);
+
+  // Different commit: not capped (counter key differs)
+  assert.equal(checkPerFindingCap(counters, findingKey, 'def5678', 'confirm'), false);
 });
 
 // --- Structural tests ---
@@ -199,7 +370,6 @@ test('S4: Command file references all skill references', () => {
     );
   }
 
-  // Must also reference SKILL.md
   assert.ok(
     content.includes('@skills/seek-verdict/SKILL.md'),
     'Command missing @skills/seek-verdict/SKILL.md'
@@ -251,13 +421,131 @@ test('S8: Verdict prompt enforces anti-anchoring', () => {
   );
 });
 
-test('S9: Policy mapping defines asymmetric thresholds', () => {
+test('S9: Policy mapping defines graduated thresholds', () => {
   const content = readFileSync(join(skillDir, 'references/policy-mapping.md'), 'utf8');
-  assert.ok(content.includes('0.80'), 'policy-mapping.md missing dismiss threshold 0.80');
-  assert.ok(content.includes('0.70'), 'policy-mapping.md missing fix threshold 0.70');
-  assert.ok(content.includes('0.85'), 'policy-mapping.md missing heightened threshold 0.85');
+  // v2: graduated thresholds for all severities
+  assert.ok(content.includes('0.95'), 'policy-mapping.md missing P0 dismiss threshold 0.95');
+  assert.ok(content.includes('0.90'), 'policy-mapping.md missing P1 dismiss threshold 0.90');
+  assert.ok(content.includes('0.80'), 'policy-mapping.md missing P2 dismiss threshold 0.80');
+  assert.ok(content.includes('0.70'), 'policy-mapping.md missing Nit/fix threshold 0.70');
+  assert.ok(content.includes('DISMISS_CANDIDATE'), 'policy-mapping.md missing DISMISS_CANDIDATE for P0/P1');
   assert.ok(
     content.includes('[DISMISS_PATTERN_WARN]'),
     'policy-mapping.md missing anti-abuse warning format'
+  );
+});
+
+// --- S10-S12: v2 structural tests ---
+
+test('S10: SKILL.md has [SEEK_VERDICT] format for confirm/clarify', () => {
+  const content = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  assert.ok(
+    content.includes('[SEEK_VERDICT]'),
+    'SKILL.md missing [SEEK_VERDICT] format'
+  );
+  assert.ok(
+    content.includes('intent=<confirm|clarify>'),
+    'SKILL.md missing intent field in [SEEK_VERDICT]'
+  );
+});
+
+test('S11: review-common.md has [SEEK_VERDICT] format', () => {
+  const content = readFileSync(
+    resolve(root, 'skills/codex-code-review/references/review-common.md'),
+    'utf8'
+  );
+  assert.ok(
+    content.includes('[SEEK_VERDICT]'),
+    'review-common.md missing [SEEK_VERDICT] format'
+  );
+});
+
+test('S12: Command file has --intent argument', () => {
+  const content = readFileSync(commandPath, 'utf8');
+  assert.ok(
+    content.includes('--intent'),
+    'Command missing --intent argument'
+  );
+  assert.ok(
+    content.includes('dismiss'),
+    'Command missing dismiss intent'
+  );
+  assert.ok(
+    content.includes('confirm'),
+    'Command missing confirm intent'
+  );
+  assert.ok(
+    content.includes('clarify'),
+    'Command missing clarify intent'
+  );
+});
+
+// --- T22-T23: Audit trail format validation (v2 new) ---
+
+test('T22: [SEEK_VERDICT] format for confirm intent has required fields', () => {
+  const content = readFileSync(join(skillDir, 'references/policy-mapping.md'), 'utf8');
+  // Extract the [SEEK_VERDICT] format line
+  const seekLine = content.split('\n').find((l) => l.includes('[SEEK_VERDICT] key='));
+  assert.ok(seekLine, 'policy-mapping.md missing [SEEK_VERDICT] format line');
+
+  const requiredFields = ['key=', 'severity=', 'intent=', 'verdict=', 'confidence=', 'codex_thread=', 'evidence=', 'timestamp='];
+  for (const field of requiredFields) {
+    assert.ok(seekLine.includes(field), `[SEEK_VERDICT] format missing field: ${field}`);
+  }
+});
+
+test('T23: [DISMISS_VERDICT] backward compat — v1 fields + intent + authorization', () => {
+  const content = readFileSync(join(skillDir, 'references/policy-mapping.md'), 'utf8');
+  const dismissLine = content.split('\n').find((l) => l.includes('[DISMISS_VERDICT] key='));
+  assert.ok(dismissLine, 'policy-mapping.md missing [DISMISS_VERDICT] format line');
+
+  // v1 fields preserved
+  const v1Fields = ['key=', 'severity=', 'verdict=', 'confidence=', 'codex_thread=', 'evidence=', 'timestamp='];
+  for (const field of v1Fields) {
+    assert.ok(dismissLine.includes(field), `[DISMISS_VERDICT] missing v1 field: ${field}`);
+  }
+
+  // v2 additive fields at line end
+  assert.ok(dismissLine.includes('intent=dismiss'), '[DISMISS_VERDICT] missing intent=dismiss');
+  assert.ok(dismissLine.includes('authorization='), '[DISMISS_VERDICT] missing authorization field');
+
+  // intent= appears after timestamp= (backward compat: additive at end)
+  const intentIdx = dismissLine.indexOf('intent=');
+  const timestampIdx = dismissLine.indexOf('timestamp=');
+  assert.ok(intentIdx > timestampIdx, 'intent= should appear after timestamp= for backward compat');
+});
+
+// --- S13-S15: load-pr-review v2 integration invariants ---
+
+test('S13: load-pr-review SKILL.md uses derived severity (no hardcoded P2 in prompt)', () => {
+  const content = readFileSync(resolve(root, 'skills/load-pr-review/SKILL.md'), 'utf8');
+  // The Agent prompt template should use <derived severity>, not literal P2
+  const promptSection = content.slice(content.indexOf('Agent({'));
+  assert.ok(
+    !promptSection.includes('severity: P2'),
+    'load-pr-review SKILL.md still has hardcoded severity: P2 in Agent prompt'
+  );
+  assert.ok(
+    promptSection.includes('<derived severity>'),
+    'load-pr-review SKILL.md missing <derived severity> placeholder in Agent prompt'
+  );
+});
+
+test('S14: load-pr-review result mapping includes DISMISS_CANDIDATE', () => {
+  const content = readFileSync(resolve(root, 'skills/load-pr-review/SKILL.md'), 'utf8');
+  assert.ok(
+    content.includes('DISMISS_CANDIDATE'),
+    'load-pr-review SKILL.md result mapping missing DISMISS_CANDIDATE for P0/P1'
+  );
+});
+
+test('S15: verdict-triage-prompt.md includes DISMISS_CANDIDATE in both mapping and verification', () => {
+  const content = readFileSync(
+    resolve(root, 'skills/load-pr-review/references/verdict-triage-prompt.md'),
+    'utf8'
+  );
+  const matches = content.match(/DISMISS_CANDIDATE/g);
+  assert.ok(matches && matches.length >= 2,
+    `verdict-triage-prompt.md has ${matches?.length || 0} DISMISS_CANDIDATE refs, expected >= 2 (mapping + verification)`
   );
 });

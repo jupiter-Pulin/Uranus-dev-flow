@@ -77,7 +77,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/codex-review-branch` | Full branch review | Important PR |
 | `/codex-cli-review` | CLI review (full disk) | Deep review |
 | `/codex-review-doc` | Review .md files | Doc changes |
-| `/seek-verdict` | P2 dismiss blind verification | Review |
+| `/seek-verdict` | Independent finding verification (dismiss/confirm/clarify) | Review |
 | `/codex-explain` | Explain complex code | Understanding |
 | `/precommit` | lint + typecheck + test | **Required** |
 | `/precommit-fast` | lint + test (no build) | Quick check |

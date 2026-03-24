@@ -58,7 +58,7 @@ When fixing, must answer:
 | Beyond current scope       | Requires architecture-level changes; report and log |
 | Third-party library issue  | Cannot modify; document workaround                  |
 | Nit persists after AI fix  | AI attempted fix, Codex still reports same Nit (possible false-positive); logged via `[NIT_DEFERRED]` |
-| P2 dismiss verified via `/seek-verdict` | Codex independently confirmed NON_ACTIONABLE with confidence >= 0.80 + evidence >= 2 (see `skills/seek-verdict/references/policy-mapping.md` for full thresholds); logged via `[DISMISS_VERDICT]` |
+| Finding dismiss verified via `/seek-verdict` | Codex independently confirmed NON_ACTIONABLE via blind verification. P2/Nit: automated (confidence >= 0.80/0.70 + evidence >= 2/1). P0/P1: requires human confirmation (`DISMISS_CANDIDATE` + user confirm). See `skills/seek-verdict/references/policy-mapping.md` for full thresholds; logged via `[DISMISS_VERDICT]` |
 | Skill analysis-only mode | Skill defines read-only / analysis-only / plan mode constraint; issues recorded in report, not auto-fixed; logged via `[ANALYSIS_ONLY_DEFERRED]` |
 
 ## Precedence

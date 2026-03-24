@@ -79,6 +79,7 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
   - Doc changes: doc review passed
 - ⛔ Need Human — Architecture changes, feature removal, user requests stop
 - ⚠️ Need Human — Feature docs not found (3-level fallback exhausted)
+- ⚠️ Need Human — P0/P1 dismiss candidate awaiting human confirmation (via `/seek-verdict`)
 - 🔄 3 rounds on same issue — Report blocker, request intervention
 
 ## Correct Behavior

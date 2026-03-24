@@ -10,6 +10,7 @@
 ## 1. Root Problem
 
 ### Surface Problem
+
 v1 的 `/seek-verdict` 被限制只能用於 P2 dismiss，但實際使用場景已超出此範圍 — `load-pr-review` 被迫將所有 thread 硬編碼為 P2 以繞過 severity gate。
 
 ### First-Principles Decomposition
@@ -23,6 +24,7 @@ Source: §1 Requirement Summary, §3.3 Asymmetric threshold 理由, Appendix: De
 5. **Why** 不能簡單地移除 severity gate？→ P0/P1 的 false negative（漏掉真正的問題）代價遠高於 P2，需要差異化的安全機制
 
 ### Fundamental Truth
+>
 > **驗證的價值來自獨立性，而獨立性的保證強度必須與風險成正比**。低風險（P2/Nit）可以自動化驗證；高風險（P0/P1）的獨立驗證需要人類作為最終 gate，因為自動化系統的信心校準尚未足夠可靠。
 
 ## 2. Assumptions Register
@@ -39,31 +41,37 @@ Source: §1 Requirement Summary, §3.3 Asymmetric threshold 理由, Appendix: De
 ## 3. Reasoning Chain
 
 ### Decision D1: Intent-based generalization（而非簡單移除 severity gate）
+
 - **Principle**: 不同的驗證目的需要不同的結果語義和授權模型（A3: risk-proportional independence）
 - **Reasoning**: 單純移除 severity gate 無法區分「我認為這是 false positive」（dismiss）和「我想確認這個問題真的存在嗎」（confirm）。三種 intent 用不同的 verdict enum 和授權效果，精確匹配使用者的實際需求
 - **Source**: §3.3 Phase C, Appendix: Decision v2 Intent-Based Generalization
 
 ### Decision D2: Fresh Codex thread（而非 review thread continuation）
+
 - **Principle**: Blind verification 的核心價值來自驗證者的獨立性（Fundamental Truth）
 - **Reasoning**: 如果在原始 review thread 中繼續，Codex 已有對該 finding 的既有判斷，anchoring bias 使驗證無效。Fresh thread = 零前置假設
 - **Source**: §3.1 Architecture, Appendix: Fresh Thread vs Review Thread
 
 ### Decision D3: P0/P1 Human Gate（而非全自動 dismiss）
+
 - **Principle**: 自動化 confidence 校準尚不可靠；高風險決策需人類 override（A3 + A4）
 - **Reasoning**: P0/P1 的 false negative 代價極高。即使 Codex confidence = 0.95，仍產出 `DISMISS_CANDIDATE`（非 `DISMISS_VERIFIED`），強制人類在下一個 prompt 確認。`⚠️ Need Human` 整合進 auto-loop exit condition，不違反其禁止暫停規則
 - **Source**: §3.3 Graduated Thresholds, §R3 Risk
 
 ### Decision D4: 1-round rebuttal 上限
+
 - **Principle**: 有限辯論優於無限辯論（avoid stall）和零辯論（miss counter-evidence）
 - **Reasoning**: 1 輪 counter-evidence 允許 Claude 提供客觀證據（測試、spec），但禁止無限辯論。如果 1 輪後仍 ambiguous → `NEED_HUMAN`，不自動解決
 - **Source**: §3.4 Rebuttal Mechanism
 
 ### Decision D5: Per-finding cap for confirm/clarify intent
+
 - **Principle**: Informational 查詢不應成為拖延修復的工具（A5 anti-abuse 理由延伸）
 - **Reasoning**: 同一 finding 在同一 commit 上最多 1 次 confirm + 1 次 clarify。Counter key 含 `head_sha`，新 commit 自動重置
 - **Source**: §3.6 Anti-Abuse Guard
 
 ### Decision D6: Backward-compatible audit trail format
+
 - **Principle**: 向後相容 > 格式完美（A6）
 - **Reasoning**: `intent=` 和 `authorization=` 作為 additive fields 放在行尾。v1 parser 使用 `|` split + key lookup，忽略未知 key。不需要 version header 或 breaking change
 - **Source**: §3.5 Audit Trail Format

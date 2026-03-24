@@ -296,7 +296,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-test-gen` | ユニットテスト生成 | - |
 | `/codex-test-review` | テストカバレッジレビュー | `--continue <threadId>` |
 | `/codex-explain` | 複雑なコードの解説 | - |
-| `/seek-verdict` | P2 dismiss のブラインド検証 | - |
+| `/seek-verdict` | 独立検証（dismiss/confirm/clarify） | - |
 
 ### 検証
 

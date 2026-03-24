@@ -17,7 +17,7 @@ For each unresolved thread, construct the `/seek-verdict` finding:
 | Field | Source | Redaction |
 |-------|--------|-----------|
 | `finding_key` | `<thread.path>\|<first comment summary, max 120 chars>` | Strip code snippets |
-| `severity` | `P2` (all PR threads assessed at P2 level) | — |
+| `severity` | Derive from reviewer comment (keyword heuristic; fallback P2) | — |
 | `original_finding_text` | Reviewer's comment body (max 500 chars) | Strip secrets/tokens per `@rules/logging.md` |
 | `origin_thread_id` | N/A (no prior review session) | — |
 | `current_head_sha` | `git rev-parse HEAD` | — |
@@ -52,6 +52,7 @@ Each `/seek-verdict` returns a `[DISMISS_VERDICT]` audit trail. Map to thread cl
 | Verdict Result | Thread Grouping |
 |---------------|----------------|
 | `DISMISS_VERIFIED` | Likely Non-Actionable |
+| `DISMISS_CANDIDATE` | Needs Discussion (⚠️ Need Human — P0/P1 requires human confirmation) |
 | `FIX_REQUIRED` | ACTIONABLE |
 | `NEED_HUMAN` | Needs Discussion |
 
@@ -97,7 +98,7 @@ After all per-thread `/seek-verdict` invocations complete, the model must be abl
 | Required Field | Source |
 |---------------|--------|
 | Codex Thread ID | From each `/seek-verdict` Skill tool response |
-| Verdict | DISMISS_VERIFIED / FIX_REQUIRED / NEED_HUMAN |
+| Verdict | DISMISS_VERIFIED / DISMISS_CANDIDATE / FIX_REQUIRED / NEED_HUMAN |
 | Confidence | 0.0-1.0 from Codex |
 
 If this table cannot be filled, Step 2 was not executed. Return to Step 2 before proceeding.

@@ -296,7 +296,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-test-gen` | Generar tests unitarios | - |
 | `/codex-test-review` | Review de test coverage | `--continue <threadId>` |
 | `/codex-explain` | Explicar código complejo | - |
-| `/seek-verdict` | Verificación ciega de dismiss P2 | - |
+| `/seek-verdict` | Verificación independiente (dismiss/confirm/clarify) | - |
 
 ### Verificación
 

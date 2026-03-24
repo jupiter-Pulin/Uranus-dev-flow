@@ -1,24 +1,36 @@
 ---
 name: seek-verdict
-description: "Lightweight blind verification for P2 finding dismissal. Use when: Claude or user wants independent Codex verification before dismissing a P2 review finding. Triggers: dismiss verification, seek verdict, verify dismiss, P2 false positive check. Not for: P0/P1 (must fix), Nit (use [NIT_DEFERRED]), or general code review (use codex-code-review). Output: [DISMISS_VERDICT] audit trail with verdict, confidence, and evidence refs."
+description: "Independent second-opinion verification for any finding. Use when: Claude or user wants independent Codex verification of a review finding — dismiss (false positive check), confirm (does this issue exist?), or clarify (what's the impact?). Triggers: dismiss verification, seek verdict, verify dismiss, false positive check, second opinion, confirm finding, clarify impact. Not for: general code review (use codex-code-review), architecture debates (use codex-brainstorm). Output: [DISMISS_VERDICT] or [SEEK_VERDICT] audit trail with verdict, confidence, and evidence refs."
 ---
 
-# seek-verdict: Blind Verification for P2 Dismiss
+# seek-verdict: Independent Second-Opinion Verification
 
 ## When NOT to Use
 
 - General code review (use `/codex-review-fast`)
-- P0/P1 findings (must fix per `fix-all-issues.md`)
-- Nit findings (use `[NIT_DEFERRED]`)
 - Architecture debates (use `/codex-brainstorm`)
+- Nit findings with no dismiss intent (use `[NIT_DEFERRED]`)
 
-## Scope
+## Intent x Severity
 
-| Severity | Allowed | Mechanism |
-|----------|---------|-----------|
-| P0/P1 | No — must fix | `fix-all-issues.md` |
-| P2 | Yes | This skill |
-| Nit | No — use existing | `[NIT_DEFERRED]` |
+| Intent | Purpose | Eligible Severities | Output Token |
+|--------|---------|-------------------|-------------|
+| `dismiss` | Is this a false positive? | All (P0/P1/P2/Nit) | `[DISMISS_VERDICT]` |
+| `confirm` | Does this issue actually exist? | All | `[SEEK_VERDICT]` |
+| `clarify` | What's the actual impact? | All | `[SEEK_VERDICT]` |
+
+**Default intent**: `dismiss` (backward compatible with v1).
+
+### Dismiss Authorization
+
+| Severity | Authorization | Gate |
+|----------|-------------|------|
+| P0 | `DISMISS_CANDIDATE` | Human confirmation required |
+| P1 | `DISMISS_CANDIDATE` | Human confirmation required |
+| P2 | `DISMISS_VERIFIED` | Automated |
+| Nit | `DISMISS_VERIFIED` | Automated |
+
+P0/P1 dismiss produces a candidate, not a final authorization. See [Policy Mapping](references/policy-mapping.md) for human gate protocol.
 
 ## 3-Phase Protocol
 
@@ -28,14 +40,20 @@ sequenceDiagram
     participant S as seek-verdict
     participant X as Codex (fresh thread)
 
-    C->>S: Finding + dismiss intent
+    C->>S: Finding + intent + severity
     Note over S: Phase A: Candidate Packaging
     S->>S: Extract finding_packet<br/>(no Claude conclusions)
     S->>X: Phase B: Blind Independent Verdict
     Note over X: Independent research<br/>git status / grep / cat
     X-->>S: verdict + confidence + evidence
-    Note over S: Phase C: Policy Mapping
-    S-->>C: Result + audit log
+    Note over S: Phase C: Policy Mapping (intent x severity)
+    alt intent=dismiss + P2/Nit
+        S-->>C: DISMISS_VERIFIED / FIX_REQUIRED (automated)
+    else intent=dismiss + P0/P1
+        S-->>C: DISMISS_CANDIDATE + Need Human (human gate)
+    else intent=confirm/clarify
+        S-->>C: [SEEK_VERDICT] informational result
+    end
 ```
 
 ### Phase A: Candidate Packaging
@@ -45,13 +63,14 @@ Extract finding artifact from review output:
 | Field | Source |
 |-------|--------|
 | `finding_key` | `file + canonical_issue_text` |
-| `severity` | P2 |
+| `severity` | `<P0 \| P1 \| P2 \| Nit>` |
+| `intent` | `<dismiss \| confirm \| clarify>` |
 | `original_finding_text` | Codex review original (secrets redacted) |
 | `origin_thread_id` | Review session threadId |
 | `current_head_sha` | `git rev-parse HEAD` |
 | `relevant_diff` | `git diff HEAD -- <file>` |
 
-**Critical**: Record Claude's dismiss hypothesis locally. **Never send it to Codex.**
+**Critical**: Record Claude's hypothesis locally. **Never send it to Codex.**
 
 ### Phase B: Blind Independent Verdict
 
@@ -68,13 +87,13 @@ Use the prompt template in [Verdict Prompt](references/verdict-prompt.md).
 
 Apply thresholds from [Policy Mapping](references/policy-mapping.md).
 
-| Result | Condition | Next Action |
-|--------|-----------|-------------|
-| `DISMISS_VERIFIED` | NON_ACTIONABLE + confidence >= 0.80 + evidence >= 2 | Log `[DISMISS_VERDICT]`, continue |
-| `FIX_REQUIRED` | ACTIONABLE + confidence >= 0.70 | Return to fix loop |
-| `NEED_HUMAN` | UNCERTAIN or low confidence | Stop, escalate |
+**Dismiss intent**: graduated thresholds by severity (P0: 0.95/4, P1: 0.90/3, P2: 0.80/2, Nit: 0.70/1).
 
-Output `[DISMISS_VERDICT]` audit trail (format in `references/policy-mapping.md`).
+**Confirm intent**: ACTIONABLE->CONFIRMED, NON_ACTIONABLE->DISPUTED, low confidence->UNCERTAIN.
+
+**Clarify intent**: HIGH_IMPACT / LOW_IMPACT / UNCERTAIN.
+
+Output audit trail per [Policy Mapping](references/policy-mapping.md).
 
 ## Rebuttal
 
@@ -86,28 +105,38 @@ If Codex returns `FIX_REQUIRED` and Claude has objective counter-evidence:
 
 ## Anti-Abuse Guard
 
-See [Policy Mapping](references/policy-mapping.md) for thresholds and session scope.
+See [Policy Mapping](references/policy-mapping.md) for full rules.
 
-- 3 consecutive `DISMISS_VERIFIED` -> `[DISMISS_PATTERN_WARN]` + heightened thresholds
-- Session end or branch switch resets counter
+- **Dismiss**: 3 consecutive `DISMISS_VERIFIED` -> `[DISMISS_PATTERN_WARN]` + heightened thresholds
+- **Confirm/Clarify**: per-finding cap (1 confirm + 1 clarify per finding per commit)
+- Session end or branch switch resets all counters
 
 ## Output
 
+**Dismiss intent**:
+
 ```
-[DISMISS_VERDICT] key=<file|canonical_issue> | severity=P2 | verdict=<DISMISS_VERIFIED|FIX_REQUIRED|NEED_HUMAN> | confidence=<0..1> | codex_thread=<id> | evidence=<brief> | timestamp=<ISO8601>
+[DISMISS_VERDICT] key=<file|canonical_issue> | severity=<P0-Nit> | verdict=<DISMISS_VERIFIED|DISMISS_CANDIDATE|FIX_REQUIRED|NEED_HUMAN> | confidence=<0..1> | codex_thread=<id> | evidence=<brief> | timestamp=<ISO8601> | intent=dismiss | authorization=<automated|human-required|human-confirmed>
+```
+
+**Confirm/Clarify intent**:
+
+```
+[SEEK_VERDICT] key=<file|canonical_issue> | severity=<P0-Nit> | intent=<confirm|clarify> | verdict=<CONFIRMED|DISPUTED|HIGH_IMPACT|LOW_IMPACT|UNCERTAIN> | confidence=<0..1> | codex_thread=<id> | evidence=<brief> | timestamp=<ISO8601>
 ```
 
 ## Verification
 
-- [ ] Finding is P2 severity (P0/P1/Nit rejected)
+- [ ] Intent is valid (`dismiss` / `confirm` / `clarify`)
 - [ ] Codex prompt contains no Claude conclusions (anti-anchoring)
 - [ ] Fresh Codex thread used (not review session thread)
-- [ ] `[DISMISS_VERDICT]` audit trail output with all required fields
-- [ ] Anti-abuse streak tracked (warning at 3 consecutive dismissals)
+- [ ] Correct audit trail token output (`[DISMISS_VERDICT]` or `[SEEK_VERDICT]`)
+- [ ] P0/P1 dismiss produces `DISMISS_CANDIDATE` + human gate (never auto-dismiss)
+- [ ] Anti-abuse streak tracked (dismiss) / per-finding cap enforced (confirm/clarify)
 
 ## References
 
 | File | Purpose |
 |------|---------|
 | [Verdict Prompt](references/verdict-prompt.md) | Codex blind verification prompt template |
-| [Policy Mapping](references/policy-mapping.md) | Confidence thresholds, audit format, anti-abuse |
+| [Policy Mapping](references/policy-mapping.md) | Intent x severity thresholds, audit format, anti-abuse |

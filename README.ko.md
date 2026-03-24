@@ -296,7 +296,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-test-gen` | 유닛 테스트 생성 | - |
 | `/codex-test-review` | 테스트 커버리지 리뷰 | `--continue <threadId>` |
 | `/codex-explain` | 복잡한 코드 설명 | - |
-| `/seek-verdict` | P2 dismiss 블라인드 검증 | - |
+| `/seek-verdict` | 독립 검증 (dismiss/confirm/clarify) | - |
 
 ### 검증
 

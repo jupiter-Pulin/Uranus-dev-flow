@@ -296,7 +296,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-test-gen` | Generate unit tests | - |
 | `/codex-test-review` | Review test coverage | `--continue <threadId>` |
 | `/codex-explain` | Explain complex code | - |
-| `/seek-verdict` | P2 dismiss blind verification | - |
+| `/seek-verdict` | Independent finding verification (dismiss/confirm/clarify) | - |
 
 ### Verification
 

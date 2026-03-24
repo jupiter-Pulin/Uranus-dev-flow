@@ -14,7 +14,8 @@ mcp__codex__codex({
 
 \`\`\`
 finding_key: ${FINDING_KEY}
-severity: P2
+severity: ${SEVERITY}
+intent: ${INTENT}
 original_finding_text: ${ORIGINAL_FINDING_TEXT}
 origin_thread_id: ${ORIGIN_THREAD_ID}
 current_head_sha: ${CURRENT_HEAD_SHA}
@@ -74,7 +75,8 @@ Before calling Codex, extract the finding packet locally:
 ```
 finding_packet:
   finding_key: <file + canonical_issue_text>
-  severity: P2
+  severity: <P0 | P1 | P2 | Nit>
+  intent: <dismiss | confirm | clarify>
   original_finding_text: <Codex review original text (secrets redacted)>
   origin_thread_id: <review session threadId>
   current_head_sha: <git rev-parse HEAD>
