@@ -67,6 +67,18 @@ The changed files and diff stats are listed above. You **must** read the actual 
 - Appropriate abstraction level
 - Testability
 
+## Before Finalizing: Deliberate
+
+Wait. Before assigning severity levels, independently verify each finding:
+
+1. **Evidence check**: For each issue, what specific code proves it's real? (file:line quote)
+2. **Context check**: Did you read enough surrounding code to understand intent?
+3. **False positive check**: Could this be intentional design? Check for comments, tests, or docs.
+4. **Severity check**: Could any finding be more severe than your initial assessment?
+5. **Gap check**: What related issues might you have overlooked?
+
+Only report findings that survive all 5 checks.
+
 ## Severity Levels
 
 - **P0**: System crash, data loss, security vulnerability

@@ -103,6 +103,14 @@ Launch **two reviewers in parallel** (single message, multiple tool calls):
 
    Read the actual diffs and file contents yourself to perform the review.
 
+   Before reporting findings, independently verify each one:
+   1. Evidence check: what specific code proves it's real? (file:line)
+   2. Context check: did you read enough surrounding code?
+   3. False positive check: could it be intentional design?
+   4. Severity check: could it be more severe than initially assessed?
+   5. Gap check: what related issues might you have overlooked?
+   Only report findings that survive all 5 checks.
+
    Output findings in this format:
    - [P0/P1/P2/Nit] file:line issue description → fix recommendation
 
