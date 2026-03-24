@@ -1,5 +1,7 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **Language**: English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
 > AI can ship fast. But without guardrails, velocity is terrifying.
