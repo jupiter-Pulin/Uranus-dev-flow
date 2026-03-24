@@ -267,6 +267,20 @@ else
   fi
 fi
 
+# === Iteration hard cap check (schema v2) — takes priority over MISSING ===
+if [[ "$USE_STATE_FILE" == "true" && -f "$STATE_FILE" ]]; then
+  ITER_ROUND=$(echo "$STATE" | jq -r '.iteration_history.current_round // 0' 2>/dev/null || echo 0)
+  ITER_MAX=$(echo "$STATE" | jq -r '.iteration_history.max_rounds // 10' 2>/dev/null || echo 10)
+  if [[ "$ITER_ROUND" -ge "$ITER_MAX" ]] 2>/dev/null; then
+    # Hard cap: override MISSING — human intervention needed, not more review cycles
+    MISSING=""
+    BLOCKED_REASON="Max review rounds exceeded ($ITER_ROUND/$ITER_MAX) — needs human intervention"
+    if [[ "${HOOK_DEBUG:-}" == "1" ]]; then
+      echo "[Debug] Iteration hard cap: round=$ITER_ROUND, max=$ITER_MAX" >&2
+    fi
+  fi
+fi
+
 # === Output result ===
 if [[ -n "${MISSING:-}" ]]; then
   if [[ "$GUARD_MODE" == "strict" ]]; then
@@ -279,9 +293,14 @@ if [[ -n "${MISSING:-}" ]]; then
     exit 0
   fi
 elif [[ -n "${BLOCKED_REASON:-}" ]]; then
+  # Use cap-specific description when max rounds exceeded
+  BLOCK_DESC="Fix issues and re-run review immediately, do not stop"
+  if echo "${BLOCKED_REASON}" | grep -q "Max review rounds"; then
+    BLOCK_DESC="Max rounds reached; escalate to human, do not auto-retry"
+  fi
   if [[ "$GUARD_MODE" == "strict" ]]; then
     echo "[Stop Guard] STRICT: ${BLOCKED_REASON}" >&2
-    printf '{"ok":false,"reason":"%s","description":"Fix issues and re-run review immediately, do not stop"}\n' "${BLOCKED_REASON}"
+    printf '{"ok":false,"reason":"%s","description":"%s"}\n' "${BLOCKED_REASON}" "${BLOCK_DESC}"
     exit 2
   else
     echo "[Stop Guard] WARN: ${BLOCKED_REASON} (set STOP_GUARD_MODE=strict to block)" >&2

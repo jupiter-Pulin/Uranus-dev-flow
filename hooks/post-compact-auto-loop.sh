@@ -76,12 +76,21 @@ elif [[ "$HAS_DOC" == "true" && "$DOC_PASSED" != "true" ]]; then
   NEXT="/codex-review-doc"
 fi
 
+# Read iteration state (schema v2)
+ITER_ROUND=$(jq -r '.iteration_history.current_round // 0' "$STATE_FILE" 2>/dev/null || echo 0)
+ITER_MAX=$(jq -r '.iteration_history.max_rounds // 10' "$STATE_FILE" 2>/dev/null || echo 10)
+
 # Only inject if there is a pending step
 if [[ -n "$NEXT" ]]; then
+  ITER_LINE=""
+  if [[ "$ITER_ROUND" -gt 0 ]] 2>/dev/null; then
+    ITER_LINE="[ITERATION_STATE] round=${ITER_ROUND}/${ITER_MAX}"
+  fi
   cat <<EOF
 [AUTO_LOOP_RESUME]
 Context was compacted. Auto-loop state is still active.
-Required next step: ${NEXT}
+${ITER_LINE:+${ITER_LINE}
+}Required next step: ${NEXT}
 Core rules (re-injected):
 1) Declaring != Executing: saying "need to run X" without invoking the tool is a violation
 2) Summary != Completion: outputting a summary then stopping is a violation

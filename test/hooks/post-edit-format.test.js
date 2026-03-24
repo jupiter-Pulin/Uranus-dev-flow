@@ -126,6 +126,40 @@ if (query && query.includes('contains(')) {
   }
 }
 
+// Handle schema_version read (migration check)
+if (query && query.includes('schema_version // 1')) {
+  const ver = data.schema_version || 1;
+  process.stdout.write(String(ver));
+  process.exit(0);
+}
+
+// Handle has("iteration_history") check
+if (query && query.includes('has("iteration_history")')) {
+  const has = Object.prototype.hasOwnProperty.call(data, 'iteration_history');
+  process.stdout.write(has ? 'true' : 'false');
+  process.exit(has ? 0 : 1);
+}
+
+// Handle iteration reset: .iteration_history.current_round = 0 | .iteration_history.findings_by_round = []
+if (query && query.includes('iteration_history.current_round = 0')) {
+  if (data.iteration_history) {
+    data.iteration_history.current_round = 0;
+    data.iteration_history.findings_by_round = [];
+  }
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
+// Handle schema migration: .schema_version = 2 | .iteration_history //= {...}
+if (query && query.includes('schema_version = 2') && query.includes('iteration_history')) {
+  data.schema_version = 2;
+  if (!data.iteration_history) {
+    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [] };
+  }
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 process.stdout.write('');
 `;
   writeExecutable(join(binDir, 'jq'), stubJq);

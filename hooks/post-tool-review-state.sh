@@ -120,9 +120,26 @@ init_state_file() {
   "code_review": {"executed": false, "passed": false, "last_run": ""},
   "doc_review": {"executed": false, "passed": false, "last_run": ""},
   "precommit": {"executed": false, "passed": false, "last_run": ""},
-  "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""}
+  "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""},
+  "schema_version": 2,
+  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": []}
 }
 EOF
+  fi
+}
+
+# Migrate state file to schema v2 (add iteration_history if missing)
+_migrate_state_v2() {
+  local state_file="${1:-$STATE_FILE}"
+  [[ ! -f "$state_file" ]] && return 0
+  local ver
+  ver=$(jq -r '.schema_version // 1' "$state_file" 2>/dev/null || echo 1)
+  if [[ "$ver" -lt 2 ]]; then
+    local tmp
+    tmp=$(mktemp)
+    jq '.schema_version = 2
+      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": []}' \
+      "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }
 
@@ -161,6 +178,50 @@ update_state() {
        --arg now "$now" \
        '.[$key].executed = $executed | .[$key].passed = $passed | .[$key].last_run = $now | .updated_at = $now' \
        "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE" 2>/dev/null || true
+  fi
+}
+
+# Update iteration history (extract finding counts from review output)
+_update_iteration() {
+  local tool_output="$1"
+  local state_file="${2:-$STATE_FILE}"
+  [[ ! -f "$state_file" ]] && return 0
+
+  local p0_count p1_count p2_count nit_count total
+
+  # Dual-format parsing: tag-based [P0] AND section-based #### P0
+  # grep -c exits 1 on no match but still outputs "0"; use subshell to isolate
+  p0_count=$(echo "$tool_output" | grep -cE '^\- \[P0\]|^#### P0' 2>/dev/null) || p0_count=0
+  p1_count=$(echo "$tool_output" | grep -cE '^\- \[P1\]|^#### P1' 2>/dev/null) || p1_count=0
+  p2_count=$(echo "$tool_output" | grep -cE '^\- \[P2\]|^#### P2' 2>/dev/null) || p2_count=0
+  nit_count=$(echo "$tool_output" | grep -cE '^\- \[Nit\]|^#### Nit' 2>/dev/null) || nit_count=0
+  total=$((p0_count + p1_count + p2_count + nit_count))
+
+  local now tmp
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Acquire lock for state file write (consistent with update_state)
+  if _lock; then
+    _migrate_state_v2 "$state_file"
+    tmp=$(mktemp)
+    if jq --argjson total "$total" --argjson p0 "$p0_count" \
+       --argjson p1 "$p1_count" --argjson p2 "$p2_count" \
+       --argjson nit "$nit_count" --arg now "$now" \
+       '.iteration_history.current_round += 1 |
+        .iteration_history.findings_by_round += [{"round": (.iteration_history.current_round), "total": $total, "p0": $p0, "p1": $p1, "p2": $p2, "nit": $nit, "timestamp": $now}] |
+        .updated_at = $now' \
+       "$state_file" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+      mv "$tmp" "$state_file"
+      if [[ "${HOOK_DEBUG:-}" == "1" ]]; then
+        echo "[Review State] Iteration updated: total=$total (p0=$p0_count p1=$p1_count p2=$p2_count nit=$nit_count)" >&2
+      fi
+    else
+      rm -f "$tmp" 2>/dev/null
+      echo "[Review State] Iteration update skipped (jq write failed)" >&2
+    fi
+    _unlock
+  else
+    echo "[Review State] Iteration update skipped (lock contention)" >&2
   fi
 }
 
@@ -239,6 +300,7 @@ fi
 if echo "$COMMAND" | grep -qE '/(sd0x-dev-flow:)?codex-review(-fast)?($|\s)'; then
   passed=$(check_passed "$TOOL_OUTPUT")
   update_state "code_review" "true" "$passed"
+  _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
   echo "[Review State] code_review updated: passed=$passed" >&2
 fi
 
@@ -268,9 +330,11 @@ if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-
   # Priority 2: code-specific
   elif echo "$TOOL_OUTPUT" | grep -qE '✅ Ready'; then
     update_state "code_review" "true" "true"
+    _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
     echo "[Review State] code_review updated (MCP): passed=true" >&2
   elif echo "$TOOL_OUTPUT" | grep -qE '⛔ Blocked'; then
     update_state "code_review" "true" "false"
+    _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
     echo "[Review State] code_review updated (MCP): passed=false" >&2
   # Priority 3: precommit
   elif echo "$TOOL_OUTPUT" | grep -qE '## Overall: ✅ PASS'; then

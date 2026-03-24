@@ -30,6 +30,14 @@ Or use: /install-rules --customize auto-loop --add-section
 
 - ✅ All Pass
 - ⛔ Need Human — Architecture changes, feature removal, user requests stop
-- 🔄 3 rounds on same issue — Report blocker, request intervention
+- 🔄 max_rounds exceeded — Report blocker, request intervention
 
 -->
+
+## Max Rounds
+
+<!-- Override the default max_rounds for review iteration hard cap.
+     Default: 10 (from auto-loop.md). Set lower for faster feedback, higher for complex reviews.
+     This value is written to .claude_review_state.json on schema migration. -->
+
+<!-- max_rounds: 10 -->

@@ -205,6 +205,18 @@ if (query && query.includes('contains(')) {
   }
 }
 
+// Handle iteration_history fields (schema v2)
+if (query && query.includes('iteration_history.current_round')) {
+  const ih = data.iteration_history || {};
+  outputValue(String(ih.current_round != null ? ih.current_round : 0));
+  process.exit(0);
+}
+if (query && query.includes('iteration_history.max_rounds')) {
+  const ih = data.iteration_history || {};
+  outputValue(String(ih.max_rounds != null ? ih.max_rounds : 10));
+  process.exit(0);
+}
+
 // Handle env.STOP_GUARD_MODE // hooks_config.stop_guard_mode (mode resolution)
 if (query && (query.includes('env.STOP_GUARD_MODE') || query.includes('hooks_config.stop_guard_mode'))) {
   const envVal = (data.env && data.env.STOP_GUARD_MODE) || '';

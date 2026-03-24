@@ -80,7 +80,7 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 - ⛔ Need Human — Architecture changes, feature removal, user requests stop
 - ⚠️ Need Human — Feature docs not found (3-level fallback exhausted)
 - ⚠️ Need Human — P0/P1 dismiss candidate awaiting human confirmation (via `/seek-verdict`)
-- 🔄 3 rounds on same issue — Report blocker, request intervention
+- 🔄 `max_rounds` exceeded (default 10, configurable in `auto-loop-project.md`) — Report blocker, request intervention. State tracked in `.claude_review_state.json` `iteration_history.current_round`
 
 ## Correct Behavior
 

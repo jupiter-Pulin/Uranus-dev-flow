@@ -148,9 +148,26 @@ init_state_file() {
   "code_review": {"executed": false, "passed": false, "last_run": ""},
   "doc_review": {"executed": false, "passed": false, "last_run": ""},
   "precommit": {"executed": false, "passed": false, "last_run": ""},
-  "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""}
+  "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""},
+  "schema_version": 2,
+  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": []}
 }
 EOF
+  fi
+}
+
+# Migrate state file to schema v2 (add iteration_history if missing)
+_migrate_state_v2() {
+  local state_file="${1:-$STATE_FILE}"
+  [[ ! -f "$state_file" ]] && return 0
+  local ver
+  ver=$(jq -r '.schema_version // 1' "$state_file" 2>/dev/null || echo 1)
+  if [[ "$ver" -lt 2 ]]; then
+    local tmp
+    tmp=$(mktemp)
+    jq '.schema_version = 2
+      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": []}' \
+      "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }
 
@@ -206,11 +223,21 @@ if echo "$file_path" | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|k
     invalidate_review "code_review"
     invalidate_review "precommit"
     invalidate_aggregate_gate
+    # Reset iteration counter on code edit (new review cycle, graceful if schema v1)
+    if jq -e 'has("iteration_history")' "$STATE_FILE" >/dev/null 2>&1; then
+      _iter_tmp=$(mktemp)
+      if jq '.iteration_history.current_round = 0 | .iteration_history.findings_by_round = []' \
+        "$STATE_FILE" > "$_iter_tmp" 2>/dev/null && [[ -s "$_iter_tmp" ]]; then
+        mv "$_iter_tmp" "$STATE_FILE"
+      else
+        rm -f "$_iter_tmp" 2>/dev/null
+      fi
+    fi
     # Clear any stale sidecar marker (successful locked write supersedes prior lock-failure markers)
     rm -f "${STATE_FILE}.blocked" 2>/dev/null || true
     _unlock
     echo "[Edit Hook] Code change detected: $file_path" >&2
-    echo "[Edit Hook] Invalidated code_review + precommit + aggregate_gate" >&2
+    echo "[Edit Hook] Invalidated code_review + precommit + aggregate_gate + iteration reset" >&2
   else
     # Fail-closed: sidecar marker (atomic) + best-effort unlocked writes
     echo "edit_lock_contention" > "${STATE_FILE}.blocked" 2>/dev/null || true

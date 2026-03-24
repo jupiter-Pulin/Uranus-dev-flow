@@ -231,6 +231,36 @@ if (query && query.includes('contains(')) {
   }
 }
 
+// Handle schema_version read (migration check)
+if (query && query.includes('schema_version // 1')) {
+  const ver = data.schema_version || 1;
+  process.stdout.write(String(ver));
+  process.exit(0);
+}
+
+// Handle schema migration: .schema_version = 2 | .iteration_history //= {...}
+if (query && query.includes('schema_version = 2') && query.includes('iteration_history')) {
+  data.schema_version = 2;
+  if (!data.iteration_history) {
+    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [] };
+  }
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
+// Handle iteration update: .iteration_history.current_round += 1
+if (query && query.includes('iteration_history.current_round += 1')) {
+  if (!data.iteration_history) {
+    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [] };
+  }
+  data.iteration_history.current_round += 1;
+  const entry = { round: data.iteration_history.current_round, total: vars.total || 0, p0: vars.p0 || 0, p1: vars.p1 || 0, p2: vars.p2 || 0, nit: vars.nit || 0, timestamp: vars.now || '' };
+  data.iteration_history.findings_by_round.push(entry);
+  data.updated_at = vars.now || '';
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 process.stdout.write('');
 `;
   writeExecutable(join(binDir, 'jq'), stubJq);
