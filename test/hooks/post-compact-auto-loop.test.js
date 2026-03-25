@@ -65,6 +65,13 @@ if (query) {
     }
     process.exit(0);
   }
+  // Handle strategic_reset_fired write
+  if (query.includes('strategic_reset_fired = true')) {
+    if (!data.iteration_history) data.iteration_history = {};
+    data.iteration_history.strategic_reset_fired = true;
+    process.stdout.write(JSON.stringify(data));
+    process.exit(0);
+  }
   // Handle arbitration: .. | strings | select(contains("X"))
   const containsMatch = query.match(/contains\\("([^"]+)"\\)/);
   if (containsMatch) {
@@ -291,5 +298,242 @@ test('post-compact-auto-loop skips arbitration in dev mode (hooks.json at root)'
     result.stdout,
     /AUTO_LOOP_RESUME/,
     'should inject in dev mode (skip arbitration)'
+  );
+});
+
+// --- P1 regression: HTML comment markers must not trigger opt-in ---
+
+test('R9+R10 default template with HTML comments does NOT trigger features', () => {
+  const cwd = makeTempDir('sd0x-pc-comment-regression-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+    iteration_history: {
+      current_round: 3,
+      max_rounds: 10,
+      total_rounds_session: 8,
+      strategic_reset_fired: false,
+    },
+  });
+
+  // Create rules dir with default template (features inside HTML comments)
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n<!-- ## Git Memory: enabled -->\n\n<!-- ## Think Harder: enabled -->\n'
+  );
+
+  // Stub git commands
+  const gitStub = `#!/bin/bash
+case "$1" in
+  log) echo "abc1234 feat: add feature" ;;
+  diff) echo " src/main.ts | 5 ++" ;;
+  status) echo " M src/main.ts" ;;
+esac
+`;
+  writeExecutable(join(binDir, 'git'), gitStub);
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0);
+  assert.ok(
+    !result.stdout.includes('[GIT_CONTEXT]'),
+    'HTML-commented Git Memory should NOT trigger'
+  );
+  assert.ok(
+    !result.stdout.includes('[STRATEGIC_RESET]'),
+    'HTML-commented Think Harder should NOT trigger'
+  );
+});
+
+// --- R9: Git-as-memory ---
+
+test('R9 git context NOT injected when opt-in disabled', () => {
+  const cwd = makeTempDir('sd0x-pc-r9-disabled-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+  // No rules directory with "## Git Memory: enabled"
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.ok(
+    !result.stdout.includes('[GIT_CONTEXT]'),
+    'should NOT inject git context when disabled'
+  );
+});
+
+test('R9 git context injected when opt-in enabled', () => {
+  const cwd = makeTempDir('sd0x-pc-r9-enabled-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+
+  // Create rules dir with enabled marker
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n## Git Memory: enabled\n'
+  );
+
+  // Stub git commands
+  const gitStub = `#!/bin/bash
+case "$1" in
+  log) echo "abc1234 feat: add feature" ;;
+  diff) echo " src/main.ts | 5 ++" ;;
+  status) echo " M src/main.ts" ;;
+esac
+`;
+  writeExecutable(join(binDir, 'git'), gitStub);
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0);
+  assert.ok(
+    result.stdout.includes('[GIT_CONTEXT]'),
+    'should inject [GIT_CONTEXT] when enabled'
+  );
+});
+
+test('R9 git context filters secret files', () => {
+  const cwd = makeTempDir('sd0x-pc-r9-secrets-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n## Git Memory: enabled\n'
+  );
+
+  // Git stub with .env file in status
+  const gitStub = `#!/bin/bash
+case "$1" in
+  log) echo "abc1234 feat: add .env config" ;;
+  diff) echo "" ;;
+  status) echo " M .env" ;;
+esac
+`;
+  writeExecutable(join(binDir, 'git'), gitStub);
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0);
+  // The .env line should be filtered out by the secret filter
+  assert.ok(
+    !result.stdout.includes('.env'),
+    'should filter .env from git context output'
+  );
+});
+
+test('R9 git context fail-open when git unavailable', () => {
+  const cwd = makeTempDir('sd0x-pc-r9-nogit-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+  });
+
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n## Git Memory: enabled\n'
+  );
+
+  // Git stub that fails
+  writeExecutable(join(binDir, 'git'), '#!/bin/bash\nexit 1\n');
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0, 'should not crash when git fails');
+  assert.ok(
+    result.stdout.includes('[AUTO_LOOP_RESUME]'),
+    'should still output auto-loop resume'
+  );
+});
+
+// --- R10: Strategic Reset ---
+
+test('R10 strategic reset NOT injected when Think Harder disabled', () => {
+  const cwd = makeTempDir('sd0x-pc-r10-disabled-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+    iteration_history: {
+      current_round: 3,
+      max_rounds: 10,
+      total_rounds_session: 8,
+      strategic_reset_fired: false,
+    },
+  });
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.ok(
+    !result.stdout.includes('[STRATEGIC_RESET]'),
+    'should NOT inject strategic reset when disabled'
+  );
+});
+
+test('R10 strategic reset injected at threshold', () => {
+  const cwd = makeTempDir('sd0x-pc-r10-threshold-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+    iteration_history: {
+      current_round: 3,
+      max_rounds: 10,
+      total_rounds_session: 7,
+      strategic_reset_fired: false,
+    },
+  });
+
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n## Think Harder: enabled\n'
+  );
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0);
+  assert.ok(
+    result.stdout.includes('[STRATEGIC_RESET]'),
+    'should inject strategic reset at threshold (7 >= 10-3)'
+  );
+  assert.ok(
+    result.stdout.includes('Re-read original error'),
+    'should include checklist items'
+  );
+});
+
+test('R10 strategic reset fires only once', () => {
+  const cwd = makeTempDir('sd0x-pc-r10-once-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: true,
+    code_review: { passed: false },
+    iteration_history: {
+      current_round: 5,
+      max_rounds: 10,
+      total_rounds_session: 9,
+      strategic_reset_fired: true,
+    },
+  });
+
+  mkdirSync(join(cwd, 'rules'), { recursive: true });
+  writeFileSync(
+    join(cwd, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project\n\n## Think Harder: enabled\n'
+  );
+
+  const result = runHook({ cwd, binDir, env: { CLAUDE_PROJECT_DIR: cwd } });
+  assert.equal(result.status, 0);
+  assert.ok(
+    !result.stdout.includes('[STRATEGIC_RESET]'),
+    'should NOT inject strategic reset when already fired'
   );
 });

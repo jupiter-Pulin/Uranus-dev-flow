@@ -242,7 +242,7 @@ if (query && query.includes('schema_version // 1')) {
 if (query && query.includes('schema_version = 2') && query.includes('iteration_history')) {
   data.schema_version = 2;
   if (!data.iteration_history) {
-    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [] };
+    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [], total_rounds_session: 0, strategic_reset_fired: false };
   }
   process.stdout.write(JSON.stringify(data));
   process.exit(0);
@@ -251,9 +251,10 @@ if (query && query.includes('schema_version = 2') && query.includes('iteration_h
 // Handle iteration update: .iteration_history.current_round += 1
 if (query && query.includes('iteration_history.current_round += 1')) {
   if (!data.iteration_history) {
-    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [] };
+    data.iteration_history = { current_round: 0, max_rounds: 10, findings_by_round: [], total_rounds_session: 0, strategic_reset_fired: false };
   }
   data.iteration_history.current_round += 1;
+  data.iteration_history.total_rounds_session = (data.iteration_history.total_rounds_session || 0) + 1;
   const entry = { round: data.iteration_history.current_round, total: vars.total || 0, p0: vars.p0 || 0, p1: vars.p1 || 0, p2: vars.p2 || 0, nit: vars.nit || 0, timestamp: vars.now || '' };
   data.iteration_history.findings_by_round.push(entry);
   data.updated_at = vars.now || '';
@@ -1046,4 +1047,53 @@ test('arbitration: registered in settings.local.json defers', () => {
   });
   assert.equal(result.status, 0, 'should defer via settings.local.json');
   assert.equal(readState(workDir), null, 'should not create state when deferred');
+});
+
+// --- R10: total_rounds_session ---
+
+test('total_rounds_session increments on code review iteration', () => {
+  const workDir = makeTempDir('sd0x-post-tool-trs-');
+  const binDir = setupStubBin();
+
+  // Seed state with iteration_history including total_rounds_session
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      schema_version: 2,
+      has_code_change: true,
+      code_review: { executed: false, passed: false, last_run: '' },
+      doc_review: { executed: false, passed: false, last_run: '' },
+      precommit: { executed: false, passed: false, last_run: '' },
+      iteration_history: {
+        current_round: 0,
+        max_rounds: 10,
+        findings_by_round: [],
+        total_rounds_session: 0,
+        strategic_reset_fired: false,
+      },
+    })
+  );
+
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_output: '## Gate: ✅ Ready\n- [P2] Minor issue',
+    },
+    env: { CLAUDE_PROJECT_DIR: workDir },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.equal(
+    state.iteration_history.total_rounds_session,
+    1,
+    'total_rounds_session should increment to 1 after first review'
+  );
+  assert.equal(
+    state.iteration_history.current_round,
+    1,
+    'current_round should also increment to 1'
+  );
 });
