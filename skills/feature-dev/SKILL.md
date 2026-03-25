@@ -25,6 +25,8 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash, Skill, AskUserQuestion, mcp_
 
 This skill implements features but does **not** commit. `/precommit` is a quality gate only. To commit, the user must invoke `/smart-commit --execute` separately.
 
+<budget:token_budget>200000</budget:token_budget>
+
 ## Workflow
 
 ```

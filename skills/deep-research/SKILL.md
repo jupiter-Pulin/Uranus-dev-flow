@@ -39,6 +39,8 @@ allowed-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, Agent
 ❌ git add | git commit | git push — per @rules/git-workflow.md
 ```
 
+<budget:token_budget>200000</budget:token_budget>
+
 ## Workflow
 
 ```mermaid
