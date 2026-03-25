@@ -258,11 +258,13 @@ Write the report to a secure temp file via `mktemp`. This keeps the report outsi
 
 ```bash
 umask 077
-REPORT_PATH="$(mktemp "${TMPDIR:-/tmp}/security-audit-XXXXXX.md")"
-chmod 600 "$REPORT_PATH"
+REPORT_PATH="${TMPDIR:-/tmp}/security-audit-$(hostname -s)-$(date +%Y%m%d-%H%M%S).md"
+touch "$REPORT_PATH" && chmod 600 "$REPORT_PATH"
 # Write report content to $REPORT_PATH
 echo "Report saved to: $REPORT_PATH"
 ```
+
+Example output: `/tmp/security-audit-macbook-pro-20260325-143052.md`
 
 ### Severity Classification
 
