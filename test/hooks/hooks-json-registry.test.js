@@ -1,0 +1,50 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { resolve } = require('node:path');
+const { readFileSync } = require('node:fs');
+
+const hooksJsonPath = resolve(__dirname, '../../hooks/hooks.json');
+const hooksConfig = JSON.parse(readFileSync(hooksJsonPath, 'utf8'));
+
+test('hooks.json is valid JSON with hooks key', () => {
+  assert.ok(hooksConfig.hooks, 'should have hooks key');
+  assert.ok(hooksConfig.hooks.SessionStart, 'should have SessionStart entries');
+});
+
+test('namespace-hint SessionStart hook uses "startup|compact" matcher, not empty string', () => {
+  const sessionStartEntries = hooksConfig.hooks.SessionStart;
+  const namespaceHintEntry = sessionStartEntries.find(
+    (e) => e.hooks?.some((h) => h.command?.includes('namespace-hint'))
+  );
+
+  assert.ok(namespaceHintEntry, 'should have namespace-hint SessionStart entry');
+  assert.equal(
+    namespaceHintEntry.matcher,
+    'startup|compact',
+    'namespace-hint matcher must be "startup|compact" to inject namespace guidance on startup ' +
+    'and after compaction, but NOT on resume where CLAUDE_PLUGIN_ROOT may be unavailable'
+  );
+});
+
+test('post-compact-auto-loop SessionStart hook uses "compact" matcher', () => {
+  const sessionStartEntries = hooksConfig.hooks.SessionStart;
+  const compactEntry = sessionStartEntries.find(
+    (e) => e.hooks?.some((h) => h.command?.includes('post-compact-auto-loop'))
+  );
+
+  assert.ok(compactEntry, 'should have post-compact-auto-loop SessionStart entry');
+  assert.equal(compactEntry.matcher, 'compact', 'post-compact hook matcher must be "compact"');
+});
+
+test('no SessionStart hook uses empty matcher', () => {
+  const sessionStartEntries = hooksConfig.hooks.SessionStart;
+  const emptyMatcherEntries = sessionStartEntries.filter((e) => e.matcher === '');
+
+  assert.equal(
+    emptyMatcherEntries.length,
+    0,
+    'no SessionStart hook should use empty matcher "" — ' +
+    'each hook must specify explicit matcher (startup, compact, resume) ' +
+    'to avoid errors when CLAUDE_PLUGIN_ROOT is unavailable on non-startup events'
+  );
+});

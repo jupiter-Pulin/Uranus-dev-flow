@@ -141,7 +141,7 @@ exit 0  # Always non-blocking
 ```json
 "SessionStart": [
   {
-    "matcher": "",
+    "matcher": "startup|compact",
     "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/namespace-hint.sh"}]
   },
   {
@@ -202,7 +202,7 @@ printf '{"ok":false,"reason":"Missing required steps","description":"Execute imm
 | Unit | SessionStart compact hook: pending doc review → 輸出包含 `/codex-review-doc` | `test/hooks/post-compact-auto-loop.test.js` |
 | Unit | SessionStart compact hook: all passed → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
 | Unit | SessionStart compact hook: no state file → 無輸出 | `test/hooks/post-compact-auto-loop.test.js` |
-| Schema | hooks.json 包含 SessionStart compact entry | `test/hooks/hooks-json.test.js` |
+| Schema | hooks.json 包含 SessionStart compact entry | `test/hooks/hooks-json-registry.test.js` |
 | Content | settings.json 包含 strict mode | Inline assertion |
 
 ## 7. Open Questions
