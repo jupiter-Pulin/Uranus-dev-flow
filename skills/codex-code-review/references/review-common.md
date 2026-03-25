@@ -118,6 +118,18 @@ When a finding is verified via `/seek-verdict`, output:
 
 > Note: `[source: ...]` tag is required in dual review mode. In single-reviewer mode it may be omitted.
 
+## AC Coverage Format (Spec-Driven Review)
+
+When `SPEC_CHECKLIST` is injected (feature has request doc with ACs), review output includes:
+
+| AC | Status | Evidence |
+|----|--------|----------|
+| AC text | Status | file:line reference |
+
+**Status values**: ✅ Implemented, ⚠️ Partial, ❌ Missing, N/A (not applicable to this change)
+
+**Omitted when**: No feature detected, no request doc, or no AC section.
+
 ## Gate Sentinels
 
 Hook gate is emitted via `bash scripts/emit-review-gate.sh READY|BLOCKED` (outputs `REVIEW_GATE=<value>`, consumed by `post-tool-review-state.sh`).

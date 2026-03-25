@@ -53,6 +53,59 @@ Collect **metadata only** — Codex reads the actual diffs and file contents its
 
 Codex independently reads full diffs and file contents via `git diff HEAD -- <file>` + `cat` (per research instructions).
 
+### Step 1.5: Feature Context & AC Detection (Spec-Driven Review)
+
+Execute: `bash scripts/resolve-feature.sh` → parse JSON output.
+
+| Field | Use |
+|-------|-----|
+| `has_requests` | Gate: only proceed if true |
+| `docs_path` | Glob for request docs |
+| `confidence` | Require >= medium |
+
+If `has_requests=true` AND `confidence` in (high, medium):
+1. Glob `${docs_path}/requests/*.md`, sort descending, take latest
+2. Read latest request doc
+3. Extract `## Acceptance Criteria` section (parse `- [ ]` / `- [x]` items)
+4. Filter out quality-gate ACs matching: `/codex-review-fast`, `/codex-review-doc`, `/codex-review`, `/precommit`, `/precommit-fast`, `/pr-review`
+5. Cap: max 20 ACs (truncate with "... and N more" note)
+6. Build `SPEC_CHECKLIST` variable, set `REQUEST_DOC_PATH`
+
+Graceful degradation: resolve-feature fails / no requests / no AC section / parse error → `SPEC_CHECKLIST = null` (skip silently).
+
+### Step 1.6: Deferred Finding Context
+
+> **Prerequisite**: Requires R4 (Nit History Persistence) hook-side write path. Until R4 is deployed, `.claude_nit_history.json` will not exist and this step is a no-op (graceful degradation).
+
+Read `.claude_nit_history.json` (if exists):
+1. Filter `.deferred[]` entries where `last_seen + ttl_days` > now
+2. **Sanitize each entry** before injection (mandatory):
+   - `canonical_issue` <= 120 chars (truncate)
+   - Strip markdown control chars (`**`, backticks, `#`, `>`, `|`)
+   - No raw code snippets; only file:line references
+   - No secrets/tokens/passwords/API keys (per `rules/security.md`)
+   - Reject entries with shell metacharacters (`;`, `&`, `|`, backtick, `$(`)
+3. Format as `<deferred_context>` XML block (max 10 entries)
+4. Store in `DEFERRED_CONTEXT` variable
+
+Inject into all prompt variants after research instructions, before Review Dimensions:
+
+```
+${DEFERRED_CONTEXT ? DEFERRED_CONTEXT : ''}
+```
+
+Format:
+
+```xml
+<deferred_context>
+Previously deferred (do not re-report without new evidence):
+- [Nit] src/service.ts | naming convention (deferred 2x)
+- [P2] src/utils.ts | error handling pattern (deferred 1x)
+</deferred_context>
+```
+
+Graceful degradation: file missing / invalid JSON / no entries / sanitization failure → `DEFERRED_CONTEXT = null` (skip silently).
+
 ### Step 2: Pre-checks (Full variant only)
 
 ```bash

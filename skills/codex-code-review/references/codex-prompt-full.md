@@ -19,6 +19,19 @@ ${DIFF_STAT}
 
 ${FOCUS ? `## Focus Area\nPay special attention to: ${FOCUS}` : ''}
 
+${SPEC_CHECKLIST ? `## Specification Checklist
+
+The following acceptance criteria are defined for this feature (from ${REQUEST_DOC_PATH}):
+
+${SPEC_CHECKLIST}
+
+Verify each AC against the code changes:
+1. Is the AC satisfied by the implementation?
+2. Are there code patterns that contradict the spec?
+3. Are there untested edge cases for any AC?
+
+Include an AC Coverage section in your output.` : ''}
+
 ## ⚠️ Important: You must independently research the project ⚠️
 
 The changed files and diff stats are listed above. You **must** read the actual diffs and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
@@ -35,6 +48,8 @@ The changed files and diff stats are listed above. You **must** read the actual 
 3. Read full source for context: \`cat <source path> | head -200\`
 4. Search existing tests: \`ls test/unit/\` or \`grep -r "describe" test/ -l | head -5\`
 5. Read related tests for expected behavior: \`cat <test path> | head -100\`
+
+${DEFERRED_CONTEXT ? DEFERRED_CONTEXT : ''}
 
 ### Verification Focus
 - Do changes follow existing code style?
@@ -101,6 +116,12 @@ Only report findings that survive all 5 checks.
 
 ### Tests Recommendation
 - Suggested new test cases
+
+${SPEC_CHECKLIST ? `### AC Coverage
+
+| AC | Status | Evidence |
+|----|--------|----------|
+| <AC text> | ✅ Implemented / ⚠️ Partial / ❌ Missing / N/A | file:line |` : ''}
 
 ### Merge Gate
 - ✅ Ready: No P0/P1

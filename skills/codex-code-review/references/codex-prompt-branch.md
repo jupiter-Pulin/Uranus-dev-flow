@@ -19,6 +19,19 @@ ${CHANGED_FILES}
 ## Diff Stats
 ${DIFF_STAT}
 
+${SPEC_CHECKLIST ? `## Specification Checklist
+
+The following acceptance criteria are defined for this feature (from ${REQUEST_DOC_PATH}):
+
+${SPEC_CHECKLIST}
+
+Verify each AC against the code changes:
+1. Is the AC satisfied by the implementation?
+2. Are there code patterns that contradict the spec?
+3. Are there untested edge cases for any AC?
+
+Include an AC Coverage section in your output.` : ''}
+
 ## ⚠️ Important: You must independently research the project ⚠️
 
 The changed files and diff stats are listed above. You **must** read the actual diffs, commit history, and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
@@ -35,6 +48,8 @@ The changed files and diff stats are listed above. You **must** read the actual 
 3. Search related tests: \`ls test/unit/\` or \`grep -r "describe" test/ -l | head -5\`
 4. Understand module dependencies of changes: \`grep -r "import.*<module name>" . -l --include="*.ts" --include="*.js" | head -10\`
 5. Check for missing tests: compare changed files with test files
+
+${DEFERRED_CONTEXT ? DEFERRED_CONTEXT : ''}
 
 ### Verification Focus
 - What is the main purpose of this branch?
@@ -120,6 +135,12 @@ Only report findings that survive all 5 checks.
 ### Missing Items
 - Missing tests
 - Missing docs
+
+${SPEC_CHECKLIST ? `### AC Coverage
+
+| AC | Status | Evidence |
+|----|--------|----------|
+| <AC text> | ✅ Implemented / ⚠️ Partial / ❌ Missing / N/A | file:line |` : ''}
 
 ### Merge Gate
 - ✅ Ready: No P0/P1

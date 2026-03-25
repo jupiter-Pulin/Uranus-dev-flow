@@ -16,6 +16,19 @@ ${DIFF_STAT}
 
 ${FOCUS ? `## Focus Area\nPay special attention to: ${FOCUS}` : ''}
 
+${SPEC_CHECKLIST ? `## Specification Checklist
+
+The following acceptance criteria are defined for this feature (from ${REQUEST_DOC_PATH}):
+
+${SPEC_CHECKLIST}
+
+Verify each AC against the code changes:
+1. Is the AC satisfied by the implementation?
+2. Are there code patterns that contradict the spec?
+3. Are there untested edge cases for any AC?
+
+Include an AC Coverage section in your output.` : ''}
+
 ## ⚠️ Important: You must independently research the project ⚠️
 
 The changed files and diff stats are listed above. You **must** read the actual diffs and file contents yourself using your sandbox access. Do NOT expect a pre-provided diff — you are responsible for reading all changes in context.
@@ -30,6 +43,8 @@ The changed files and diff stats are listed above. You **must** read the actual 
 - Search called functions: \`grep -r "functionName" . -l --include="*.ts" --include="*.js" --include="*.md" | head -10\`
 - Read related files: \`cat <file-path> | head -100\`
 - Understand class definitions: \`grep -rA 20 "class ClassName" . --include="*.ts" --include="*.js"\`
+
+${DEFERRED_CONTEXT ? DEFERRED_CONTEXT : ''}
 
 ## Review Dimensions
 
@@ -64,6 +79,12 @@ Only report findings that survive all 5 checks.
 ### Findings
 
 - [P0/P1/P2/Nit] <file:line> <issue description> -> <fix recommendation>
+
+${SPEC_CHECKLIST ? `### AC Coverage
+
+| AC | Status | Evidence |
+|----|--------|----------|
+| <AC text> | ✅ Implemented / ⚠️ Partial / ❌ Missing / N/A | file:line |` : ''}
 
 ### Merge Gate
 
