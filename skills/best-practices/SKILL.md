@@ -1,6 +1,6 @@
 ---
 name: best-practices
-description: "Industry best practices audit. Researches best practices (via WebSearch or agent-browser), analyzes current implementation, then uses /codex-brainstorm adversarial debate to confirm alignment. Outputs gap analysis report. Use when: auditing against industry standards, checking compliance with best practices, benchmarking implementation quality. Not for: code review (use /codex-review), architecture design (use /codex-architect)."
+description: "Industry best practices research and audit. Researches best practices (via WebSearch or agent-browser), optionally analyzes current implementation, then uses /codex-brainstorm adversarial debate to confirm findings. Outputs research summary or gap analysis report. Use when: investigating best practices for a topic before design, auditing existing implementation against industry standards, planning features by collecting industry patterns, checking compliance with best practices, benchmarking implementation quality, or any question about 'what are the best practices for X'. Not for: code review (use /codex-review), architecture design (use /codex-architect)."
 allowed-tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__codex__codex, mcp__codex__codex-reply, Agent
 ---
 

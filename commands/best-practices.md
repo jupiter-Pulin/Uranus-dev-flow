@@ -1,5 +1,5 @@
 ---
-description: Industry best practices audit with adversarial debate.
+description: Industry best practices research and audit with adversarial debate. Use for investigating, planning, or auditing best practices.
 argument-hint: "<topic>" [--scope <directory>]
 allowed-tools: Read, Grep, Glob, WebSearch, WebFetch, mcp__codex__codex, mcp__codex__codex-reply, Agent
 ---
