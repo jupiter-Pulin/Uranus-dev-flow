@@ -28,7 +28,7 @@ Confidence degrades when research infrastructure is incomplete — the score can
 | 1 agent failed or no web tools | 0.9 | Partial coverage gap |
 | 2+ agents failed or code-only research | 0.75 | Significant degradation |
 
-**Edge case clarification**: "web tools available" means at least WebSearch OR agent-browser succeeded for at least one web-focused agent. If agent-browser is unavailable but WebSearch works, cap remains 1.0. If all web tools are unavailable but code agents succeed, cap is 0.9 (partial coverage gap in source diversity).
+**Edge case clarification**: "web tools available" means at least one tool in the web cascade (Priority 1-3: agent-browser, WebSearch, or WebFetch) succeeded for at least one web-focused agent. If agent-browser is unavailable but WebSearch or WebFetch works, cap remains 1.0. If all web tools are unavailable (cascade exhausted at Priority 4) but code agents succeed, cap is 0.9 (partial coverage gap in source diversity).
 
 ## Phase 3 Trigger Thresholds
 

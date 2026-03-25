@@ -61,7 +61,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/load-pr-review` | Load PR review comments into session | Development |
 | `/pr-comment` | Post review comments to PR | Development |
 | `/deep-explore` | Multi-wave parallel code exploration | Understanding |
-| `/deep-research` | Multi-agent deep research orchestration | Understanding |
+| `/deep-research` | Universal multi-source research orchestration | Understanding |
 | `/code-explore` | Code exploration | Understanding |
 | `/code-investigate` | Dual-perspective code investigation | Understanding |
 | `/git-investigate` | Track code history | Finding source |
@@ -88,7 +88,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/check-coverage` | Test coverage analysis | Quality |
 | `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) | Quality |
 | `/project-audit` | Project health audit with scoring | Quality |
-| `/best-practices` | Industry best practices audit | Quality |
+| `/best-practices` | Industry best practices conformance audit | Quality |
 | `/dep-audit` | Dependency vulnerability audit | Periodic / PR |
 | `/generate-runner` | Generate customized precommit runner | Tooling |
 | `/update-docs` | Sync docs with code | Doc changes |
