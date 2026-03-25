@@ -9,8 +9,10 @@
   3. Unified claim registry（URL + file:line evidence）
   4. 4-Signal completeness scoring
   5. Conditional adversarial debate（composable via `/codex-brainstorm`）
+  6. **Universal research entry point**（v1.1）— 任何研究意圖皆可觸發，soft routing preference 取代 hard exclusion
 - **Scope**:
   - v1: pipeline + roles + claim registry + scoring + conditional debate + mode system
+  - v1.1: trigger redesign — universal entry, soft routing, expanded keywords, Phase 0 suggestion
   - v2 (deferred): cross-session learning, custom tool plugins, streaming progress UI
 
 ## 2. Existing Code Analysis
@@ -35,7 +37,7 @@
 - **Debate lifecycle**: `codex-brainstorm` Nash equilibrium + termination conditions
 - **Confidence cap**: `deep-explore/synthesis.md` degradation model (1.0 / 0.9 / 0.75)
 
-### Files to Create
+### Files Created (v1, completed)
 
 | File | Purpose |
 |------|---------|
@@ -46,13 +48,15 @@
 | `commands/deep-research.md` | Command entry point |
 | `test/commands/deep-research.test.js` | Tests |
 
-### Files to Modify
+### Files to Modify (v1.1 trigger redesign)
 
 | File | Change |
 |------|--------|
-| `CLAUDE.template.md` | Command Quick Reference 加入 `/deep-research` |
-| `CLAUDE.md` | Command Quick Reference 加入 `/deep-research` |
-| `.claude/CLAUDE.md` | Command Quick Reference 加入 `/deep-research` |
+| `skills/deep-research/SKILL.md` | description field + Trigger + "When NOT to Use" + Phase 0 suggestion |
+| `commands/deep-research.md` | description sync |
+| `CLAUDE.template.md` | 確認 `/deep-research` description 一致 |
+| `CLAUDE.md` | 確認 `/deep-research` description 一致 |
+| `.claude/CLAUDE.md` | 確認 `/deep-research` description 一致 |
 
 ## 3. Technical Solution
 
@@ -65,7 +69,7 @@ flowchart TD
     MODE --> |exploratory| R[Phase 1: Parallel Research]
     MODE --> |compliance| R
     MODE --> |decision| R
-    R --> |2-3 researcher agents| A1[Researcher: Web/Official]
+    R --> |1-3 researcher agents| A1[Researcher: Web/Official]
     R --> |background| A2[Researcher: Code/Impl]
     R --> |background| A3[Researcher: Community/Cases]
     A1 --> S[Phase 2: Synthesis + GapDetect]
@@ -127,9 +131,20 @@ sequenceDiagram
 | `<topic>` | Required | Research topic/question |
 | `--mode` | `exploratory` | `exploratory` / `compliance` / `decision` |
 | `--debate` | `auto` | `auto` / `force` / `off` |
-| `--agents` | `3` | Number of researcher agents (2-3) |
+| `--agents` | `3` | Number of researcher agents (1-3; 1 = sequential inline) |
 | `--scope` | project root | Limit codebase research to path |
 | `--budget` | `medium` | Token budget: `low` (1 agent) / `medium` (2-3) / `high` (3 + debate) |
+
+**Argument validation** (v1.1):
+
+| Argument | Validation | Error Behavior |
+|----------|-----------|---------------|
+| `<topic>` | Non-empty; untrusted input — never interpolate as executable | Gate: Need Human if empty |
+| `--mode` | Enum: `exploratory` / `compliance` / `decision` | Default to `exploratory` |
+| `--debate` | Enum: `auto` / `force` / `off` | Default to `auto` |
+| `--agents` | Integer 1-3 | Clamp to [1, 3] |
+| `--scope` | Repo-relative; reject `..`, absolute paths, symlinks | Error message |
+| `--budget` | Enum: `low` / `medium` / `high` | Default to `medium` |
 
 **Intent classification**:
 
@@ -139,6 +154,30 @@ Topic analysis → classify intent:
   - compliance: "Are we following best practices for X?"
   - decision: "Should we use X or Y?"
 ```
+
+**Specialized skill suggestion** (v1.1, advisory, non-blocking):
+
+After intent classification, if Phase 0 detects a narrow single-dimension intent, output a suggestion but always continue:
+
+| Detected Pattern | Suggestion |
+|-----------------|------------|
+| "best practices" + "audit" + no other dimension | Consider `/best-practices` for structured 4-phase audit. Continuing with broad research... |
+| "compare X vs Y" + exactly 2-3 named options | Consider `/feasibility-study` for quantified comparison. Continuing with broad research... |
+| code-only keywords + no web research intent | Consider `/deep-explore` for code-only exploration. Continuing with broad research... |
+
+The suggestion is informational — Phase 1 always proceeds. See `requests/2026-03-25-universal-research-entry.md` for design rationale.
+
+**Auto-budget downgrade** (v1.1, cost safety):
+
+When Phase 0 detects narrow single-dimension intent AND user did not explicitly set `--budget`:
+
+| Detected Intent | Auto Downgrade | Rationale |
+|----------------|---------------|-----------|
+| Single-dimension (code-only, audit-only, ranking-only) | `--budget low` (1 agent, no debate) | Avoid unnecessary multi-agent cost |
+| Broad/mixed/ambiguous | Keep default `--budget medium` | Full pipeline warranted |
+| User explicitly set `--budget` | Respect user choice | User override takes priority |
+
+**Precedence**: `--mode` constraints > user explicit flags > auto-routing hints. Example: `--mode compliance` forces debate regardless of auto-downgrade to `--budget low`.
 
 **Shard planning**:
 
@@ -387,7 +426,7 @@ See §3.5 for scoring model.
 | `<topic>` | Required | Research question |
 | `--mode` | `exploratory` | `exploratory` / `compliance` / `decision` |
 | `--debate` | `auto` | `auto` / `force` / `off` |
-| `--agents` | `3` | Researcher count (2-3) |
+| `--agents` | `3` | Researcher count (1-3; 1 = sequential inline) |
 | `--scope` | project root | Codebase research scope |
 | `--budget` | `medium` | Token budget level |
 
@@ -460,6 +499,8 @@ See §3.5 for scoring model.
 
 ## 5. Work Breakdown
 
+### v1 (completed)
+
 | # | Task | Effort | Output |
 |---|------|--------|--------|
 | 1 | Create `skills/deep-research/SKILL.md` | L | Skill definition with 4-phase workflow |
@@ -469,6 +510,15 @@ See §3.5 for scoring model.
 | 5 | Create `commands/deep-research.md` | S | Command entry point |
 | 6 | Create `test/commands/deep-research.test.js` | S | Schema + content tests |
 | 7 | Update CLAUDE.md command tables (3 files) | S | +1 line each |
+
+### v1.1 (trigger redesign)
+
+| # | Task | Effort | Output |
+|---|------|--------|--------|
+| 8 | Update `skills/deep-research/SKILL.md` description + trigger + "When NOT to Use" | S | Universal entry description |
+| 9 | Add Phase 0 suggestion + auto-budget-downgrade + argument validation | S | Cost safety + input safety |
+| 10 | Sync `commands/deep-research.md` description | S | Consistent description |
+| 11 | Verify CLAUDE.md consistency (3 files) | S | Confirm description alignment |
 
 ## 6. Testing Strategy
 
@@ -487,5 +537,5 @@ See §3.5 for scoring model.
 | # | Question | Impact | 建議 |
 |---|----------|--------|------|
 | 1 | 是否需要 `--output <file>` 將報告寫入檔案？ | UX | v2 考慮，v1 輸出到 conversation |
-| 2 | Compliance mode 是否應直接呼叫 `/best-practices` 而非自己做 web research？ | Architecture | 建議 v1 共用 web cascade，v2 考慮 skill delegation |
+| 2 | Compliance mode 是否應直接呼叫 `/best-practices` 而非自己做 web research？ | Architecture | v1 共用 web cascade；v1.1 Phase 0 advisory suggestion 解決此問題（建議但不阻擋）|
 | 3 | 是否需要 `--previous` flag 比較上次 research 結果？ | Cross-session | Defer to v2 |

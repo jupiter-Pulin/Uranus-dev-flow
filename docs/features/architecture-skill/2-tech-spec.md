@@ -115,6 +115,7 @@ Launch research tracks in parallel:
 | C: Codex design advice | `mcp__codex__codex` | Feature context + Track A/B results | Independent architecture recommendations | After A+B | Proceed without (degraded) |
 
 **Track A: Code pattern analysis**
+
 ```
 Agent({
   description: "Analyze existing architecture patterns",
