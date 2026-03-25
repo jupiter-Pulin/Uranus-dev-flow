@@ -1,7 +1,7 @@
 # Wait Prompt Deliberation
 
 > **Created**: 2026-03-24
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [Auto-Loop Evolution](../2-tech-spec.md) Section 3.3 T2
 
@@ -34,19 +34,19 @@ LLM self-correction has a 64.5% blind spot rate (Self-Correction Bench, arXiv 25
 
 ## Acceptance Criteria
 
-- [ ] Deliberation block added to all 3 review prompt variants (fast, full, branch)
-- [ ] Deliberation block added to secondary reviewer prompt in SKILL.md
-- [ ] Block placed between Review Dimensions and Severity section
-- [ ] Block includes 5 verification checks (evidence, context, false positive, severity, gap)
-- [ ] Token overhead measured and documented (target: ~95 tokens)
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] Deliberation block added to all 3 review prompt variants (fast, full, branch)
+- [x] Deliberation block added to secondary reviewer prompt in SKILL.md
+- [x] Block placed between Review Dimensions and Severity section
+- [x] Block includes 5 verification checks (evidence, context, false positive, severity, gap)
+- [x] Token overhead measured and documented (target: ~95 tokens)
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Deep Research + Tech Spec completed |
-| Development | - | |
-| Testing | - | Manual A/B test on 5 PRs planned |
-| Acceptance | - | |
+| Development | Done | Commit `883c6d4` |
+| Testing | Done | Codex review ✅ + precommit ✅ + CI ✅ |
+| Acceptance | Done | All 7/7 AC checked |

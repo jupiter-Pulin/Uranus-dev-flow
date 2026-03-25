@@ -1,7 +1,7 @@
 # Spec-Driven AC Injection into Code Review
 
 > **Created**: 2026-03-24
-> **Status**: Pending
+> **Status**: Completed
 > **Priority**: P2
 > **Tech Spec**: [Auto-Loop Evolution](../2-tech-spec.md) Section 3.3 T3
 
@@ -39,20 +39,20 @@ Code review currently operates in "archaeological" mode — inferring intent fro
 
 ## Acceptance Criteria
 
-- [ ] Feature context resolved via `resolve-feature.sh` during code review
-- [ ] AC parsed from `## Acceptance Criteria` with quality-gate filter
-- [ ] `## Specification Checklist` injected into review prompt (when AC available)
-- [ ] Review output includes `## AC Coverage` table mapping AC to implementation status
-- [ ] Graceful degradation: no request doc / no AC section = skip silently
-- [ ] Token budget: AC injection bounded by tech-spec-defined cap (resolve open question before implementation)
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] Feature context resolved via `resolve-feature.sh` during code review
+- [x] AC parsed from `## Acceptance Criteria` with quality-gate filter
+- [x] `## Specification Checklist` injected into review prompt (when AC available)
+- [x] Review output includes `## AC Coverage` table mapping AC to implementation status
+- [x] Graceful degradation: no request doc / no AC section = skip silently
+- [x] Token budget: AC injection bounded by tech-spec-defined cap (max 20 ACs)
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Deep Research + Tech Spec completed |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Development | Done | Commit `bbf138c` |
+| Testing | Done | 36 contract tests + Codex ✅ + precommit ✅ + CI ✅ |
+| Acceptance | Done | All 8/8 AC checked |
