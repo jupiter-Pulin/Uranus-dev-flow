@@ -1,7 +1,7 @@
 ---
 name: watch-ci
 description: "Monitor GitHub Actions CI runs until completion. Use when: watching CI after push, checking build status, monitoring PR checks, waiting for CI completion, user says 'watch CI', 'check CI', 'CI status', 'monitor build', or /watch-ci. Not for: pushing code (use push-ci), creating PRs (use create-pr). Output: per-run verdict (pass/fail/timeout)."
-allowed-tools: Bash(gh:*), Bash(git:*)
+allowed-tools: Bash(gh:*), Bash(git:*), Read
 context: fork
 ---
 
@@ -61,14 +61,18 @@ For each matching run, monitor with `gh run watch`:
 gh run watch <run-id> --exit-status
 ```
 
-**Execution mode**: `gh run watch` is a long-running blocking command. To avoid locking Claude while CI runs:
+**Execution mode**: `gh run watch` is a long-running blocking command. Background mode is the default to keep the conversation responsive.
 
 | Mode | When | Behavior |
 |------|------|----------|
-| Background (default) | No `--foreground` flag | Use Bash `run_in_background: true`. Claude notifies user that monitoring started, then continues. On task completion notification, read output via `TaskOutput` and report verdict. |
-| Foreground | `--foreground` flag passed | Execute inline (blocking). Claude waits for completion before responding. |
+| Background (default) | No `--foreground` flag | Use Bash `run_in_background: true`. Report monitoring started, **then end the turn immediately** so the user can continue other work. When the background task notification arrives, read output and report verdict. |
+| Foreground | `--foreground` flag passed | Execute inline (blocking). Claude waits for completion before responding. Only use when the caller explicitly needs to block on CI result. |
 
-**Background mode details**: After launching `gh run watch` in background, immediately inform the user (e.g. "CI monitoring started for run `<id>`, I'll report when it completes"). When the background task notification arrives, use `TaskOutput` to read the result and emit the verdict.
+**Background mode (default) — critical behavior**:
+1. Launch each `gh run watch` with `run_in_background: true`
+2. Immediately inform the user: "CI monitoring started for run `<id>`, I'll report when it completes"
+3. **End the current turn** — do NOT wait for the background tasks. The user can continue chatting, ask questions, or start new tasks while CI runs.
+4. When each background task notification arrives, read the output file (from the task notification's `output_file` path) using Read tool, then parse `gh run watch` output for pass/fail status and emit the verdict.
 
 **Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), monitor all. In background mode, launch each as a separate background task. Report verdict for each individually.
 
@@ -121,14 +125,17 @@ Overall verdict = worst individual result (any fail → overall fail).
 
 ```
 Input: /watch-ci
-Action: Auto-detect HEAD SHA → find matching runs → watch → verdict
+Action: Auto-detect HEAD SHA → find matching runs → launch background watch → "CI monitoring started, I'll report when it completes" → end turn → (user continues chatting) → background completes → read output → report verdict
 
 Input: /watch-ci --sha abc1234
-Action: Find runs for specified SHA → watch → verdict
+Action: Find runs for specified SHA → background watch → verdict on completion
 
 Input: /watch-ci --run-id 12345678
-Action: Watch specific run → verdict
+Action: Watch specific run in background → verdict on completion
+
+Input: /watch-ci --foreground
+Action: Auto-detect → find runs → blocking watch → verdict (user waits)
 
 Input: Is CI passing?
-Action: Auto-detect → find runs → watch → verdict
+Action: Auto-detect → find runs → background watch → verdict
 ```

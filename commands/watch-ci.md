@@ -1,7 +1,7 @@
 ---
 description: Monitor GitHub Actions CI runs for current HEAD or specified SHA
 argument-hint: [--sha <sha>] [--branch <branch>] [--timeout <min>] [--run-id <id>] [--foreground]
-allowed-tools: Bash(gh:*), Bash(git:*)
+allowed-tools: Bash(gh:*), Bash(git:*), Read
 ---
 
 **Must read and follow the skill below before executing this command:**
