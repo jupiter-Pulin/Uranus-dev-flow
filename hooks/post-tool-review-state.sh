@@ -126,7 +126,7 @@ init_state_file() {
   "precommit": {"executed": false, "passed": false, "last_run": ""},
   "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""},
   "schema_version": 2,
-  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": []}
+  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}
 }
 EOF
   fi
@@ -142,7 +142,7 @@ _migrate_state_v2() {
     local tmp
     tmp=$(mktemp)
     jq '.schema_version = 2
-      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": []}' \
+      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
       "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }
@@ -212,6 +212,7 @@ _update_iteration() {
        --argjson p1 "$p1_count" --argjson p2 "$p2_count" \
        --argjson nit "$nit_count" --arg now "$now" \
        '.iteration_history.current_round += 1 |
+        .iteration_history.total_rounds_session = ((.iteration_history.total_rounds_session // 0) + 1) |
         .iteration_history.findings_by_round += [{"round": (.iteration_history.current_round), "total": $total, "p0": $p0, "p1": $p1, "p2": $p2, "nit": $nit, "timestamp": $now}] |
         .updated_at = $now' \
        "$state_file" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then

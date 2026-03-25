@@ -45,6 +45,8 @@ Check for N+1 queries, memory leaks, blocking operations, and caching issues.`
 
 > **MECE boundary**: `/best-practices` produces a **conformance judgment** (verdict + gap + debate proof). `/deep-research` produces a **discovery synthesis** (claim registry + coverage matrix + score). "What are best approaches for X?" -> `/deep-research`. "Does our code follow best practices for X?" -> `/best-practices`.
 
+<budget:token_budget>200000</budget:token_budget>
+
 ## Workflow
 
 ```mermaid

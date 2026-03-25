@@ -150,7 +150,7 @@ init_state_file() {
   "precommit": {"executed": false, "passed": false, "last_run": ""},
   "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""},
   "schema_version": 2,
-  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": []}
+  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}
 }
 EOF
   fi
@@ -166,7 +166,7 @@ _migrate_state_v2() {
     local tmp
     tmp=$(mktemp)
     jq '.schema_version = 2
-      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": []}' \
+      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
       "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }

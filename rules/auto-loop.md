@@ -13,6 +13,9 @@
 ❌ **Declaring as executing**: Saying "need to run X" without actually invoking the tool
 ❌ **Summary as completion**: Outputting a polished summary then stopping, without executing the next step
 ❌ **Context/token excuse**: Citing context window limits, long session, or token budget as reason to skip or defer review. If context is genuinely exhausted, the model must still attempt the review — failure to invoke is a violation regardless of reason. See @rules/context-management.md for measurement-based context policy.
+❌ **Polished summary during active loop**: Outputting a completion-style summary (table, checklist, "all done" language) while fix-review-precommit cycle is still active. Brief operational status lines ("Fixed 3 issues, running review...") are allowed; terminal summaries are not until all gates pass.
+
+> **Token budget advisory**: `<budget:token_budget>` tags in skill definitions are planning signals only. They never justify stopping, skipping review, or deferring auto-loop obligations. See @rules/context-management.md for full context policy.
 
 ## Auto-Trigger
 
@@ -81,6 +84,16 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 - ⚠️ Need Human — Feature docs not found (3-level fallback exhausted)
 - ⚠️ Need Human — P0/P1 dismiss candidate awaiting human confirmation (via `/seek-verdict`)
 - 🔄 `max_rounds` exceeded (default 10, configurable in `auto-loop-project.md`) — Report blocker, request intervention. State tracked in `.claude_review_state.json` `iteration_history.current_round`
+
+## Strategic Reset (opt-in, near-cap)
+
+When `total_rounds_session >= max_rounds - 3` and `strategic_reset_fired = false`, the post-compact hook injects a `[STRATEGIC_RESET]` checklist. This fires once per state-file lifetime (reset when the state file is recreated).
+
+Enable via `auto-loop-project.md`: `## Think Harder: enabled`
+
+The checklist prompts re-reading original requirements, challenging assumptions, and trying fundamentally different approaches before escalating at max_rounds.
+
+`total_rounds_session` is incremented on every review iteration (in `_update_iteration()`) and is **never** reset on code edits (unlike `current_round`). This ensures the strategic reset fires based on cumulative effort, not per-cycle effort.
 
 ## Correct Behavior
 

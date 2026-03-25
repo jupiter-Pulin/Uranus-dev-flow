@@ -86,10 +86,41 @@ if [[ -n "$NEXT" ]]; then
   if [[ "$ITER_ROUND" -gt 0 ]] 2>/dev/null; then
     ITER_LINE="[ITERATION_STATE] round=${ITER_ROUND}/${ITER_MAX}"
   fi
+
+  # R10: Think harder near-cap (opt-in)
+  THINK_HARDER=""
+  _PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+  _TH_ENABLED="false"
+  for _rf in "${_PROJECT_DIR}/rules/auto-loop-project.md" \
+             "${_PROJECT_DIR}/.claude/rules/auto-loop-project.md"; do
+    if grep -v '<!--' "$_rf" 2>/dev/null | grep -q '## Think Harder: enabled'; then
+      _TH_ENABLED="true"; break
+    fi
+  done
+
+  if [[ "$_TH_ENABLED" == "true" ]]; then
+    TOTAL_SESSION=$(jq -r '.iteration_history.total_rounds_session // 0' "$STATE_FILE" 2>/dev/null || echo 0)
+    RESET_FIRED=$(jq -r '.iteration_history.strategic_reset_fired // false' "$STATE_FILE" 2>/dev/null || echo false)
+    THRESHOLD=$(( ${ITER_MAX:-10} - 3 ))
+    [[ "$THRESHOLD" -lt 1 ]] && THRESHOLD=1
+    if [[ "$TOTAL_SESSION" -ge "$THRESHOLD" ]] && [[ "$RESET_FIRED" != "true" ]]; then
+      THINK_HARDER="[STRATEGIC_RESET] Approaching iteration cap (${TOTAL_SESSION}/${ITER_MAX}). Before escalating:
+1) Re-read original error/requirement from conversation start
+2) Challenge current assumption — what if the opposite is true?
+3) Search for similar patterns: grep -r \"keyword\" --include=\"*.ts\" -l
+4) Try fundamentally different approach (not incremental fix)
+5) If still blocked after reset, escalate at max_rounds"
+      # Mark as fired (write to state file)
+      jq '.iteration_history.strategic_reset_fired = true' "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null \
+        && mv "${STATE_FILE}.tmp" "$STATE_FILE" 2>/dev/null || true
+    fi
+  fi
+
   cat <<EOF
 [AUTO_LOOP_RESUME]
 Context was compacted. Auto-loop state is still active.
 ${ITER_LINE:+${ITER_LINE}
+}${THINK_HARDER:+${THINK_HARDER}
 }Required next step: ${NEXT}
 Core rules (re-injected):
 1) Declaring != Executing: saying "need to run X" without invoking the tool is a violation
@@ -97,6 +128,30 @@ Core rules (re-injected):
 3) Execute review in same reply after edit — do not stop, do not ask
 Do not ask "should I continue" — execute ${NEXT} now.
 EOF
+
+  # R9: Git-as-memory injection (opt-in)
+  _GIT_MEM_ENABLED="false"
+  for _rf in "${_PROJECT_DIR}/rules/auto-loop-project.md" \
+             "${_PROJECT_DIR}/.claude/rules/auto-loop-project.md"; do
+    if grep -v '<!--' "$_rf" 2>/dev/null | grep -q '## Git Memory: enabled'; then
+      _GIT_MEM_ENABLED="true"; break
+    fi
+  done
+
+  if [[ "$_GIT_MEM_ENABLED" == "true" ]]; then
+    _FILTER='grep -v -iE "\.(env|pem|key|secret)|credential|token"'
+    _GL=$(git log --oneline --no-merges -5 2>/dev/null | eval "$_FILTER" | head -10) || true
+    _GD=$(git diff --stat 2>/dev/null | eval "$_FILTER" | head -15) || true
+    _GS=$(git status --short 2>/dev/null | eval "$_FILTER" | head -15) || true
+    _GB=""
+    [[ -n "$_GL" ]] && _GB+="Recent commits:\n${_GL}\n"
+    [[ -n "$_GD" ]] && _GB+="Uncommitted changes:\n${_GD}\n"
+    [[ -n "$_GS" ]] && _GB+="Working tree:\n${_GS}\n"
+    if [[ -n "$_GB" ]]; then
+      echo "[GIT_CONTEXT]"
+      echo -e "$_GB" | head -40
+    fi
+  fi
 fi
 
 exit 0

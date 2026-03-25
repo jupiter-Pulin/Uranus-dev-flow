@@ -41,3 +41,20 @@ Or use: /install-rules --customize auto-loop --add-section
      This value is written to .claude_review_state.json on schema migration. -->
 
 <!-- max_rounds: 10 -->
+
+## Git Memory
+
+<!-- Set to "enabled" to inject git context (log/diff/status) after compaction.
+     Helps recover working context when the session is compacted.
+     Basic pattern filtering (.env, .pem, .key, .secret, credential, token), 40-line cap.
+     Not a comprehensive secret scanner — sensitive commit messages may still appear. -->
+
+<!-- ## Git Memory: enabled -->
+
+## Think Harder
+
+<!-- Set to "enabled" to inject a strategic reset checklist near iteration cap.
+     Fires once per state-file lifetime when total_rounds_session >= max_rounds - 3.
+     Prompts re-reading requirements and trying fundamentally different approaches. -->
+
+<!-- ## Think Harder: enabled -->
