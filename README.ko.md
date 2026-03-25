@@ -1,12 +1,14 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **언어**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md)
 
 > AI는 빠르게 코드를 작성할 수 있습니다. 하지만 가드레일 없이는, 그 속도가 두렵습니다.
 
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-73 commands · 56 skills · 14 agents — Claude context window의 ~4%만 사용
+75 commands · 58 skills · 14 agents — Claude context window의 ~4%만 사용
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -94,7 +96,7 @@ v2.0은 두 개의 독립적인 리뷰어를 병렬로 디스패치합니다 —
 
 | 리뷰어 | 역할 | 폴백 |
 |--------|------|------|
-| Codex MCP | 프라이머리 (sandbox, 전체 diff) | 항상 사용 가능 |
+| Codex MCP | 기본적으로 듀얼 리뷰, 저하 폴백 모드 지원 | 사용 불가 시 싱글 리뷰어 모드로 폴백 |
 | 보조 (pr-review-toolkit) | 신뢰도 스코어링 리뷰 | strict-reviewer → 싱글 모드 |
 
 Findings는 **심각도 정규화** (P0-Nit), **중복 제거** (파일 + 이슈 키, ±5줄 허용), **소스 귀속** (`codex` | `toolkit` | `both`)됩니다.
@@ -136,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (73 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (56 skills) |
+| 플러그인 설치 | Claude Code | 전체 (75 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
-**요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (선택 사항, `/codex-*` 명령어용)
+**요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` 명령에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
 
 ## 워크플로 트랙
 
@@ -204,10 +206,10 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -245,7 +247,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-security` | OWASP Top 10 감사 |
 
 <details>
-<summary>전체 73개 명령어</summary>
+<summary>전체 75개 명령어</summary>
 
 ### 개발
 
@@ -323,6 +325,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/deep-analyze` | 심층 분석 + 로드맵 |
 | `/project-brief` | PM/CTO용 요약 보고서 |
 | `/deep-research` | 멀티 에이전트 심층 리서치 오케스트레이션 |
+| `/fp-brief` | 기술 문서 첫 원칙 브리핑 |
 
 ### 문서 & 도구
 
@@ -334,6 +337,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/doc-refactor` | 문서 간소화 |
 | `/simplify` | 코드 간소화 |
 | `/de-ai-flavor` | AI 생성 흔적 제거 |
+| `/generate-runner` | 모든 에코시스템을 위한 맞춤형 precommit runner 생성 |
 | `/safe-remove` | 플러그인 에셋 안전 제거 |
 
 | `/pr-review` | PR 셀프 리뷰 |
@@ -350,7 +354,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ## 규칙 & Hook
 
-14개 규칙 (상시 로드 컨벤션) + 6개 Hook (자동 가드레일).
+14개 규칙 (상시 로드 컨벤션) + 7개 Hook (자동 가드레일).
 
 > **커스터마이징**: `auto-loop-project.md`를 편집하여 프로젝트별 auto-loop 동작을 오버라이드할 수 있습니다. 플러그인 업데이트와 충돌하지 않습니다 — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 참조.
 

@@ -1,12 +1,14 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **語言**: [English](README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
 > AI 可以跑很快，但沒有護欄，速度令人不安。
 
 **AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
-73 commands · 56 skills · 14 agents — 僅佔 Claude context window 的 ~4%
+75 commands · 58 skills · 14 agents — 僅佔 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -90,11 +92,11 @@ sequenceDiagram
 
 ## 功能亮點：雙 Reviewer 架構
 
-v2.0 平行分派兩個獨立 reviewer — 零單點故障：
+v2.0 預設平行分派兩個獨立 reviewer，支援降級 fallback 模式：
 
 | Reviewer | 角色 | 降級策略 |
 |----------|------|----------|
-| Codex MCP | 主要（sandbox，完整 diff） | 始終可用 |
+| Codex MCP | 主要（sandbox，完整 diff） | 不可用時退回單 reviewer 模式 |
 | 次要（pr-review-toolkit） | 信心分數制審查 | strict-reviewer → 單 reviewer 模式 |
 
 Findings 會**嚴重度正規化**（P0-Nit）、**去重**（file + issue key，±5 行容差），並**標記來源**（`codex` | `toolkit` | `both`）。
@@ -136,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（73 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（56 skills） |
+| Plugin 安裝 | Claude Code | 完整（75 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（58 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用，供 `/codex-*` 指令使用）
+**需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用 — `/codex-*` 指令需要；未安裝時退回單 reviewer 模式）
 
 ## Workflow Tracks
 
@@ -204,10 +206,10 @@ flowchart TD
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -245,7 +247,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>全部 73 個指令</summary>
+<summary>全部 75 個指令</summary>
 
 ### 開發
 
@@ -323,6 +325,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/deep-analyze` | 深度分析 + roadmap |
 | `/project-brief` | PM/CTO 執行摘要 |
 | `/deep-research` | 多 agent 深度研究編排 |
+| `/fp-brief` | 技術文件第一原理簡報 |
 
 ### 文件與工具
 
@@ -334,6 +337,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/doc-refactor` | 簡化文件 |
 | `/simplify` | Code 簡化 |
 | `/de-ai-flavor` | 移除 AI 痕跡 |
+| `/generate-runner` | 為任何生態系產生自訂 precommit runner |
 | `/safe-remove` | 安全移除 plugin 資產 |
 
 | `/pr-review` | PR self-review |
@@ -350,7 +354,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ## Rules & Hooks
 
-14 條 rules（常駐載入的慣例）+ 6 個 hooks（自動化護欄）。
+14 條 rules（常駐載入的慣例）+ 7 個 hooks（自動化護欄）。
 
 > **客製化**：編輯 `auto-loop-project.md` 可覆寫專案的 auto-loop 行為。Plugin 更新不會衝突 — 詳見 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 

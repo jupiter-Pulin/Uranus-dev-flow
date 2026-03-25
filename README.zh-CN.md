@@ -1,12 +1,14 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **语言**: [English](README.md) | [繁體中文](README.zh-TW.md) | 简体中文 | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
 > AI 能快速交付，但缺乏防护机制，速度令人不安。
 
 **AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
-73 commands · 56 skills · 14 agents — 仅占 Claude context window 的 ~4%
+75 commands · 58 skills · 14 agents — 仅占 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -90,11 +92,11 @@ sequenceDiagram
 
 ## 功能亮点：双 Reviewer 架构
 
-v2.0 并行分派两个独立 reviewer — 零单点故障：
+v2.0 并行分派两个独立 reviewer — 默认双 reviewer 并行审查，支持降级 fallback 模式：
 
 | Reviewer | 角色 | 降级策略 |
 |----------|------|----------|
-| Codex MCP | 主要（sandbox，完整 diff） | 始终可用 |
+| Codex MCP | 主要（sandbox，完整 diff） | 不可用时退回单 reviewer 模式 |
 | 次要（pr-review-toolkit） | 置信度评分制审查 | strict-reviewer → 单 reviewer 模式 |
 
 Findings 会**严重度正规化**（P0-Nit）、**去重**（file + issue key，±5 行容差），并**标记来源**（`codex` | `toolkit` | `both`）。
@@ -136,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
-| 插件安装 | Claude Code | 完整（73 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（56 skills） |
+| 插件安装 | Claude Code | 完整（75 commands、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（58 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（可选，用于 `/codex-*` 命令）
+**环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（选用 — `/codex-*` 命令需要；未安装时退回单 reviewer 模式）
 
 ## 工作流路径
 
@@ -204,10 +206,10 @@ flowchart TD
 
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| 命令 | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| 技能 | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| 命令 | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| 技能 | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | 代理 | 14 | strict-reviewer, verify-app, coverage-analyst |
-| 钩子 | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| 钩子 | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | 规则 | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | 脚本 | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -245,7 +247,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/codex-security` | OWASP Top 10 审计 |
 
 <details>
-<summary>全部 73 个命令</summary>
+<summary>全部 75 个命令</summary>
 
 ### 开发
 
@@ -323,6 +325,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/deep-analyze` | 深度分析 + 路线图 |
 | `/project-brief` | PM/CTO 执行摘要 |
 | `/deep-research` | 多 agent 深度研究编排 |
+| `/fp-brief` | 第一原理简报 |
 
 ### 文档与工具
 
@@ -334,6 +337,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/doc-refactor` | 精简文档 |
 | `/simplify` | 代码精简 |
 | `/de-ai-flavor` | 去除 AI 痕迹 |
+| `/generate-runner` | 为任何生态系生成自定义 precommit runner |
 | `/safe-remove` | 安全移除插件资产 |
 
 | `/pr-review` | PR 自查 |
@@ -350,7 +354,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ## 规则与钩子
 
-14 条规则（常驻加载的规范）+ 6 个钩子（自动化防护栏）。
+14 条规则（常驻加载的规范）+ 7 个钩子（自动化防护栏）。
 
 > **定制化**：编辑 `auto-loop-project.md` 可覆写项目的 auto-loop 行为。插件更新不会冲突 — 详见 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 

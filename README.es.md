@@ -1,12 +1,14 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **Idioma**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | Español
 
 > La IA puede entregar rápido. Pero sin barreras de seguridad, la velocidad da miedo.
 
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
-73 commands · 56 skills · 14 agents — ~4% de la ventana de context de Claude
+75 commands · 58 skills · 14 agents — ~4% de la ventana de context de Claude
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -90,11 +92,11 @@ sequenceDiagram
 
 ## Funcionalidad destacada: Arquitectura Dual-Reviewer
 
-v2.0 despacha dos reviewers independientes en paralelo — cero punto único de fallo:
+v2.0 despacha dos reviewers independientes en paralelo — Dual-review por defecto con modos de fallback degradado:
 
 | Reviewer | Rol | Fallback |
 |----------|-----|----------|
-| Codex MCP | Primario (sandbox, diff completo) | Siempre disponible |
+| Codex MCP | Primario (sandbox, diff completo) | Modo single-reviewer si no está disponible |
 | Secundario (pr-review-toolkit) | Review con puntuación de confianza | strict-reviewer → modo single |
 
 Los hallazgos se **normalizan por severidad** (P0-Nit), **deduplican** (archivo + clave de issue, tolerancia ±5 líneas) y se **atribuyen por fuente** (`codex` | `toolkit` | `both`).
@@ -136,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (73 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (56 skills) |
+| Instalar plugin | Claude Code | Completa (75 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional, para comandos `/codex-*`)
+**Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional — los comandos `/codex-*` lo requieren; sin él, se usa modo single-reviewer)
 
 ## Tracks de workflow
 
@@ -204,10 +206,10 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -245,7 +247,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-security` | Auditoría OWASP Top 10 |
 
 <details>
-<summary>Los 73 comandos</summary>
+<summary>Los 75 comandos</summary>
 
 ### Desarrollo
 
@@ -323,6 +325,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/deep-analyze` | Análisis profundo + roadmap |
 | `/project-brief` | Resumen ejecutivo para PM/CTO |
 | `/deep-research` | Orquestación de investigación profunda multi-agente |
+| `/fp-brief` | Briefing de primeros principios de documentos técnicos |
 
 ### Documentación y herramientas
 
@@ -334,6 +337,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/doc-refactor` | Simplificar documentación |
 | `/simplify` | Simplificar código |
 | `/de-ai-flavor` | Eliminar artefactos generados por IA de documentos |
+| `/generate-runner` | Generar runner de precommit personalizado para cualquier ecosistema |
 | `/safe-remove` | Eliminación segura de activos del plugin |
 
 | `/pr-review` | Self-review de PR |
@@ -350,7 +354,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ## Reglas & Hooks
 
-14 reglas (convenciones siempre cargadas) + 6 hooks (guardrails automatizados).
+14 reglas (convenciones siempre cargadas) + 7 hooks (guardrails automatizados).
 
 > **Personalización**: Edita `auto-loop-project.md` para sobrescribir el comportamiento de auto-loop por proyecto. Las actualizaciones del plugin no conflictuarán — ver [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 

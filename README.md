@@ -8,7 +8,7 @@
 
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-73 commands · 56 skills · 14 agents — ~4% of Claude's context window
+75 commands · 58 skills · 14 agents — ~4% of Claude's context window
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -92,11 +92,11 @@ sequenceDiagram
 
 ## Feature Spotlight: Dual-Reviewer Architecture
 
-v2.0 dispatches two independent reviewers in parallel — zero single-point-of-failure:
+v2.0 dispatches two independent reviewers in parallel — dual-review by default with degraded fallback modes:
 
 | Reviewer | Role | Fallback |
 |----------|------|----------|
-| Codex MCP | Primary (sandbox, full diff) | Always available |
+| Codex MCP | Primary (sandbox, full diff) | Single-reviewer mode if unavailable |
 | Secondary (pr-review-toolkit) | Confidence-scored review | strict-reviewer → single mode |
 
 Findings are **severity-normalized** (P0-Nit), **deduplicated** (file + issue key, ±5 line tolerance), and **source-attributed** (`codex` | `toolkit` | `both`).
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (73 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (56 skills) |
+| Plugin install | Claude Code | Full (75 commands, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional, for `/codex-*` commands)
+**Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` commands require it; without it, review falls back to single-reviewer mode)
 
 ## Workflow Tracks
 
@@ -206,10 +206,10 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
-| Hooks | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -247,7 +247,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>All 73 commands</summary>
+<summary>All 75 commands</summary>
 
 ### Development
 
@@ -325,6 +325,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/deep-analyze` | Deep analysis + roadmap |
 | `/project-brief` | PM/CTO executive summary |
 | `/deep-research` | Multi-agent deep research orchestration |
+| `/fp-brief` | First-principles briefing from technical documents |
 
 ### Documentation & Tooling
 
@@ -336,6 +337,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/doc-refactor` | Simplify documents |
 | `/simplify` | Code simplification |
 | `/de-ai-flavor` | Remove AI-generated artifacts from documents |
+| `/generate-runner` | Generate customized precommit runner for any ecosystem |
 | `/safe-remove` | Safely remove plugin assets |
 
 | `/pr-review` | PR self-review |
@@ -352,7 +354,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ## Rules & Hooks
 
-14 rules (always-loaded conventions) + 6 hooks (automated guardrails).
+14 rules (always-loaded conventions) + 7 hooks (automated guardrails).
 
 > **Customization**: Edit `auto-loop-project.md` to override auto-loop behavior per project. Plugin updates won't conflict — see [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 

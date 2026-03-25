@@ -1,12 +1,14 @@
 # sd0x-dev-flow
 
+![sd0x-dev-flow banner](https://raw.githubusercontent.com/sd0xdev/sd0x-dev-flow/main/banner.jpg)
+
 **言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md)
 
 > AI は高速にコードを出力できます。しかしガードレールなしでは、その速度は恐怖です。
 
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-73 commands · 56 skills · 14 agents — Claude の context window のわずか ~4%
+75 commands · 58 skills · 14 agents — Claude の context window のわずか ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -94,7 +96,7 @@ v2.0 では2つの独立したレビューアーを並列でディスパッチ�
 
 | レビューアー | 役割 | フォールバック |
 |-------------|------|---------------|
-| Codex MCP | プライマリ（sandbox、完全 diff） | 常時利用可能 |
+| Codex MCP | デフォルトでデュアルレビュー、フォールバックモードをサポート | 利用不可時はシングルレビューモードにフォールバック |
 | セカンダリ（pr-review-toolkit） | 信頼度スコアリングレビュー | strict-reviewer → シングルモード |
 
 Findings は**重要度正規化**（P0-Nit）、**重複排除**（ファイル + issue キー、±5 行許容）、**ソース帰属**（`codex` | `toolkit` | `both`）されます。
@@ -136,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（73 コマンド、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（56 スキル） |
+| プラグインインストール | Claude Code | フル（75 コマンド、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（58 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
-**必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション、`/codex-*` コマンド用）
+**必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション — `/codex-*` コマンドに必要；未インストール時はシングルレビューモードにフォールバック）
 
 ## ワークフロートラック
 
@@ -204,10 +206,10 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 73 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| スキル | 56 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| コマンド | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| スキル | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
 | エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
-| フック | 6 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop |
+| フック | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | スクリプト | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
 
@@ -245,7 +247,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-security` | OWASP Top 10 監査 |
 
 <details>
-<summary>全 73 コマンド</summary>
+<summary>全 75 コマンド</summary>
 
 ### 開発
 
@@ -323,6 +325,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/deep-analyze` | 深堀り分析 + ロードマップ |
 | `/project-brief` | PM/CTO 向けエグゼクティブサマリー |
 | `/deep-research` | マルチエージェント深層リサーチオーケストレーション |
+| `/fp-brief` | 技術文書のファーストプリンシプルブリーフィング |
 
 ### ドキュメント・ツール
 
@@ -334,6 +337,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/doc-refactor` | ドキュメントの簡素化 |
 | `/simplify` | コードの簡素化 |
 | `/de-ai-flavor` | AI 生成の痕跡を除去 |
+| `/generate-runner` | 任意のエコシステム向けカスタム precommit runner 生成 |
 | `/safe-remove` | プラグインアセットの安全な削除 |
 
 | `/pr-review` | PR セルフレビュー |
@@ -350,7 +354,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ## ルール & フック
 
-14 ルール（常時読み込みの規約）+ 6 フック（自動ガードレール）。
+14 ルール（常時読み込みの規約）+ 7 フック（自動ガードレール）。
 
 > **カスタマイズ**：`auto-loop-project.md` を編集してプロジェクトの auto-loop 動作をオーバーライドできます。プラグイン更新と競合しません — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 参照。
 
