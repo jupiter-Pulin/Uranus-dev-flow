@@ -82,16 +82,20 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // empty' 2>/dev/null)
 TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // empty' 2>/dev/null)
 
-# Only process Bash and MCP Codex tools
+# Only process Bash, MCP Codex, and Skill tools
 if [[ "$TOOL_NAME" != "Bash" ]] && \
    [[ "$TOOL_NAME" != "mcp__codex__codex" ]] && \
-   [[ "$TOOL_NAME" != "mcp__codex__codex-reply" ]]; then
+   [[ "$TOOL_NAME" != "mcp__codex__codex-reply" ]] && \
+   [[ "$TOOL_NAME" != "Skill" ]]; then
   exit 0
 fi
 
-# Extract command (Bash) or output (MCP)
+# Extract command (Bash), skill name (Skill), or output (MCP)
 if [[ "$TOOL_NAME" == "Bash" ]]; then
   COMMAND=$(echo "$TOOL_INPUT" | jq -r '.command // empty' 2>/dev/null)
+elif [[ "$TOOL_NAME" == "Skill" ]]; then
+  # Skill tool — extract skill name as command, tool_output is the skill's text output
+  COMMAND=$(echo "$TOOL_INPUT" | jq -r '.skill // empty' 2>/dev/null)
 else
   # MCP tool — extract text from tool_output.content (string) or content[].text (array)
   # Guard: tool_output must be an object to access .content; fall back to string if not
@@ -225,6 +229,247 @@ _update_iteration() {
   fi
 }
 
+# === Nit History Persistence (R4) ===
+NIT_HISTORY_FILE=".claude_nit_history.json"
+NIT_LOCKDIR="${NIT_HISTORY_FILE}.lockdir"
+NIT_HAVE_LOCK=0
+
+_nit_lock() {
+  local start end
+  start=$(date +%s)
+  while ! mkdir "$NIT_LOCKDIR" 2>/dev/null; do
+    end=$(date +%s)
+    if [ $((end - start)) -ge 3 ]; then
+      # Stale recovery
+      local lock_ts
+      lock_ts=$(cat "$NIT_LOCKDIR/ts" 2>/dev/null || echo 0)
+      local now
+      now=$(date +%s)
+      if [ $((now - lock_ts)) -ge 10 ]; then
+        rm -rf "$NIT_LOCKDIR" 2>/dev/null
+        mkdir "$NIT_LOCKDIR" 2>/dev/null && break
+      fi
+      return 1
+    fi
+    sleep 0.1
+  done
+  echo "$$" > "$NIT_LOCKDIR/pid" 2>/dev/null
+  date +%s > "$NIT_LOCKDIR/ts" 2>/dev/null
+  NIT_HAVE_LOCK=1
+}
+
+_nit_unlock() {
+  [ "$NIT_HAVE_LOCK" -eq 1 ] && rm -rf "$NIT_LOCKDIR" 2>/dev/null
+  NIT_HAVE_LOCK=0
+}
+
+_canonicalize_issue() {
+  local issue="$1"
+  printf '%s' "$issue" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[[:space:]]+/ /g' \
+    | sed -E 's/line [0-9]+//gi' \
+    | sed -E 's/[0-9]+/N/g' \
+    | sed -E 's/\*\*//g; s/`//g; s/#//g; s/>//g; s/\|//g' \
+    | cut -c1-120 \
+    | sed 's/[[:space:]]*$//'
+}
+
+_compute_hash() {
+  local file="$1" issue="$2"
+  local canonical
+  canonical=$(_canonicalize_issue "$issue")
+  local key="${file}|${canonical}"
+  if command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$key" | shasum -a 256 | cut -c1-16
+  elif command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$key" | sha256sum | cut -c1-16
+  else
+    # Fallback: use cksum-based pseudo-hash (less ideal but functional)
+    printf '%s' "$key" | od -A n -t x1 | tr -d ' \n' | cut -c1-16
+  fi
+}
+
+_init_nit_history() {
+  local nit_file="${1:-$NIT_HISTORY_FILE}"
+  if [[ ! -f "$nit_file" ]]; then
+    printf '{"schema_version":1,"deferred":[],"dismissed_via_verdict":[]}\n' > "$nit_file"
+  fi
+  # Validate JSON; recreate if corrupted
+  if ! jq empty "$nit_file" 2>/dev/null; then
+    echo "[Nit History] Corrupted file, recreating" >&2
+    printf '{"schema_version":1,"deferred":[],"dismissed_via_verdict":[]}\n' > "$nit_file"
+  fi
+}
+
+_gc_nit_history() {
+  local nit_file="${1:-$NIT_HISTORY_FILE}"
+  [[ ! -f "$nit_file" ]] && return 0
+  local now_epoch tmp
+  now_epoch=$(date +%s)
+  tmp=$(mktemp)
+  if jq --argjson now "$now_epoch" '
+    .deferred |= [.[] | select(
+      ((.last_seen | sub("\\.[0-9]+Z$"; "Z") | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) + (.ttl_days * 86400)) > $now
+    )] |
+    .dismissed_via_verdict |= [.[] | select(
+      ((.timestamp | sub("\\.[0-9]+Z$"; "Z") | strptime("%Y-%m-%dT%H:%M:%SZ") | mktime) + (.ttl_days * 86400)) > $now
+    )]
+  ' "$nit_file" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$nit_file"
+  else
+    rm -f "$tmp" 2>/dev/null
+  fi
+}
+
+_upsert_nit_deferred() {
+  local sentinel_line="$1"
+  local nit_file="${2:-$NIT_HISTORY_FILE}"
+
+  # Parse: [NIT_DEFERRED] file:line | issue | reason: <reason> | <timestamp>
+  local file_with_line issue reason
+  file_with_line=$(printf '%s' "$sentinel_line" | sed -E 's/^\[NIT_DEFERRED\][[:space:]]*//' | cut -d'|' -f1 | sed 's/[[:space:]]*$//')
+  issue=$(printf '%s' "$sentinel_line" | cut -d'|' -f2 | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+  reason=$(printf '%s' "$sentinel_line" | cut -d'|' -f3 | sed 's/^[[:space:]]*reason:[[:space:]]*//; s/[[:space:]]*$//')
+
+  # Strip :line from file path
+  local file_path
+  file_path=$(printf '%s' "$file_with_line" | sed -E 's/:[0-9]+$//')
+
+  # Security: reject paths with shell metacharacters
+  if printf '%s' "$file_path" | grep -qE '[;&|`]' || printf '%s' "$file_path" | grep -qE '\$\('; then
+    echo "[Nit History] Rejected suspicious file path" >&2
+    return 0
+  fi
+  if printf '%s' "$issue" | grep -qE '[;&`]' || printf '%s' "$issue" | grep -qE '\$\('; then
+    echo "[Nit History] Rejected suspicious issue text" >&2
+    return 0
+  fi
+
+  [[ -z "$file_path" || -z "$issue" ]] && return 0
+
+  local hash
+  hash=$(_compute_hash "$file_path" "$issue")
+  [[ -z "$hash" ]] && return 0
+
+  _init_nit_history "$nit_file"
+
+  local now
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  local tmp
+  tmp=$(mktemp)
+  if jq --arg hash "$hash" --arg file "$file_path" --arg issue "$(_canonicalize_issue "$issue")" \
+     --arg reason "${reason:-unknown}" --arg now "$now" '
+    if (.deferred | map(.hash) | index($hash)) then
+      .deferred |= map(if .hash == $hash then .defer_count += 1 | .last_seen = $now else . end)
+    else
+      .deferred += [{
+        "hash": $hash,
+        "file": $file,
+        "severity": "Nit",
+        "canonical_issue": $issue,
+        "reason": $reason,
+        "defer_count": 1,
+        "first_seen": $now,
+        "last_seen": $now,
+        "ttl_days": 14
+      }]
+    end
+  ' "$nit_file" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$nit_file"
+  else
+    rm -f "$tmp" 2>/dev/null
+    echo "[Nit History] Upsert failed (jq error)" >&2
+    return 0
+  fi
+
+  _gc_nit_history "$nit_file"
+  echo "[Nit History] Deferred: hash=$hash file=$file_path" >&2
+}
+
+_upsert_dismiss_verdict() {
+  local sentinel_line="$1"
+  local nit_file="${2:-$NIT_HISTORY_FILE}"
+
+  # Parse key=value pairs from [DISMISS_VERDICT] line
+  # Key format: key=file|issue — contains | which is also the field delimiter (space-pipe-space)
+  # Parse key= up to " | severity=" boundary to preserve the file|issue structure
+  local key_field severity verdict confidence timestamp
+  key_field=$(printf '%s' "$sentinel_line" | sed -E 's/.*key=([^|]+\|[^|]+) \| severity=.*/\1/' | sed 's/[[:space:]]*$//')
+  severity=$(printf '%s' "$sentinel_line" | grep -oE 'severity=[^|]+' | sed 's/^severity=//' | sed 's/[[:space:]]*$//')
+  verdict=$(printf '%s' "$sentinel_line" | grep -oE 'verdict=[^|]+' | sed 's/^verdict=//' | sed 's/[[:space:]]*$//')
+  confidence=$(printf '%s' "$sentinel_line" | grep -oE 'confidence=[^|]+' | sed 's/^confidence=//' | sed 's/[[:space:]]*$//')
+  timestamp=$(printf '%s' "$sentinel_line" | grep -oE 'timestamp=[^|]+' | sed 's/^timestamp=//' | sed 's/[[:space:]]*$//')
+
+  # Extract file from key (format: file|issue)
+  local file_path issue_text
+  file_path=$(printf '%s' "$key_field" | cut -d'|' -f1 | sed 's/[[:space:]]*$//')
+  issue_text=$(printf '%s' "$key_field" | cut -d'|' -f2- | sed 's/^[[:space:]]*//')
+
+  [[ -z "$file_path" || -z "$verdict" ]] && return 0
+
+  local hash
+  hash=$(_compute_hash "$file_path" "$issue_text")
+  [[ -z "$hash" ]] && return 0
+
+  _init_nit_history "$nit_file"
+
+  local now
+  now="${timestamp:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}"
+
+  local tmp
+  tmp=$(mktemp)
+  if jq --arg hash "$hash" --arg file "$file_path" --arg severity "${severity:-unknown}" \
+     --arg verdict "$verdict" --arg confidence "${confidence:-0}" --arg now "$now" '
+    if (.dismissed_via_verdict | map(.hash) | index($hash)) then
+      .dismissed_via_verdict |= map(if .hash == $hash then .verdict = $verdict | .confidence = ($confidence | tonumber) | .timestamp = $now else . end)
+    else
+      .dismissed_via_verdict += [{
+        "hash": $hash,
+        "file": $file,
+        "severity": $severity,
+        "verdict": $verdict,
+        "confidence": ($confidence | tonumber),
+        "timestamp": $now,
+        "ttl_days": 30
+      }]
+    end
+  ' "$nit_file" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$nit_file"
+  else
+    rm -f "$tmp" 2>/dev/null
+    echo "[Nit History] Dismiss verdict upsert failed (jq error)" >&2
+    return 0
+  fi
+
+  _gc_nit_history "$nit_file"
+  echo "[Nit History] Dismissed: hash=$hash verdict=$verdict" >&2
+}
+
+_parse_nit_sentinels() {
+  local tool_output="$1"
+  local nit_file="${2:-$NIT_HISTORY_FILE}"
+
+  # Acquire nit history lock for batch write
+  if ! _nit_lock; then
+    echo "[Nit History] Lock contention, skipping sentinel parse" >&2
+    return 0
+  fi
+
+  # Parse [NIT_DEFERRED] sentinels
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && _upsert_nit_deferred "$line" "$nit_file"
+  done < <(printf '%s' "$tool_output" | grep '^\[NIT_DEFERRED\]' 2>/dev/null || true)
+
+  # Parse [DISMISS_VERDICT] sentinels
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && _upsert_dismiss_verdict "$line" "$nit_file"
+  done < <(printf '%s' "$tool_output" | grep '^\[DISMISS_VERDICT\]' 2>/dev/null || true)
+
+  _nit_unlock
+}
+
 # Check for pass markers (anchored to line start to avoid false positives in error messages)
 check_passed() {
   local output="$1"
@@ -296,23 +541,23 @@ if [[ "$TOOL_NAME" == "Bash" ]] && echo "$COMMAND" | grep -qE 'emit-review-gate'
   fi
 fi
 
-# /codex-review-fast or /codex-review
-if echo "$COMMAND" | grep -qE '/(sd0x-dev-flow:)?codex-review(-fast)?($|\s)'; then
+# /codex-review-fast or /codex-review (also matches Skill name: sd0x-dev-flow:codex-review-fast)
+if echo "$COMMAND" | grep -qE '/?(sd0x-dev-flow:)?codex-review(-fast)?($|\s)'; then
   passed=$(check_passed "$TOOL_OUTPUT")
   update_state "code_review" "true" "$passed"
   _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
   echo "[Review State] code_review updated: passed=$passed" >&2
 fi
 
-# /codex-review-doc or /review-spec
-if echo "$COMMAND" | grep -qE '/(sd0x-dev-flow:)?codex-review-doc($|[[:space:]])|/(sd0x-dev-flow:)?review-spec($|[[:space:]])'; then
+# /codex-review-doc or /review-spec (also matches Skill name form)
+if echo "$COMMAND" | grep -qE '/?(sd0x-dev-flow:)?codex-review-doc($|[[:space:]])|/?(sd0x-dev-flow:)?review-spec($|[[:space:]])'; then
   passed=$(check_passed "$TOOL_OUTPUT")
   update_state "doc_review" "true" "$passed"
   echo "[Review State] doc_review updated: passed=$passed" >&2
 fi
 
-# /precommit or /precommit-fast
-if echo "$COMMAND" | grep -qE '/(sd0x-dev-flow:)?precommit(-fast)?($|\s)'; then
+# /precommit or /precommit-fast (also matches Skill name form)
+if echo "$COMMAND" | grep -qE '/?(sd0x-dev-flow:)?precommit(-fast)?($|\s)'; then
   passed=$(check_passed "$TOOL_OUTPUT")
   update_state "precommit" "true" "$passed"
   echo "[Review State] precommit updated: passed=$passed" >&2
@@ -349,6 +594,22 @@ if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-
     echo "[Review State] code_review updated (MCP): passed=true" >&2
   fi
   # Bare ## Gate: ✅/⛔ alone → skip (ambiguity rule)
+fi
+
+# === Nit sentinel routing ===
+# [NIT_DEFERRED] and [DISMISS_VERDICT] appear in code review and seek-verdict output.
+# Restrict to known producers to avoid pollution from template/doc content.
+_NIT_ELIGIBLE=false
+if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-reply" ]]; then
+  _NIT_ELIGIBLE=true
+elif [[ "$TOOL_NAME" == "Skill" ]] && echo "$COMMAND" | grep -qE '(codex-review|seek-verdict|codex-cli-review)'; then
+  # Skill tool: restrict to known nit sentinel producers
+  _NIT_ELIGIBLE=true
+elif [[ "$TOOL_NAME" == "Bash" ]] && echo "$COMMAND" | grep -qE '/(sd0x-dev-flow:)?(codex-review|seek-verdict|codex-cli-review)'; then
+  _NIT_ELIGIBLE=true
+fi
+if [[ "$_NIT_ELIGIBLE" == "true" ]] && printf '%s' "$TOOL_OUTPUT" | grep -qE '^\[NIT_DEFERRED\]|^\[DISMISS_VERDICT\]' 2>/dev/null; then
+  _parse_nit_sentinels "$TOOL_OUTPUT"
 fi
 
 exit 0

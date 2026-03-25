@@ -42,7 +42,7 @@
         ]
       },
       {
-        "matcher": "Bash|mcp__codex__codex|mcp__codex__codex-reply",
+        "matcher": "Bash|mcp__codex__codex|mcp__codex__codex-reply|Skill",
         "hooks": [
           {
             "type": "command",
