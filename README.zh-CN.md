@@ -8,7 +8,7 @@
 
 **AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
-75 commands · 58 skills · 14 agents — 仅占 Claude context window 的 ~4%
+76 commands · 58 skills · 15 agents — 仅占 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,7 +138,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
-| 插件安装 | Claude Code | 完整（75 commands、hooks、rules、auto-loop） |
+| 插件安装 | Claude Code | 完整（76 commands、hooks、rules、auto-loop） |
 | `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（58 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
@@ -206,9 +206,9 @@ flowchart TD
 
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| 命令 | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| 命令 | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | 技能 | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
-| 代理 | 14 | strict-reviewer, verify-app, coverage-analyst |
+| 代理 | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | 钩子 | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | 规则 | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | 脚本 | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
@@ -247,7 +247,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/codex-security` | OWASP Top 10 审计 |
 
 <details>
-<summary>全部 75 个命令</summary>
+<summary>全部 76 个命令</summary>
 
 ### 开发
 
@@ -323,6 +323,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/tech-spec` | 生成技术规格书 |
 | `/review-spec` | 审查技术规格书 |
 | `/deep-analyze` | 深度分析 + 路线图 |
+| `/architecture` | 架构设计 + 3-architecture.md |
 | `/project-brief` | PM/CTO 执行摘要 |
 | `/deep-research` | 多 agent 深度研究编排 |
 | `/fp-brief` | 第一原理简报 |

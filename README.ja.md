@@ -8,7 +8,7 @@
 
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-75 commands · 58 skills · 14 agents — Claude の context window のわずか ~4%
+76 commands · 58 skills · 15 agents — Claude の context window のわずか ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,7 +138,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（75 コマンド、フック、ルール、auto-loop） |
+| プラグインインストール | Claude Code | フル（76 コマンド、フック、ルール、auto-loop） |
 | `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（58 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
@@ -206,9 +206,9 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| コマンド | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | スキル | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
-| エージェント | 14 | strict-reviewer, verify-app, coverage-analyst |
+| エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | フック | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | スクリプト | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
@@ -247,7 +247,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-security` | OWASP Top 10 監査 |
 
 <details>
-<summary>全 75 コマンド</summary>
+<summary>全 76 コマンド</summary>
 
 ### 開発
 
@@ -323,6 +323,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/tech-spec` | 技術仕様書の作成 |
 | `/review-spec` | 技術仕様書のレビュー |
 | `/deep-analyze` | 深堀り分析 + ロードマップ |
+| `/architecture` | アーキテクチャ設計 + 3-architecture.md |
 | `/project-brief` | PM/CTO 向けエグゼクティブサマリー |
 | `/deep-research` | マルチエージェント深層リサーチオーケストレーション |
 | `/fp-brief` | 技術文書のファーストプリンシプルブリーフィング |

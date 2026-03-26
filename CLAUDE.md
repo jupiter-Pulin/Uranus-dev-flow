@@ -112,7 +112,6 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/push-ci` | Push (with approval) + delegate to /watch-ci | Git |
 | `/watch-ci` | Monitor GitHub Actions CI runs | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
-| `/git-worktree` | Manage git worktrees (auto-syncs .claude/) | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
 | `/pr-summary` | PR status summary (grouped by ticket) | Git |
 | `/contract-decode` | EVM contract error/calldata decoder | Blockchain |

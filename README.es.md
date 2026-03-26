@@ -8,7 +8,7 @@
 
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
-75 commands · 58 skills · 14 agents — ~4% de la ventana de context de Claude
+76 commands · 58 skills · 15 agents — ~4% de la ventana de context de Claude
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,7 +138,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (75 commands, hooks, rules, auto-loop) |
+| Instalar plugin | Claude Code | Completa (76 commands, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
@@ -206,9 +206,9 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
-| Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
+| Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
@@ -247,7 +247,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-security` | Auditoría OWASP Top 10 |
 
 <details>
-<summary>Los 75 comandos</summary>
+<summary>Los 76 comandos</summary>
 
 ### Desarrollo
 
@@ -323,6 +323,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/tech-spec` | Generar tech spec |
 | `/review-spec` | Revisar tech spec |
 | `/deep-analyze` | Análisis profundo + roadmap |
+| `/architecture` | Diseño de arquitectura + 3-architecture.md |
 | `/project-brief` | Resumen ejecutivo para PM/CTO |
 | `/deep-research` | Orquestación de investigación profunda multi-agente |
 | `/fp-brief` | Briefing de primeros principios de documentos técnicos |

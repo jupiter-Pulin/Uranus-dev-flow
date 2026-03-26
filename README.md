@@ -8,7 +8,7 @@
 
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-75 commands · 58 skills · 14 agents — ~4% of Claude's context window
+76 commands · 58 skills · 15 agents — ~4% of Claude's context window
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,7 +138,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (75 commands, hooks, rules, auto-loop) |
+| Plugin install | Claude Code | Full (76 commands, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
@@ -206,9 +206,9 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
-| Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
+| Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
@@ -247,7 +247,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>All 75 commands</summary>
+<summary>All 76 commands</summary>
 
 ### Development
 
@@ -323,6 +323,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/tech-spec` | Generate tech spec |
 | `/review-spec` | Review tech spec |
 | `/deep-analyze` | Deep analysis + roadmap |
+| `/architecture` | Architecture design + 3-architecture.md |
 | `/project-brief` | PM/CTO executive summary |
 | `/deep-research` | Multi-agent deep research orchestration |
 | `/fp-brief` | First-principles briefing from technical documents |

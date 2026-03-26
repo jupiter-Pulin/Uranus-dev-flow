@@ -8,7 +8,7 @@
 
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-75 commands · 58 skills · 14 agents — Claude context window의 ~4%만 사용
+76 commands · 58 skills · 15 agents — Claude context window의 ~4%만 사용
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,7 +138,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (75 commands, hooks, rules, auto-loop) |
+| 플러그인 설치 | Claude Code | 전체 (76 commands, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (58 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
@@ -206,9 +206,9 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 75 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
-| Agents | 14 | strict-reviewer, verify-app, coverage-analyst |
+| Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
 | Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
@@ -247,7 +247,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-security` | OWASP Top 10 감사 |
 
 <details>
-<summary>전체 75개 명령어</summary>
+<summary>전체 76개 명령어</summary>
 
 ### 개발
 
@@ -323,6 +323,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/tech-spec` | 기술 스펙 작성 |
 | `/review-spec` | 기술 스펙 리뷰 |
 | `/deep-analyze` | 심층 분석 + 로드맵 |
+| `/architecture` | 아키텍처 설계 + 3-architecture.md |
 | `/project-brief` | PM/CTO용 요약 보고서 |
 | `/deep-research` | 멀티 에이전트 심층 리서치 오케스트레이션 |
 | `/fp-brief` | 기술 문서 첫 원칙 브리핑 |
