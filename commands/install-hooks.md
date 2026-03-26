@@ -87,6 +87,7 @@ Read all `.sh` files from the discovered hooks directory. The available hooks ar
 | `post-tool-review-state.sh` | PostToolUse | Bash, mcp__codex__codex, mcp__codex__codex-reply | Parse review results, update state file |
 | `stop-guard.sh` | Stop | — | Check review + precommit completed before stop |
 | `post-compact-auto-loop.sh` | SessionStart | compact | Re-inject auto-loop rules after context compaction |
+| `user-prompt-review-guard.sh` | UserPromptSubmit | — | Inject pending review reminder with cooldown |
 
 > **Note**: The plugin's `SessionStart` namespace hook (`scripts/namespace-hint.sh`, defined in `hooks.json`) is intentionally excluded from local install — it emits plugin-namespaced command guidance (`/sd0x-dev-flow:...`) which is incorrect for local installations where commands are accessed without namespace prefix.
 
@@ -149,6 +150,9 @@ Hook definition mapping (use `$CLAUDE_PROJECT_DIR` for CWD-independent paths —
     ],
     "SessionStart": [
       {"matcher": "compact", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-auto-loop.sh"}]}
+    ],
+    "UserPromptSubmit": [
+      {"matcher": "", "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/user-prompt-review-guard.sh"}]}
     ]
   }
 }

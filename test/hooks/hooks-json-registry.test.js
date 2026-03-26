@@ -36,6 +36,16 @@ test('post-compact-auto-loop SessionStart hook uses "compact" matcher', () => {
   assert.equal(compactEntry.matcher, 'compact', 'post-compact hook matcher must be "compact"');
 });
 
+test('UserPromptSubmit hook registered for user-prompt-review-guard', () => {
+  const upsEntries = hooksConfig.hooks.UserPromptSubmit;
+  assert.ok(upsEntries, 'should have UserPromptSubmit entries');
+  assert.ok(upsEntries.length >= 1, 'should have at least 1 UserPromptSubmit hook');
+  const guardEntry = upsEntries.find(
+    (e) => e.hooks?.some((h) => h.command?.includes('user-prompt-review-guard'))
+  );
+  assert.ok(guardEntry, 'should have user-prompt-review-guard UserPromptSubmit entry');
+});
+
 test('no SessionStart hook uses empty matcher', () => {
   const sessionStartEntries = hooksConfig.hooks.SessionStart;
   const emptyMatcherEntries = sessionStartEntries.filter((e) => e.matcher === '');

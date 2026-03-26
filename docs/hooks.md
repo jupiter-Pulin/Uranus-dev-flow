@@ -8,6 +8,7 @@
 | `pre-edit-guard` | Before Edit/Write | Prevent editing .env/.git |
 | `stop-guard` | Before stop | Block or warn on incomplete reviews + stale-state git check (strict after install, warn in plugin runtime) |
 | `post-compact-auto-loop` | After context compact | Re-inject auto-loop rules from state file |
+| `user-prompt-review-guard` | Before each prompt | Inject pending review reminder with cooldown (5min default) |
 
 Hooks are safe by default. Use environment variables to customize:
 
@@ -18,5 +19,6 @@ Hooks are safe by default. Use environment variables to customize:
 | `HOOK_BYPASS` | (unset) | Set `1` to skip all stop-guard checks |
 | `HOOK_DEBUG` | (unset) | Set `1` to output debug info |
 | `GUARD_EXTRA_PATTERNS` | (unset) | Regex patterns for extra protected paths (e.g. `src/locales/.*\.json$`) |
+| `REVIEW_GUARD_COOLDOWN` | `300` (5 min) | Seconds between pending review reminders |
 
 **Dependencies**: Hooks require `jq`. Auto-format requires `prettier`. Missing dependencies are handled gracefully.
