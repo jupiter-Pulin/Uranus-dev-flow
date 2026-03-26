@@ -72,6 +72,7 @@ grep -rn "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md
 grep -rn "/<name>" README*.md
 grep -rn "/<name>\|<name>" rules/ skills/ --include="*.md"
 grep -rn "<name>" hooks/hooks.json
+grep -rn "<name>" test/ --include="*.test.js"
 ```
 
 ### Phase 3: Classify Impacts
@@ -94,7 +95,10 @@ Execution order (patches first, deletes last):
    - Remove/update entries in README.md + locale variants (count + detail row)
    - Update prose mentions in other skills/rules
 2. **Delete** target files:
-   - For `skill` type: remove entire `skills/<name>/` directory + `commands/<name>.md`
+   - For `skill` type: remove entire `skills/<name>/` directory + `commands/<name>.md` + `test/commands/<name>.test.js` + `test/skills/<name>*.test.js`
+   - For `command` type: remove `commands/<name>.md` + `test/commands/<name>.test.js`
+   - For `script` type: remove `scripts/<name>.*` + `test/scripts/<name>.test.js`
+   - For `hook` type: remove hook script + JSON entry + `test/hooks/<name>.test.js`
    - For other types: remove primary + secondary files per Phase 1 table
    - Remove empty directories after deletion
 
@@ -125,6 +129,8 @@ If residual references found, report them. If clean, output `Verification passed
 |------|--------|
 | skills/<name>/SKILL.md | DELETE |
 | commands/<name>.md | DELETE |
+| test/commands/<name>.test.js | DELETE (if exists) |
+| test/skills/<name>*.test.js | DELETE (if exists) |
 
 ### BLOCKER References (must resolve first)
 | File:Line | Pattern | Why |
@@ -160,14 +166,14 @@ If residual references found, report them. If clean, output `Verification passed
 
 ```
 /safe-remove skill create-skill
-→ Dry-run plan showing 3 files to delete + 12 PATCHABLE references
+→ Dry-run plan showing 5 files to delete (skill dir + command + tests) + 12 PATCHABLE references
 
 /safe-remove skill create-skill --execute
-→ AskUserQuestion → patch 12 refs → delete 3 files → verify clean
+→ AskUserQuestion → patch 12 refs → delete 5 files (incl. test/commands + test/skills) → verify clean
 
 /safe-remove agent unused-agent
 → Dry-run: 1 file to delete, check for BLOCKER in agents skills: field
 
 /safe-remove command old-command --execute
-→ Quick removal: 1 file + CLAUDE.md row + README rows
+→ Quick removal: 2 files (command + test) + CLAUDE.md row + README rows
 ```

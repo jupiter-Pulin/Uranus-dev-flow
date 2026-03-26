@@ -39,8 +39,9 @@
 | Other skill refs | `grep -rn "/<name>\|<name>" skills/ --include="*.md"` | PATCHABLE |
 | Rule mentions | `grep -rn "/<name>" rules/ --include="*.md"` | PATCHABLE |
 | Hook refs | `grep -n "<name>" hooks/hooks.json` | BLOCKER (if command path) |
+| Test files | `grep -rn "<name>" test/ --include="*.test.js"` | PATCHABLE |
 
-**Files to delete**: `skills/<name>/` (entire directory) + `commands/<name>.md` (if exists)
+**Files to delete**: `skills/<name>/` (entire directory) + `commands/<name>.md` (if exists) + `test/commands/<name>.test.js` (if exists) + `test/skills/<name>*.test.js` (if exists)
 
 ### command
 
@@ -49,8 +50,9 @@
 | CLAUDE.md table | `grep -n "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md` | PATCHABLE |
 | README tables | `grep -n "/<name>" README*.md` | PATCHABLE |
 | Skill references | `grep -rn "/<name>" skills/ --include="*.md"` | PATCHABLE |
+| Test files | `grep -rn "<name>" test/commands/ --include="*.test.js"` | PATCHABLE |
 
-**Files to delete**: `commands/<name>.md`
+**Files to delete**: `commands/<name>.md` + `test/commands/<name>.test.js` (if exists)
 
 ### agent
 
@@ -77,8 +79,9 @@
 | Hook command path | `grep -n "<name>" hooks/hooks.json` | BLOCKER |
 | Skill script ref | `grep -rn "scripts/<name>" skills/ commands/ --include="*.md"` | BLOCKER |
 | run-skill.sh usage | `grep -rn "run-skill.sh.*<name>" commands/ --include="*.md"` | BLOCKER |
+| Test files | `grep -rn "<name>" test/scripts/ --include="*.test.js"` | PATCHABLE |
 
-**Files to delete**: `scripts/<name>.*`
+**Files to delete**: `scripts/<name>.*` + `test/scripts/<name>.test.js` (if exists)
 
 ### hook
 
@@ -87,8 +90,9 @@
 | hooks.json entry | Read `hooks/hooks.json`, find entry | Direct removal from JSON |
 | .claude/ mirror | Check `.claude/hooks/` or `.claude/settings.json` | PATCHABLE |
 | Install-hooks ref | `grep -rn "<name>" commands/install-hooks.md skills/*/SKILL.md` | PATCHABLE |
+| Test files | `grep -rn "<name>" test/hooks/ --include="*.test.js"` | PATCHABLE |
 
-**Files to delete**: Hook script file + JSON entry
+**Files to delete**: Hook script file + JSON entry + `test/hooks/<name>.test.js` (if exists)
 
 ## Verification Regexes (Post-Removal)
 
