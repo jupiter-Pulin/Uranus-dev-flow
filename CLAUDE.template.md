@@ -99,6 +99,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/tech-spec` | Generate tech spec | Design |
 | `/review-spec` | Review tech spec | Design |
 | `/deep-analyze` | Deep analysis + roadmap | Design |
+| `/architecture` | Architecture design + 3-architecture.md | Design |
 | `/project-brief` | PM/CTO executive summary | Design |
 | `/fp-brief` | First-principles briefing | Understanding |
 | `/codex-architect` | Architecture advice | Design |

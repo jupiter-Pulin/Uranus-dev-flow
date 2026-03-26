@@ -35,7 +35,7 @@ docs/features/<feature>/
 | 0      | Feasibility study  | `/feasibility-study` | Recommended |
 | 1      | Requirements spec  | -                    | As needed   |
 | 2      | Technical spec     | `/tech-spec`         | Required    |
-| 3      | Architecture design| `/deep-analyze`      | Recommended |
+| 3      | Architecture design| `/architecture`      | Recommended |
 | 4+     | Implementation/Appendix | -               | As needed   |
 
 ## Cross-References
