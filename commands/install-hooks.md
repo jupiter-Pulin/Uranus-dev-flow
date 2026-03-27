@@ -91,7 +91,7 @@ Read all `.sh` files from the discovered hooks directory. The available hooks ar
 | `user-prompt-review-guard.sh` | UserPromptSubmit | — | Inject pending review reminder with cooldown |
 
 > **Sync requirement**: This table must match `hooks/hooks.json`. When adding a new hook, update both this table AND the Phase 4b settings template below.
-
+>
 > **Note**: The plugin's `SessionStart` namespace hook (`scripts/namespace-hint.sh`, defined in `hooks.json`) is intentionally excluded from local install — it emits plugin-namespaced command guidance (`/sd0x-dev-flow:...`) which is incorrect for local installations where commands are accessed without namespace prefix.
 
 If `--list` is specified, output this table and **stop**.
