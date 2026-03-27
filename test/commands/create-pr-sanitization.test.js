@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { readFileSync, existsSync } = require('node:fs');
 const { resolve } = require('node:path');
 
 const root = resolve(__dirname, '../..');
@@ -237,8 +237,9 @@ test('CLAUDE.md Development Rules #3 references /create-pr Step 4b', () => {
 });
 
 // --- Tests: .claude/CLAUDE.md mirror ---
+// .claude/ is in .gitignore — file only exists locally (plugin install), not in CI checkout
 
-test('.claude/CLAUDE.md mirrors PR title/body rule from CLAUDE.md', () => {
+test('.claude/CLAUDE.md mirrors PR title/body rule from CLAUDE.md', { skip: !existsSync(resolve(root, '.claude/CLAUDE.md')) && 'file not present (CI or fresh checkout)' }, () => {
   const dotClaudePath = resolve(root, '.claude/CLAUDE.md');
   const dotClaude = readFileSync(dotClaudePath, 'utf8');
   assert.ok(
