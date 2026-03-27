@@ -1,7 +1,7 @@
 ---
 description: Create, update, or scan request documents. Auto-fill template on creation, sync with implementation progress on update, scan all incomplete requests with --status.
-argument-hint: [--update <file-path>] [--update-all] [--feature <name>] [--status]
-allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
+argument-hint: [--update <file-path>] [--update-all] [--verify-ac] [--feature <name>] [--status]
+allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion, Agent
 ---
 
 ⚠️ **Must read and follow the skill below before executing this command:**
@@ -31,6 +31,7 @@ $ARGUMENTS
 | `--status`         | Scan mode: report all incomplete requests |
 | `--update-all`     | Batch update: scan all incomplete + git verify + batch edit |
 | `--update <path>`  | Update mode: specify request path |
+| `--verify-ac`      | Update mode: dispatch Explore agent for AC verification |
 | `--feature <name>` | Create mode: specify feature area |
 | No parameter       | Auto-determine from context       |
 
@@ -39,7 +40,7 @@ $ARGUMENTS
 ```
 Has --status        -> Scan Mode
 Has --update-all    -> Batch Update Mode
-Has --update        -> Update Mode
+Has --update        -> Update Mode (+ --verify-ac triggers Phase 2.5)
 Has --feature       -> Create Mode
 Context references request doc -> Update Mode (after confirmation)
 Other               -> Create Mode (ask for info)
@@ -71,9 +72,10 @@ Follow the Update Mode Workflow in the skill:
 
 1. **Load**: Read existing request document
 2. **Analyze**: Analyze Related Files + git changes
-3. **Map**: Compare implementation with Acceptance Criteria
-4. **Update**: Update Progress / Status / Checkboxes
-5. **Report**: Output change summary
+3. **Verify** (`--verify-ac` only): Dispatch Explore agent for AC verification
+4. **Map**: Compare implementation with Acceptance Criteria
+5. **Update**: Update Progress / Status / Checkboxes
+6. **Report**: Output change summary
 
 ## Output
 
@@ -134,6 +136,12 @@ Follow the Update Mode Workflow in the skill:
 |---|---------|---------|----------|---------|-----|------|
 | 1 | {title} | {feature} | P1 | 2026-03-13 | 3/8 | `docs/features/...` |
 
+### Candidate Complete ({count})
+
+| # | Request | Feature | Priority | Created | AC | Path |
+|---|---------|---------|----------|---------|-----|------|
+| 1 | {title} | {feature} | P2 | 2026-03-20 | 8/8 | `docs/features/...` |
+
 ### Pending ({count})
 
 | # | Request | Feature | Priority | Created | AC | Stale | Path |
@@ -150,6 +158,7 @@ Follow the Update Mode Workflow in the skill:
 | Status | Count | Avg Age (days) |
 |--------|-------|---------------|
 | In Progress | N | N |
+| Candidate Complete | N | N |
 | Pending | N | N |
 | Design/Proposed | N | N |
 | **Total Incomplete** | **N** | **N** |

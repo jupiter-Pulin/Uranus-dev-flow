@@ -1,7 +1,7 @@
 ---
 name: create-request
 description: "Create, update, or scan request documents. Use when: planning features, tracking requests, updating progress, scanning incomplete requests, checking request status dashboard. Not for: tech specs (use tech-spec), code implementation (use feature-dev). Output: request document with status tracking."
-allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Write, Bash, AskUserQuestion, Agent
 ---
 
 # Create/Update Request Skill
@@ -29,6 +29,12 @@ flowchart LR
 | `update` | File specified / update request | Read current state -> Check implementation -> Update progress |
 | `update-all` | `--update-all` flag | Batch scan → git verify → update all stale docs → report |
 | `scan`   | `--status` flag                 | Scan all requests -> Parse metadata -> Filter incomplete -> Report |
+
+### Arguments
+
+| Flag | Applies To | Description |
+|------|-----------|-------------|
+| `--verify-ac` | `--update` (single) | Dispatch Explore agent to verify AC completion with evidence (file:line). Supports auto-detected path via feature context 5-level cascade. Not available with `--update-all`. |
 
 ## When NOT to Use
 
@@ -134,6 +140,7 @@ If incomplete info, ask:
 ```
 Phase 1: Load      -> Read existing request document
 Phase 2: Analyze   -> Analyze Related Files + git changes
+Phase 2.5: Verify  -> (--verify-ac only) Agent-based AC verification
 Phase 3: Map       -> Compare implementation with Acceptance Criteria
 Phase 4: Update    -> Update Progress / Status / Checkboxes
 Phase 5: Report    -> Output change summary
@@ -152,6 +159,40 @@ grep -rE "describe|it\(" test/ --include="*<feature>*"
 git log --oneline --grep="codex-review" -- <related_files>
 ```
 
+### Phase 2.5: AC Verification Agent (`--verify-ac` only)
+
+Dispatched when `--verify-ac` flag is present on single-request `--update`. Supports auto-detected path via feature context 5-level cascade. Skipped otherwise (default path unchanged, <10 sec).
+
+**Input**: AC_LIST from `## Acceptance Criteria` (filter quality-gate ACs per codex-code-review Step 1.5 pattern). RELATED_FILES from `## Related Files` table.
+
+```
+Agent({
+  description: "Verify AC completion for <feature>",
+  subagent_type: "Explore",
+  prompt: `AC verification specialist.
+    AC_LIST: ${AC_LIST}
+    RELATED_FILES: ${RELATED_FILES}
+    For each AC: read code, verify implementation.
+    Output per AC:
+    - Status: Complete | Partial | Not Found | Inconclusive
+    - Evidence: file:line references
+    - Confidence: High | Medium | Low
+    - Gap (if Partial): what is missing`
+})
+```
+
+**Timeout**: 60 sec hard limit. Unverified ACs on timeout marked `Inconclusive`.
+
+**Graceful degradation**: Agent dispatch fails → warn user, fall back to git-based heuristic (Phase 2 results).
+
+**Confidence-to-status mapping**:
+
+| Condition | Status |
+|-----------|--------|
+| All AC `Complete` with `High` confidence | `Completed` |
+| All AC checked but any `Medium`/`Low`/`Inconclusive` | `Candidate Complete` + verification summary in Progress.Note |
+| Some AC `Not Found` or `Partial` | `In Progress` |
+
 ### Phase 3: Progress Mapping Rules
 
 | Implementation Status               | Progress Update      |
@@ -166,7 +207,7 @@ git log --oneline --grep="codex-review" -- <related_files>
 
 | Section               | Update Logic                              |
 | --------------------- | ----------------------------------------- |
-| `Status`              | Canonical lifecycle: Pending → In Progress → Completed. Normalize variants: `In Development`/`In Dev` → `In Progress`; `Done` → `Completed` |
+| `Status`              | Canonical lifecycle: Pending → In Progress → Candidate Complete → Completed. Candidate Complete = all AC checked but not closure-grade verified (either heuristic-only, or `--verify-ac` with non-High confidence). Only `--verify-ac` with all-High confidence sets `Completed`. Normalize variants: `In Development`/`In Dev` → `In Progress`; `Done` → `Completed` |
 | `Progress` table      | Update each phase status based on git changes |
 | `Acceptance Criteria` | Check checkboxes based on implementation/test results |
 | `Progress.Note`       | Add latest commit message summary         |
@@ -224,6 +265,7 @@ Support two metadata formats (try in order, use first match):
 | Done | Done | No |
 | Superseded | Done | No |
 | In Progress / In Development / In Dev | Active | Yes |
+| Candidate Complete | Active (needs verification) | Yes — group after In Progress |
 | Pending | Backlog | Yes |
 | Design / Proposed | Pre-work | Yes |
 | unknown | Backlog (grouped with Pending) | Yes |
@@ -235,8 +277,9 @@ Support two metadata formats (try in order, use first match):
 Console-only markdown output (no file creation). Group by status in actionability order:
 
 1. **In Progress** — active work, highest actionability
-2. **Pending** — backlog, includes stale detection
-3. **Design / Proposed** — pre-implementation
+2. **Candidate Complete** — heuristic-complete, needs `--verify-ac` confirmation
+3. **Pending** — backlog, includes stale detection
+4. **Design / Proposed** — pre-implementation
 
 Each group as a table with columns: `#`, `Request`, `Feature`, `Priority`, `Created`, `AC`, `Path`.
 Pending group adds a `Stale` column.
@@ -281,7 +324,7 @@ git log --oneline --all -- skills/<feature>/ commands/<feature>.md | head -5
 
 | Category | Condition | Action |
 |----------|-----------|--------|
-| ALL_CHECKED | AC all `[x]` but Status ≠ Completed | Update Status → Completed |
+| ALL_CHECKED | AC all `[x]` but Status ≠ Completed/Candidate Complete | Update Status → Candidate Complete (heuristic-only, not Completed) |
 | HAS_COMMITS | Git commits exist for Related Files | Read doc → verify AC → update |
 | LEGACY_METADATA | No blockquote Status (table format or missing) | Check table format; if already Completed → skip |
 | NO_EVIDENCE | No git commits, AC unchecked | Skip (report as unchanged) |
@@ -290,7 +333,7 @@ git log --oneline --all -- skills/<feature>/ commands/<feature>.md | head -5
 
 For each updatable doc:
 
-1. **Status**: If all AC checked → `Completed`. If some AC checked → `In Progress`.
+1. **Status**: If all AC checked (heuristic) → `Candidate Complete`. If some AC checked → `In Progress`. Only `--verify-ac` (single update) can set `Completed`.
 2. **AC checkboxes**: Cross-reference git diff to determine which ACs are met. Only check ACs with clear implementation evidence.
 3. **Progress table**: Update phase statuses based on commits found.
 4. **Missing metadata**: Add blockquote metadata header if doc only has table format or no metadata.
@@ -302,8 +345,8 @@ For each updatable doc:
 
 | # | Request | Feature | Before | After | Changes |
 |---|---------|---------|--------|-------|---------|
-| 1 | Bug-fix redesign | bug-fix-redesign | Pending 0/14 | Completed 14/14 | Status + AC + Progress |
-| 2 | Safe-remove | safe-remove | Pending 0/12 | Completed 12/12 | Status + AC |
+| 1 | Bug-fix redesign | bug-fix-redesign | Pending 0/14 | Candidate Complete 14/14 | Status + AC + Progress |
+| 2 | Safe-remove | safe-remove | Pending 0/12 | Candidate Complete 12/12 | Status + AC |
 | 3 | Multi-ecosystem | multi-ecosystem | Pending 0/23 | Pending 0/23 | (no changes — no commits) |
 
 **Updated**: N / **Unchanged**: N / **Total scanned**: N
