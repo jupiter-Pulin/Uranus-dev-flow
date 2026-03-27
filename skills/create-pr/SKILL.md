@@ -81,10 +81,38 @@ Format: `<type>: [<TICKET>] <concise summary>`
 
 **Rules:**
 
-- No AI-generated tags (no "Generated with Claude" etc.)
+- No AI-generated tags — enforced by Step 4b sanitization (see below)
 - Keep summary factual, based on actual commits
 - Use imperative mood in bullet points
 - Omit Ticket section if no ticket ID or `{ISSUE_TRACKER_URL}` not configured
+
+**Forbidden patterns** (POSIX ERE, case-insensitive — canonical source: `scripts/commit-msg-guard.sh:19-23`):
+
+| Pattern Category | Regex |
+|-----------------|-------|
+| Co-Authored-By AI | `Co-Authored-By:.*(Claude\|Anthropic\|GPT\|OpenAI\|Copilot\|noreply@anthropic)` |
+| Generated-by tag | `Generated (by\|with).*(Claude\|Claude Code\|AI\|GPT\|Copilot)` |
+| Emoji robot tag | `🤖.*(Claude\|AI\|GPT)` |
+
+> **Note**: `\|` in the table above is Markdown table escaping. Actual POSIX ERE uses unescaped `|`.
+
+### 4b. AI Content Sanitization
+
+After generating title and body (Step 3-4), scan for forbidden patterns and sanitize **before** any output or execution. Applies to all modes: dry-run/execute, create/update, `--title` override.
+
+**Title sanitization** (regenerate/fail):
+
+1. Scan title for forbidden patterns (`grep -Ei`)
+2. If match found → regenerate title from commits (1 attempt, without AI attribution)
+3. If regenerated title still matches → **HARD FAIL**: abort with error message
+4. `--title` override: same scan-and-fail logic (no regeneration — user-provided text fails immediately if matched)
+
+**Body sanitization** (line-strip + log):
+
+1. Scan body line-by-line for forbidden patterns
+2. Remove matching lines
+3. Log each removal: `[AI_STRIPPED] <removed line>`
+4. If all content lines removed → preserve template structure (Summary / Test plan headers only)
 
 ### 5. Pre-flight Checks + Mode Detection
 
@@ -114,7 +142,7 @@ When an existing PR is detected (or `--update` is passed):
 gh pr view <PR-number> --json number,title,body,url,baseRefName
 ```
 
-**Step 2**: Re-generate title and body from latest commits (same logic as Steps 2-4 above, using full commit range `base..head`).
+**Step 2**: Re-generate title and body from latest commits (same logic as Steps 2-4 above, using full commit range `base..head`). **Run Step 4b AI Content Sanitization** on the re-generated content before proceeding.
 
 **Step 3**: Smart diff — compare current vs newly generated:
 
@@ -190,6 +218,42 @@ Title: <title>
 Base: <base> ← Head: <head>
 ```
 
+### 7b. Post-creation Verify (execute-only)
+
+After `gh pr create` or `gh pr edit` completes in `--execute` mode, verify the published content for AI attribution leaks.
+
+**Step 1**: Fetch actual published content:
+
+```bash
+gh pr view <number> --json title,body --template '{{.title}}{{"\n"}}{{.body}}'
+```
+
+**Step 2**: Scan for forbidden patterns (same 3 POSIX ERE from Step 4b).
+
+**Step 3**: If leak detected — **auto-remediate** (single attempt, using pre-sanitized snapshot from Step 4b):
+
+```bash
+# Title (safe escaping via printf):
+gh pr edit <number> --title "$(printf '%s' "$SANITIZED_TITLE")"
+
+# Body (safe escaping via --body-file + heredoc):
+gh pr edit <number> --body-file /dev/stdin <<'EOF'
+<pre-sanitized-body-snapshot>
+EOF
+```
+
+**Step 4**: Re-verify via `gh pr view`. If still leaked → **HARD FAIL**:
+
+```
+❌ AI attribution leaked in PR #<number> after remediation attempt.
+   Manual fix: gh pr edit <number> --title "<clean-title>" --body-file <clean-body-file>
+```
+
+**Guardrails**:
+1. Single remediation attempt only — no retry loop
+2. Use pre-sanitized snapshot (do not re-generate from commits)
+3. Fail-fast on GitHub API errors (no retry for transient errors)
+
 ## Multi-PR Mode
 
 When user specifies multiple branch pairs (e.g. "A → main, B → A"), create them sequentially and output all URLs at the end.
@@ -200,7 +264,7 @@ When user specifies multiple branch pairs (e.g. "A → main, B → A"), create t
 |------|----------|
 | No ticket ID in branch name | Omit `[TICKET]` from title, omit Ticket section from body |
 | Branch suffix like `-2`, `-3` | Strip suffix when extracting ticket ID |
-| User provides `--title` | Use as-is, skip auto-generation |
+| User provides `--title` | Use as-is (skip auto-generation), but **still run Step 4b scan** — fail immediately if forbidden pattern matched |
 | Stacked PRs (B → A → main) | Note dependency in body: "Stacked on #<PR-number>" |
 | `--update` but no existing PR | Error: "No PR found for branch `<head>` → `<base>`" |
 | Auto-detect existing PR | Switch to update mode, show "Existing PR #N detected, switching to update mode" |
@@ -215,12 +279,16 @@ When user specifies multiple branch pairs (e.g. "A → main, B → A"), create t
 - [ ] No existing PR for the same head/base
 - [ ] Title follows project convention
 - [ ] Body includes summary and test plan
+- [ ] Step 4b: Title and body pass forbidden-pattern scan
+- [ ] Step 7b: Post-creation verify finds no AI attribution (execute-only)
 - [ ] Dry-run command is valid (copy-pasteable)
 
 ### Update mode
 
 - [ ] Existing PR fetched successfully (`gh pr view`)
 - [ ] New title/body generated from latest commits
+- [ ] Step 4b: Re-generated content sanitized before output/edit
+- [ ] Step 7b: Post-edit verify finds no AI attribution (execute-only)
 - [ ] Before/after diff shown to user
 - [ ] Only changed fields included in `gh pr edit` command
 - [ ] Dry-run command is valid (copy-pasteable)
