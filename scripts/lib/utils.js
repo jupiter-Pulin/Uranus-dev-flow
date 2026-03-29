@@ -281,7 +281,12 @@ let _pluginName = null;
 function getPluginName() {
   if (_pluginName !== null) return _pluginName;
   try {
-    const pluginRoot = path.resolve(__dirname, '../..');
+    const envRoot = process.env.PLUGIN_ROOT;
+    const pluginRoot = (envRoot
+      && fs.existsSync(path.join(envRoot, 'scripts', 'lib', 'utils.js'))
+      && fs.existsSync(path.join(envRoot, '.claude-plugin', 'plugin.json')))
+      ? envRoot
+      : path.resolve(__dirname, '../..');
     const pj = JSON.parse(fs.readFileSync(
       path.join(pluginRoot, '.claude-plugin', 'plugin.json'), 'utf8'));
     _pluginName = pj.name || '';

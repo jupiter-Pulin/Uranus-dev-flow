@@ -3,14 +3,29 @@
 
 const fs = require('fs');
 const path = require('path');
-const { runCapture, gitRepoRoot, qualifyCommand } = require('../../../scripts/lib/utils');
+
+// Resolve plugin root: validated env var → walk-up with marker → legacy fallback
+const _pluginRoot = (() => {
+  const sentinel = p => fs.existsSync(path.join(p, 'scripts', 'lib', 'utils.js'));
+  const marker = p => fs.existsSync(path.join(p, '.claude-plugin', 'plugin.json'));
+  const envRoot = process.env.PLUGIN_ROOT;
+  if (envRoot && sentinel(envRoot) && marker(envRoot)) return envRoot;
+  let d = __dirname;
+  while (d !== path.dirname(d)) {
+    if (sentinel(d) && marker(d)) return d;
+    d = path.dirname(d);
+  }
+  return path.resolve(__dirname, '..', '..', '..');
+})();
+
+const { runCapture, gitRepoRoot, qualifyCommand } = require(path.join(_pluginRoot, 'scripts', 'lib', 'utils'));
 
 // ---------------------------------------------------------------------------
 // File classification config (language-agnostic)
 // ---------------------------------------------------------------------------
 function loadClassification() {
   try {
-    const p = path.join(__dirname, '../../../scripts/config/file-classification.json');
+    const p = path.join(_pluginRoot, 'scripts', 'config', 'file-classification.json');
     return JSON.parse(fs.readFileSync(p, 'utf8'));
   } catch {
     return null;

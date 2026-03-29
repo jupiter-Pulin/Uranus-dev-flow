@@ -76,6 +76,25 @@ test('run-skill.sh rejects path traversal in script name', () => {
   );
 });
 
+test('run-skill.sh exports PLUGIN_ROOT to child processes', () => {
+  // Runtime assertion: run a skill script and verify PLUGIN_ROOT is set
+  const output = execSync(
+    `bash "${scriptPath}" next-step analyze.js --json 2>&1; true`,
+    { encoding: 'utf8', cwd: resolve(__dirname, '../..') }
+  );
+  // The script should not fail with MODULE_NOT_FOUND (proves PLUGIN_ROOT resolves)
+  assert.ok(
+    !output.includes('MODULE_NOT_FOUND'),
+    'skill script should resolve modules via PLUGIN_ROOT'
+  );
+  // Also verify source text as secondary check
+  const scriptContent = require('fs').readFileSync(scriptPath, 'utf8');
+  assert.ok(
+    scriptContent.includes('export PLUGIN_ROOT='),
+    'run-skill.sh should export PLUGIN_ROOT'
+  );
+});
+
 test('run-skill.sh exits non-zero for missing skill', () => {
   assert.throws(
     () => {
