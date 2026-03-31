@@ -18,6 +18,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-compact-auto-loop.sh"
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-init.sh"
+          }
+        ]
       }
     ],
     "PreToolUse": [

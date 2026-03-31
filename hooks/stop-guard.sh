@@ -75,6 +75,10 @@ fi
 # Read JSON input from stdin
 INPUT=$(cat)
 
+# Recursion guard: prevent infinite loop in strict mode (D-1)
+STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+if [[ "$STOP_HOOK_ACTIVE" == "true" ]]; then exit 0; fi
+
 # Check if jq is available
 if ! command -v jq &> /dev/null; then
   echo "[Stop Guard] jq not installed, allowing stop" >&2

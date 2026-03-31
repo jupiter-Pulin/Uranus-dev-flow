@@ -124,6 +124,10 @@ if (query && query.includes('.data.advisory')) {
   process.exit(0);
 }
 
+if (query && query.includes('.stop_hook_active')) {
+  outputValue(asBoolString(data.stop_hook_active));
+  process.exit(0);
+}
 if (query && query.includes('.transcript_path')) {
   outputValue(data.transcript_path ?? '');
   process.exit(0);
@@ -1547,4 +1551,50 @@ test('arbitration: registered in settings.local.json defers', () => {
     !result.stdout.includes('"ok"'),
     'should not produce stop-guard JSON output'
   );
+});
+
+// ---------------------------------------------------------------------------
+// D-1: Recursion guard (stop_hook_active)
+// ---------------------------------------------------------------------------
+
+test('recursion guard: stop_hook_active=true exits 0 immediately', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-recursion-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { stop_hook_active: true, transcript_path: '' },
+    env: { STOP_GUARD_MODE: 'strict' },
+  });
+  assert.equal(result.status, 0, 'stop_hook_active=true should exit 0 even in strict mode');
+});
+
+test('recursion guard: stop_hook_active absent behaves normally', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-no-recursion-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: true,
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { STOP_GUARD_MODE: 'strict' },
+  });
+  assert.equal(result.status, 2, 'without stop_hook_active, strict mode should block');
 });
