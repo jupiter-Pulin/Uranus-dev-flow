@@ -1,7 +1,7 @@
 # Architecture Skill
 
 > **Created**: 2026-03-26
-> **Status**: In Progress
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
@@ -13,7 +13,7 @@
 
 - 新建 `/architecture` skill，支援 create + update 模式
 - 複用 feature context resolution（5-level cascade）
-- 平行研究：Explore agent（code patterns） + tech-spec 讀取 + Codex 架構建議
+- 平行研究：Explore agent（code patterns） + tech-spec 讀取（parallel）→ Codex 架構建議（sequential, after A+B）
 - 使用 architecture-designer agent 產出組件圖 + 資料流 + 架構決策
 - `/codex-brainstorm` 辯論驗證架構設計
 - 輸出 `3-architecture.md`，自動觸發 `/codex-review-doc`
@@ -29,7 +29,7 @@
 
 | File | Action | Description |
 |------|--------|-------------|
-| `skills/architecture/SKILL.md` | New | Skill 主體定義（4-phase workflow） |
+| `skills/architecture/SKILL.md` | New | Skill 主體定義（Phase 0-4 workflow） |
 | `skills/architecture/references/template.md` | New | `3-architecture.md` output template |
 | `skills/architecture/references/codex-prompt.md` | New | Codex 獨立架構研究 prompt |
 | `agents/architecture-designer.md` | New | 架構設計 agent（derived from solution-architect） |
@@ -39,24 +39,24 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1: `skills/architecture/SKILL.md` 存在，包含 4-phase workflow（Context → Research → Design → Output）
-- [ ] AC2: Output template 包含 8 個必要 section（Overview, Components, Data Flow, Integration, Decisions, Deployment, Verification, Cross-References）
-- [ ] AC3: Phase 0 feature context resolution 正確（create/update 模式切換）
-- [ ] AC4: Phase 1 平行研究（Explore agent background + tech-spec inline + Codex sequential）
-- [ ] AC5: Architecture-designer agent 定義存在於 `agents/`
-- [ ] AC6: `rules/docs-numbering.md` Phase 3 command 更新為 `/architecture`
-- [ ] AC7: Tests 覆蓋 SKILL.md structure + template sections + command mirror
-- [ ] Pass `/codex-review-fast`
-- [ ] Pass `/precommit`
+- [x] AC1: `skills/architecture/SKILL.md` 存在，包含 Phase 0-4 workflow（Context → Research → Design → Verification → Output）
+- [x] AC2: Output template 包含 8 個必要 section（Overview, Components, Data Flow, Integration, Decisions, Deployment, Verification, Cross-References）
+- [x] AC3: Phase 0 feature context resolution 正確（create/update 模式切換）
+- [x] AC4: Phase 1 平行研究（Explore agent background + tech-spec inline + Codex sequential）
+- [x] AC5: Architecture-designer agent 定義存在於 `agents/`
+- [x] AC6: `rules/docs-numbering.md` Phase 3 command 更新為 `/architecture`
+- [x] AC7: Tests 覆蓋 SKILL.md structure + template sections + command mirror
+- [x] Pass `/codex-review-fast`
+- [x] Pass `/precommit`
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | Tech spec completed |
+| Development | Done | SKILL.md + template + codex-prompt + agent + command (commit 80a3e46) |
+| Testing | Done | 11 tests passing (`test/commands/architecture.test.js`) |
+| Acceptance | Done | Codex review + precommit pass |
 
 ## References
 
