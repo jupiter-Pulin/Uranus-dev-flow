@@ -7,6 +7,7 @@ Case files contain IoCs, detection commands, cleanup procedures, and attack chai
 | case_id | Product | Status | Platforms | Attack Window | Confidence | File |
 |---------|---------|--------|-----------|---------------|------------|------|
 | APIFOX-2026-03 | Apifox | active | macOS, Windows, Linux | 2026-03-04 to 2026-03-22 | high | [apifox-2026-03.md](./apifox-2026-03.md) |
+| AXIOS-2026-03 | axios (npm) | active | macOS, Windows, Linux | 2026-03-31 00:21 to 03:15 UTC | high | [axios-2026-03.md](./axios-2026-03.md) |
 
 ## Case File Template
 
@@ -21,6 +22,7 @@ Case files contain IoCs, detection commands, cleanup procedures, and attack chai
 | `platforms` | list | yes | Affected OS platforms |
 | `attack_window` | object | yes | `start` and `end` dates |
 | `confidence` | enum | yes | `high` / `medium` / `low` |
+| `product_type` | enum | no | `app` (default) / `npm-library`. Library cases use lockfile scan for presence check instead of app directory check |
 
 ### Required Section Order
 
