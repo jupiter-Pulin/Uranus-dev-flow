@@ -1,7 +1,7 @@
 # Max Rounds Project Override Parser
 
 > **Created**: 2026-03-25
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Auto-Loop Evolution](../2-tech-spec.md) Section 3.2 (Rule Migration)
 > **Depends On**: [Iteration Counter (R2)](./2026-03-24-iteration-counter-convergence-r2.md)
@@ -35,12 +35,12 @@ R2 added `iteration_history.max_rounds` to the state schema (default 10) and `au
 
 ## Acceptance Criteria
 
-- [ ] `auto-loop-project.md` has documented `max_rounds` override syntax
-- [ ] `_migrate_state_v2()` reads override and applies to `iteration_history.max_rounds`
-- [ ] `init_state_file()` in post-edit-format.sh reads override for initial value
-- [ ] Fallback to 10 when override not found or file missing
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] `auto-loop-project.md` has documented `max_rounds` override syntax
+- [x] `_migrate_state_v2()` reads override and applies to `iteration_history.max_rounds`
+- [x] `init_state_file()` in post-edit-format.sh reads override for initial value
+- [x] Fallback to 10 when override not found or file missing
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 

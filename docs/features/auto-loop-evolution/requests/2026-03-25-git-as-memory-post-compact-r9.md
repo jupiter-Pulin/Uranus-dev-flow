@@ -1,7 +1,7 @@
 # Git-as-Memory Post-Compact Injection
 
 > **Created**: 2026-03-25
-> **Status**: Spec Complete
+> **Status**: Candidate Complete
 > **Priority**: P2 (medium effort, hook change)
 > **Brainstorm threadId**: `019d24b5-0085-74f3-b143-ae6b35060c95`
 > **Origin**: autoresearch project analysis (deep-research 2026-03-25)
@@ -29,15 +29,15 @@ autoresearch 用 `git log` 作為外部記憶體，每次 iteration 重建 conte
 
 ## Acceptance Criteria
 
-- [ ] Post-compact injection 含 `[GIT_CONTEXT]` block
-- [ ] `git log --oneline --no-merges -5` output (capped `head -20`)
-- [ ] `git diff --stat` output (capped `head -20`)
-- [ ] `git status --short` output (capped `head -20`)
-- [ ] 所有 git command fail-open（command 失敗時靜默跳過）
-- [ ] 只在 `$NEXT` 非空時輸出
-- [ ] 現有 `[AUTO_LOOP_RESUME]` 行為不變
-- [ ] Git context injection 預設 off，opt-in via `auto-loop-project.md` (`## Git Memory: enabled`)
-- [ ] Git output 不含 secret-like patterns（`.env`, `credential`, `token`, `secret` in filenames filtered out）
+- [x] Post-compact injection 含 `[GIT_CONTEXT]` block
+- [x] `git log --oneline --no-merges -5` output (capped `head -20`)
+- [x] `git diff --stat` output (capped `head -20`)
+- [x] `git status --short` output (capped `head -20`)
+- [x] 所有 git command fail-open（command 失敗時靜默跳過）
+- [x] 只在 `$NEXT` 非空時輸出
+- [x] 現有 `[AUTO_LOOP_RESUME]` 行為不變
+- [x] Git context injection 預設 off，opt-in via `auto-loop-project.md` (`## Git Memory: enabled`)
+- [x] Git output 不含 secret-like patterns（`.env`, `credential`, `token`, `secret` in filenames filtered out）
 
 ## Design Decision
 

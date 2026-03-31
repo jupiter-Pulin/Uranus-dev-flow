@@ -1,7 +1,7 @@
 # Mid-Loop Summary Prohibition
 
 > **Created**: 2026-03-25
-> **Status**: Spec Complete
+> **Status**: Candidate Complete
 > **Priority**: P1 (low effort, immediate)
 > **Brainstorm threadId**: `019d24b5-0085-74f3-b143-ae6b35060c95`
 > **Origin**: autoresearch project analysis (deep-research 2026-03-25)
@@ -26,9 +26,9 @@ autoresearch 明確禁止「每次 iteration 後做摘要」，因為 summary �
 
 ## Acceptance Criteria
 
-- [ ] `rules/auto-loop.md` Prohibited Behaviors 含新條目
-- [ ] `.claude/rules/auto-loop.md` 同步
-- [ ] 明確區分 brief status（允許）vs polished summary（禁止）
+- [x] `rules/auto-loop.md` Prohibited Behaviors 含新條目
+- [x] `.claude/rules/auto-loop.md` 同步
+- [x] 明確區分 brief status（允許）vs polished summary（禁止）
 
 ## Implementation
 

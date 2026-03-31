@@ -1,7 +1,7 @@
 # Session Lifecycle Reset (D-2)
 
 > **Created**: 2026-03-31
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P1
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-2
 
@@ -33,22 +33,22 @@
 
 ## Acceptance Criteria
 
-- [ ] 新 session 啟動時 review state reset（code_review/doc_review/precommit all false）
-- [ ] `total_rounds_session` 和 `strategic_reset_fired` 保留（不 reset）
-- [ ] 同 session 重複觸發不 reset（idempotent）
-- [ ] State file 不存在時建立最小版本
-- [ ] hooks.json additive（不破壞既有 namespace-hint、compact hooks）
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] 新 session 啟動時 review state reset（code_review/doc_review/precommit all false）
+- [x] `total_rounds_session` 和 `strategic_reset_fired` 保留（不 reset）
+- [x] 同 session 重複觸發不 reset（idempotent）
+- [x] State file 不存在時建立最小版本
+- [x] hooks.json additive（不破壞既有 namespace-hint、compact hooks）
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | |
+| Development | Done | `85a9f07` — new session-init.sh + hooks.json |
+| Testing | Done | 5 new test cases (all pass) |
+| Acceptance | Done | Codex review ✅ Ready + precommit ✅ Pass |
 
 ## References
 

@@ -1,7 +1,7 @@
 # Stop Hook Recursion Guard (D-1)
 
 > **Created**: 2026-03-31
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P0
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-1
 
@@ -31,20 +31,20 @@ Strict mode `stop-guard.sh` exit 2 可能造成 infinite loop：Claude 回應 �
 
 ## Acceptance Criteria
 
-- [ ] `stop_hook_active=true` 時 exit 0（不觸發 review 檢查）
-- [ ] `stop_hook_active=false` 或缺失時行為不變
-- [ ] jq parse 失敗時 fallback 為 `false`（不中斷）
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] `stop_hook_active=true` 時 exit 0（不觸發 review 檢查）
+- [x] `stop_hook_active=false` 或缺失時行為不變
+- [x] jq parse 失敗時 fallback 為 `false`（不中斷）
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | |
+| Development | Done | `85a9f07` — 3 lines in stop-guard.sh |
+| Testing | Done | 2 new test cases (51 total pass) |
+| Acceptance | Done | Codex review ✅ Ready + precommit ✅ Pass |
 
 ## References
 

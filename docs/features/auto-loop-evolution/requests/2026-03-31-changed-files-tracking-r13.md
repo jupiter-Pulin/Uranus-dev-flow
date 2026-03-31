@@ -1,7 +1,7 @@
 # Changed Files Tracking (D-3)
 
 > **Created**: 2026-03-31
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P1
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-3
 > **Depends On**: [Session Lifecycle Reset](./2026-03-31-session-lifecycle-reset-r12.md)
@@ -34,21 +34,21 @@ State file 只記錄 `has_code_change` boolean，不追蹤哪些 files 變了。
 
 ## Acceptance Criteria
 
-- [ ] Edit 觸發後 `changed_files_since_review` 包含該 file path
-- [ ] 重複 edit 同一 file 不產生 duplicate（unique array）
-- [ ] code_review pass 後 array reset 為 `[]`
-- [ ] Schema v3 backward compatible（v2 state file 自動升級）
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] Edit 觸發後 `changed_files_since_review` 包含該 file path
+- [x] 重複 edit 同一 file 不產生 duplicate（unique array）
+- [x] code_review pass 後 array reset 為 `[]`
+- [x] Schema v3 backward compatible（v2 state file 自動升級）
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | |
+| Development | Done | `_track_changed_file()` + `_reset_changed_files()` |
+| Testing | Done | 120/120 hook tests pass |
+| Acceptance | Done | Codex review ✅ Ready + precommit ✅ Pass |
 
 ## References
 

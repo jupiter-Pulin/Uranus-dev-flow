@@ -1,7 +1,7 @@
 # Convergence Rule Codification
 
 > **Created**: 2026-03-25
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Auto-Loop Evolution](../2-tech-spec.md) Section 3.3 T1 (Convergence Detection)
 > **Depends On**: [Iteration Counter (R2)](./2026-03-24-iteration-counter-convergence-r2.md)
@@ -34,17 +34,17 @@ R2 implemented per-round finding storage (`findings_by_round[]` in state schema 
 
 ## Acceptance Criteria
 
-- [ ] `auto-loop.md` Exit Conditions includes convergence decision table (zero/plateau/converging/null)
-- [ ] Zero findings rule: `total == 0` in current round triggers precommit
-- [ ] Plateau rule: `total >= prev_total` AND fingerprint overlap >= 50% for 3+ rounds triggers Need Human
-- [ ] Rule references `iteration_history.findings_by_round[]` from `.claude_review_state.json`
-- [ ] Pass /codex-review-doc
+- [x] `auto-loop.md` Exit Conditions includes convergence decision table (zero/plateau/converging/null)
+- [x] Zero findings rule: `total == 0` in current round triggers precommit
+- [x] Plateau rule: `total >= prev_total` AND fingerprint overlap >= 50% for 3+ rounds triggers Need Human
+- [x] Rule references `iteration_history.findings_by_round[]` from `.claude_review_state.json`
+- [x] Pass /codex-review-doc
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Tech spec §3.3 T1 defines convergence table |
-| Development | - | |
-| Testing | - | Behavior-layer only (no hook tests needed) |
-| Acceptance | - | |
+| Development | Done | Convergence plateau added to auto-loop.md:87 |
+| Testing | Done | Behavior-layer only (no hook tests needed) |
+| Acceptance | Done | Codex review ✅ Ready + precommit ✅ Pass |

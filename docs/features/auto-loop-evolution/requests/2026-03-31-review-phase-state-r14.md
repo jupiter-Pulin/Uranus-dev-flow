@@ -1,7 +1,7 @@
 # Review Phase State (D-4)
 
 > **Created**: 2026-03-31
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-4
 > **Depends On**: [Changed Files Tracking](./2026-03-31-changed-files-tracking-r13.md)
@@ -35,22 +35,22 @@ State file 只追蹤 review 是否執行過，不追蹤當前 review cycle 階�
 
 ## Acceptance Criteria
 
-- [ ] Code edit → phase = `pending_review`
-- [ ] Emit READY → phase = `precommit_pending`
-- [ ] Emit BLOCKED → phase = `addressing_findings`
-- [ ] Precommit pass → phase = `idle`
-- [ ] stop-guard 根據 phase 產出正確 MISSING hint
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] Code edit → phase = `pending_review`
+- [x] Emit READY → phase = `precommit_pending`
+- [x] Emit BLOCKED → phase = `addressing_findings`
+- [x] Precommit pass → phase = `idle`
+- [x] stop-guard 根據 phase 產出正確 MISSING hint
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | |
+| Development | Done | |
+| Testing | Done | |
+| Acceptance | Done | |
 
 ## References
 

@@ -1,7 +1,7 @@
 # Structured Output Schema (D-5)
 
 > **Created**: 2026-03-31
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-5
 
@@ -34,22 +34,22 @@ Sentinel parsing（`✅ Ready`、`## Gate: ✅`）用 regex 匹配 Codex 輸出�
 
 ## Acceptance Criteria
 
-- [ ] Codex 輸出含 JSON block 時正確 parse gate 值
-- [ ] Codex 輸出無 JSON block 時 fallback 到 text sentinel（不 break）
-- [ ] JSON says READY but text says BLOCKED → result = BLOCKED（fail-closed）
-- [ ] Parse failure（invalid JSON）→ fallback 到 text sentinel
-- [ ] 不影響現有 review workflow（backward compatible）
-- [ ] Pass /codex-review-fast
-- [ ] Pass /precommit-fast
+- [x] Codex 輸出含 JSON block 時正確 parse gate 值
+- [x] Codex 輸出無 JSON block 時 fallback 到 text sentinel（不 break）
+- [x] JSON says READY but text says BLOCKED → result = BLOCKED（fail-closed）
+- [x] Parse failure（invalid JSON）→ fallback 到 text sentinel
+- [x] 不影響現有 review workflow（backward compatible）
+- [x] Pass /codex-review-fast
+- [x] Pass /precommit-fast
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | |
+| Development | Done | |
+| Testing | Done | |
+| Acceptance | Done | |
 
 ## References
 

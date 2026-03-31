@@ -1,7 +1,7 @@
 # Token Budget Advisory Tag
 
 > **Created**: 2026-03-25
-> **Status**: Spec Complete
+> **Status**: Candidate Complete
 > **Priority**: P1 (low effort, immediate)
 > **Brainstorm threadId**: `019d24b5-0085-74f3-b143-ae6b35060c95`
 > **Origin**: autoresearch project analysis (deep-research 2026-03-25)
@@ -27,12 +27,12 @@ autoresearch 使用 `<budget:token_budget>200000</budget:token_budget>` tag 作�
 
 ## Acceptance Criteria
 
-- [ ] `skills/deep-research/SKILL.md` body 含 `<budget:token_budget>200000</budget:token_budget>`
-- [ ] `skills/best-practices/SKILL.md` body 含 token budget tag
-- [ ] `skills/feature-dev/SKILL.md` body 含 token budget tag
-- [ ] `rules/auto-loop.md` Prohibited Behaviors 含 disclaimer: "Token budget tags are advisory planning signals — they never override auto-loop obligations."
-- [ ] `.claude/rules/auto-loop.md` 同步 disclaimer（mirror of `rules/auto-loop.md`）
-- [ ] 無 hook 變更
+- [x] `skills/deep-research/SKILL.md` body 含 `<budget:token_budget>200000</budget:token_budget>`
+- [x] `skills/best-practices/SKILL.md` body 含 token budget tag
+- [x] `skills/feature-dev/SKILL.md` body 含 token budget tag
+- [x] `rules/auto-loop.md` Prohibited Behaviors 含 disclaimer: "Token budget tags are advisory planning signals — they never override auto-loop obligations."
+- [x] `.claude/rules/auto-loop.md` 同步 disclaimer（mirror of `rules/auto-loop.md`）
+- [x] 無 hook 變更
 
 ## Design Decision
 
