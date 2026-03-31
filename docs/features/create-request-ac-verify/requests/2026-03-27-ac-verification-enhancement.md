@@ -1,7 +1,7 @@
 # /create-request AC Verification Enhancement
 
 > **Created**: 2026-03-27
-> **Status**: Pending
+> **Status**: In Progress
 > **Priority**: P2
 > **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 

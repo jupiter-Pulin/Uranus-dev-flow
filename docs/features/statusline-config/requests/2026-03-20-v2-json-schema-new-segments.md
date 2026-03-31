@@ -1,7 +1,7 @@
 # StatusLine Config v2: New JSON Fields + Segments
 
 > **Created**: 2026-03-20
-> **Status**: Pending
+> **Status**: In Progress
 > **Priority**: P1
 > **Tech Spec**: [2-tech-spec.md Section 11](../2-tech-spec.md#11-v2-update-new-json-fields--segments)
 

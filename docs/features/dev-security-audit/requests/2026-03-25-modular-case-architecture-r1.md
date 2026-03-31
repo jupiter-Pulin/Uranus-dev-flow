@@ -1,7 +1,7 @@
 # Modular Case Architecture for dev-security-audit
 
 > **Created**: 2026-03-25
-> **Status**: Pending
+> **Status**: In Progress
 > **Priority**: P1
 > **Tech Spec**: N/A (design decisions captured in Design Decisions section below)
 

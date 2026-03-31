@@ -1,7 +1,7 @@
 # Lightweight Correction Skill (`/remind`)
 
 > **Created**: 2026-03-19
-> **Status**: Design
+> **Status**: In Progress
 > **Priority**: P1
 > **Deep Research**: conversation 2026-03-19 (2 agents, score 88/100)
 

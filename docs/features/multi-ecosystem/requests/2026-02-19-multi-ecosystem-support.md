@@ -1,7 +1,7 @@
 # Multi-Ecosystem Support for Open-Source Users
 
 > **Created**: 2026-02-19
-> **Status**: Pending
+> **Status**: In Progress
 > **Priority**: P1
 > **Tech Spec**: (pending — run `/tech-spec` to generate)
 
