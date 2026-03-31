@@ -125,7 +125,15 @@ ${SPEC_CHECKLIST ? `### AC Coverage
 
 ### Merge Gate
 - ✅ Ready: No P0/P1
-- ⛔ Blocked: Has P0/P1, needs fix`,
+- ⛔ Blocked: Has P0/P1, needs fix
+
+### Structured Summary (optional, after text report)
+
+If possible, append a JSON block at the end:
+
+\\\`\\\`\\\`json
+{"gate":"READY","findings_count":{"p0":0,"p1":0,"p2":0,"nit":0}}
+\\\`\\\`\\\``,
   sandbox: 'read-only',
   'approval-policy': 'never',
 });

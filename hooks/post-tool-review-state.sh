@@ -132,6 +132,20 @@ EOF
   fi
 }
 
+# Read max_rounds override from project config (R6)
+_read_project_max_rounds() {
+  local default_val="${1:-10}"
+  local rf val
+  for rf in "rules/auto-loop-project.md" ".claude/rules/auto-loop-project.md"; do
+    [[ ! -f "$rf" ]] && continue
+    val=$(grep -v '<!--' "$rf" 2>/dev/null | grep -A1 '## Max Rounds' | tail -1 | tr -d ' ')
+    if [[ "$val" =~ ^[0-9]+$ && "$val" -ge 3 && "$val" -le 50 ]]; then
+      echo "$val"; return
+    fi
+  done
+  echo "$default_val"
+}
+
 # Migrate state file to schema v2 (add iteration_history if missing)
 _migrate_state_v2() {
   local state_file="${1:-$STATE_FILE}"
@@ -141,8 +155,10 @@ _migrate_state_v2() {
   if [[ "$ver" -lt 2 ]]; then
     local tmp
     tmp=$(mktemp)
-    jq '.schema_version = 2
-      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
+    local mr
+    mr=$(_read_project_max_rounds 10)
+    jq --argjson mr "$mr" '.schema_version = 2
+      | .iteration_history //= {"current_round": 0, "max_rounds": $mr, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
       "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }
@@ -228,6 +244,19 @@ _update_iteration() {
   else
     echo "[Review State] Iteration update skipped (lock contention)" >&2
   fi
+}
+
+# Reset changed files array on review pass (D-3)
+_reset_changed_files() {
+  [[ ! -f "$STATE_FILE" ]] && return 0
+  local tmp
+  tmp=$(mktemp)
+  if jq '.changed_files_since_review = []' "$STATE_FILE" > "$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
+    mv "$tmp" "$STATE_FILE"
+  else
+    rm -f "$tmp" 2>/dev/null
+  fi
+  return 0
 }
 
 # === Nit History Persistence (R4) ===
@@ -485,6 +514,32 @@ check_passed() {
   fi
 }
 
+# D-5: Parse review gate with JSON-first, text sentinel fallback
+# Conflict policy: JSON READY + text BLOCKED → fail-closed BLOCKED
+_parse_review_gate() {
+  local output="$1"
+  local json_gate text_gate
+
+  # Try JSON block: look for {"gate":"READY"} or {"gate":"BLOCKED"}
+  json_gate=$(echo "$output" | sed -n '/```json/,/```/p' | sed '1d;$d' | jq -r '.gate // empty' 2>/dev/null || true)
+
+  # Text sentinel
+  text_gate=$(check_passed "$output")
+
+  if [[ -n "$json_gate" ]]; then
+    local json_result="false"
+    [[ "$json_gate" == "READY" ]] && json_result="true"
+    # Conflict resolution: if JSON says READY but text says BLOCKED → fail-closed
+    if [[ "$json_result" == "true" && "$text_gate" == "false" ]]; then
+      echo "false"  # fail-closed
+    else
+      echo "$json_result"
+    fi
+  else
+    echo "$text_gate"  # fallback to text sentinel
+  fi
+}
+
 # Update aggregate_gate in state file (call within lock)
 update_aggregate_gate() {
   local gate_value="$1"
@@ -499,12 +554,17 @@ update_aggregate_gate() {
   case "$gate_value" in
     PENDING)
       jq --arg now "$now" \
-         '.review_mode = "dual" | .aggregate_gate.executed = false | .aggregate_gate.gate = null | .aggregate_gate.source = null | .aggregate_gate.reason = null | .aggregate_gate.last_run = $now | .updated_at = $now' \
+         '.review_mode = "dual" | .aggregate_gate.executed = false | .aggregate_gate.gate = null | .aggregate_gate.source = null | .aggregate_gate.reason = null | .aggregate_gate.last_run = $now | .updated_at = $now | .review_phase = "pending_review"' \
          "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
       ;;
-    READY|BLOCKED)
+    READY)
       jq --arg gate "$gate_value" --arg now "$now" \
-         '.aggregate_gate.executed = true | .aggregate_gate.gate = $gate | .aggregate_gate.reason = null | .aggregate_gate.last_run = $now | .updated_at = $now' \
+         '.aggregate_gate.executed = true | .aggregate_gate.gate = $gate | .aggregate_gate.reason = null | .aggregate_gate.last_run = $now | .updated_at = $now | .review_phase = "precommit_pending"' \
+         "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+      ;;
+    BLOCKED)
+      jq --arg gate "$gate_value" --arg now "$now" \
+         '.aggregate_gate.executed = true | .aggregate_gate.gate = $gate | .aggregate_gate.reason = null | .aggregate_gate.last_run = $now | .updated_at = $now | .review_phase = "addressing_findings"' \
          "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
       ;;
   esac
@@ -544,8 +604,9 @@ fi
 
 # /codex-review-fast or /codex-review (also matches Skill name: sd0x-dev-flow:codex-review-fast)
 if echo "$COMMAND" | grep -qE '/?(sd0x-dev-flow:)?codex-review(-fast)?($|\s)'; then
-  passed=$(check_passed "$TOOL_OUTPUT")
+  passed=$(_parse_review_gate "$TOOL_OUTPUT")
   update_state "code_review" "true" "$passed"
+  [[ "$passed" == "true" ]] && { _reset_changed_files || true; }
   _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
   echo "[Review State] code_review updated: passed=$passed" >&2
 fi
@@ -561,6 +622,13 @@ fi
 if echo "$COMMAND" | grep -qE '/?(sd0x-dev-flow:)?precommit(-fast)?($|\s)'; then
   passed=$(check_passed "$TOOL_OUTPUT")
   update_state "precommit" "true" "$passed"
+  if [[ "$passed" == "true" ]]; then
+    ( _phase_tmp=$(mktemp)
+      if jq '.review_phase = "idle"' "$STATE_FILE" > "$_phase_tmp" 2>/dev/null && [[ -s "$_phase_tmp" ]]; then
+        mv "$_phase_tmp" "$STATE_FILE"
+      else rm -f "$_phase_tmp" 2>/dev/null; fi
+    ) 2>/dev/null || true
+  fi
   echo "[Review State] precommit updated: passed=$passed" >&2
 fi
 
@@ -576,6 +644,7 @@ if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-
   # Priority 2: code-specific
   elif echo "$TOOL_OUTPUT" | grep -qE '✅ Ready'; then
     update_state "code_review" "true" "true"
+    _reset_changed_files || true
     _update_iteration "$TOOL_OUTPUT" "$STATE_FILE"
     echo "[Review State] code_review updated (MCP): passed=true" >&2
   elif echo "$TOOL_OUTPUT" | grep -qE '⛔ Blocked'; then
@@ -585,6 +654,11 @@ if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-
   # Priority 3: precommit
   elif echo "$TOOL_OUTPUT" | grep -qE '## Overall: ✅ PASS'; then
     update_state "precommit" "true" "true"
+    ( _phase_tmp=$(mktemp)
+      if jq '.review_phase = "idle"' "$STATE_FILE" > "$_phase_tmp" 2>/dev/null && [[ -s "$_phase_tmp" ]]; then
+        mv "$_phase_tmp" "$STATE_FILE"
+      else rm -f "$_phase_tmp" 2>/dev/null; fi
+    ) 2>/dev/null || true
     echo "[Review State] precommit updated (MCP): passed=true" >&2
   elif echo "$TOOL_OUTPUT" | grep -qE '## Overall: (⛔ FAIL|❌ FAIL)'; then
     update_state "precommit" "true" "false"
@@ -592,6 +666,7 @@ if [[ "$TOOL_NAME" == "mcp__codex__codex" || "$TOOL_NAME" == "mcp__codex__codex-
   # Priority 4: generic
   elif echo "$TOOL_OUTPUT" | grep -qE '✅ All Pass'; then
     update_state "code_review" "true" "true"
+    _reset_changed_files || true
     echo "[Review State] code_review updated (MCP): passed=true" >&2
   fi
   # Bare ## Gate: ✅/⛔ alone → skip (ambiguity rule)

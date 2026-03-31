@@ -38,16 +38,18 @@ Or use: /install-rules --customize auto-loop --add-section
 
 <!-- Override the default max_rounds for review iteration hard cap.
      Default: 10 (from auto-loop.md). Set lower for faster feedback, higher for complex reviews.
-     This value is written to .claude_review_state.json on schema migration. -->
+     Range: 3-50. Parsed by hooks on schema migration.
+     To override: uncomment and set the line below (must be a bare integer, no comments). -->
 
-<!-- max_rounds: 10 -->
+<!-- 10 -->
 
 ## Git Memory
 
-<!-- Set to "enabled" to inject git context (log/diff/status) after compaction.
+<!-- Inject git context (last 5 commits, diff stat, working tree) after compaction.
      Helps recover working context when the session is compacted.
      Basic pattern filtering (.env, .pem, .key, .secret, credential, token), 40-line cap.
-     Not a comprehensive secret scanner — sensitive commit messages may still appear. -->
+     Not a comprehensive secret scanner — sensitive commit messages may still appear.
+     To enable: uncomment the line below. -->
 
 <!-- ## Git Memory: enabled -->
 

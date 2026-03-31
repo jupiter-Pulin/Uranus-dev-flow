@@ -156,6 +156,20 @@ EOF
   fi
 }
 
+# Read max_rounds override from project config (R6)
+_read_project_max_rounds() {
+  local default_val="${1:-10}"
+  local rf val
+  for rf in "rules/auto-loop-project.md" ".claude/rules/auto-loop-project.md"; do
+    [[ ! -f "$rf" ]] && continue
+    val=$(grep -v '<!--' "$rf" 2>/dev/null | grep -A1 '## Max Rounds' | tail -1 | tr -d ' ')
+    if [[ "$val" =~ ^[0-9]+$ && "$val" -ge 3 && "$val" -le 50 ]]; then
+      echo "$val"; return
+    fi
+  done
+  echo "$default_val"
+}
+
 # Migrate state file to schema v2 (add iteration_history if missing)
 _migrate_state_v2() {
   local state_file="${1:-$STATE_FILE}"
@@ -163,10 +177,11 @@ _migrate_state_v2() {
   local ver
   ver=$(jq -r '.schema_version // 1' "$state_file" 2>/dev/null || echo 1)
   if [[ "$ver" -lt 2 ]]; then
-    local tmp
+    local mr tmp
+    mr=$(_read_project_max_rounds 10)
     tmp=$(mktemp)
-    jq '.schema_version = 2
-      | .iteration_history //= {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
+    jq --argjson mr "$mr" '.schema_version = 2
+      | .iteration_history //= {"current_round": 0, "max_rounds": $mr, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}' \
       "$state_file" > "$tmp" && mv "$tmp" "$state_file"
   fi
 }
@@ -216,10 +231,43 @@ update_change_flag() {
      "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
 }
 
+# Track individual changed files for delta review (D-3)
+# Graceful: no-op if jq doesn't support the filter (e.g., stub jq in tests)
+_track_changed_file() {
+  local file_path="$1"
+  [[ ! -f "$STATE_FILE" ]] && return 0
+  local tmp _before_size _after_size
+  _before_size=$(wc -c < "$STATE_FILE" 2>/dev/null || echo 0)
+  tmp=$(mktemp)
+  if jq --arg f "$file_path" \
+    '.changed_files_since_review = ((.changed_files_since_review // []) + [$f] | unique)' \
+    "$STATE_FILE" > "$tmp" 2>/dev/null; then
+    _after_size=$(wc -c < "$tmp" 2>/dev/null || echo 0)
+    if [[ "$_after_size" -ge "$_before_size" ]]; then
+      mv "$tmp" "$STATE_FILE"
+    else
+      rm -f "$tmp" 2>/dev/null
+    fi
+  else
+    rm -f "$tmp" 2>/dev/null
+  fi
+  return 0
+}
+
 # Track code changes (all recognized code extensions)
 if echo "$file_path" | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|kts|rb|php|swift|c|cpp|cc|h|hpp|cs|scala|ex|exs)$'; then
   if _lock; then
     update_change_flag "has_code_change"
+    _track_changed_file "$file_path" || true
+    # Set review phase to pending (D-4) — graceful on jq failure
+    (
+      local _phase_tmp; _phase_tmp=$(mktemp)
+      if jq '.review_phase = "pending_review"' "$STATE_FILE" > "$_phase_tmp" 2>/dev/null && [[ -s "$_phase_tmp" ]]; then
+        mv "$_phase_tmp" "$STATE_FILE"
+      else
+        rm -f "$_phase_tmp" 2>/dev/null
+      fi
+    ) 2>/dev/null || true
     invalidate_review "code_review"
     invalidate_review "precommit"
     invalidate_aggregate_gate
@@ -253,6 +301,7 @@ fi
 if echo "$file_path" | grep -Eq '\.(md|mdx)$'; then
   if _lock; then
     update_change_flag "has_doc_change"
+    _track_changed_file "$file_path"
     invalidate_review "doc_review"
     invalidate_aggregate_gate
     # Clear any stale sidecar marker (successful locked write supersedes prior lock-failure markers)

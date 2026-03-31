@@ -84,6 +84,7 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 - ⚠️ Need Human — Feature docs not found (3-level fallback exhausted)
 - ⚠️ Need Human — P0/P1 dismiss candidate awaiting human confirmation (via `/seek-verdict`)
 - 🔄 `max_rounds` exceeded (default 10, configurable in `auto-loop-project.md`) — Report blocker, request intervention. State tracked in `.claude_review_state.json` `iteration_history.current_round`
+- 🔄 Convergence plateau — `findings_by_round[n].total >= findings_by_round[n-1].total` AND fingerprint overlap >= 50% for 3+ consecutive rounds → `⚠️ Need Human` (same issues recurring despite fixes). State tracked in `iteration_history.findings_by_round[].fingerprints`
 
 ## Strategic Reset (opt-in, near-cap)
 

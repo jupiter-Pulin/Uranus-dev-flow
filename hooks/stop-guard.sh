@@ -108,6 +108,7 @@ if [[ -f "$STATE_FILE" ]]; then
   PRECOMMIT_PASSED=$(echo "$STATE" | jq -r '.precommit.passed // false')
   HAS_CODE_CHANGE=$(echo "$STATE" | jq -r '.has_code_change // false')
   HAS_DOC_CHANGE=$(echo "$STATE" | jq -r '.has_doc_change // false')
+  REVIEW_PHASE=$(echo "$STATE" | jq -r '.review_phase // "idle"')
 
   # === Sidecar fail-closed marker (race-safe lock-failure signal) ===
   if [[ -f "${STATE_FILE}.blocked" ]]; then
@@ -237,6 +238,10 @@ if [[ "$USE_STATE_FILE" == "true" ]]; then
   fi
   if [[ "$HAS_DOC_CHANGE" == "true" && "$DOC_REVIEW_PASSED" != "true" ]]; then
     MISSING="$MISSING /codex-review-doc"
+  fi
+  # D-4: Phase-aware hint (supplements, does not replace, existing MISSING logic)
+  if [[ -n "$MISSING" && -n "${REVIEW_PHASE:-}" && "$REVIEW_PHASE" != "idle" ]]; then
+    MISSING="$MISSING (phase:$REVIEW_PHASE)"
   fi
 else
   # Transcript parsing mode
