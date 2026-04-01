@@ -3,7 +3,7 @@
 > **Created**: 2026-04-01
 > **Status**: Pending
 > **Priority**: P1
-> **Tech Spec**: [Link](../2-tech-spec.md)
+> **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md)
 
 ## Background
 

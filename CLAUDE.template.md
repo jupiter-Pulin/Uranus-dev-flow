@@ -105,6 +105,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/codex-architect` | Architecture advice | Design |
 | `/codex-implement` | Codex writes code | Development |
 | `/bug-fix` | Bug fix workflow | Bug fixing |
+| `/debug` | Interactive debugging | Debugging |
 | `/feature-dev` | Feature development | Development |
 | `/feature-verify` | Feature verification (READ-ONLY) | Development |
 | `/load-pr-review` | Load PR review comments into session | Development |
@@ -135,6 +136,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/codex-test-review` | Review test coverage | **Required** |
 | `/post-dev-test` | Post-dev test completion | After feature |
 | `/check-coverage` | Test coverage analysis | Quality |
+| `/test-health` | Holistic test coverage measurement | Quality |
 | `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) | Quality |
 | `/project-audit` | Project health audit with scoring | Quality |
 | `/best-practices` | Industry best practices conformance audit | Quality |
