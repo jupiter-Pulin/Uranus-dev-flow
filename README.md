@@ -8,7 +8,7 @@
 
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-76 commands · 58 skills · 15 agents — ~4% of Claude's context window
+76 commands · 60 skills · 15 agents — ~4% of Claude's context window
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | Method | Tools | Coverage |
 |--------|-------|----------|
 | Plugin install | Claude Code | Full (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (58 skills) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (60 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` commands require it; without it, review falls back to single-reviewer mode)
@@ -207,11 +207,11 @@ flowchart TD
 | Category | Count | Examples |
 |----------|-------|---------|
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| Hooks | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
 
 ### Minimal Context Footprint
 
@@ -276,7 +276,6 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/git-profile` | Git identity and GPG signing profile manager |
 | `/push-ci` | Push (with approval) + CI monitor |
 | `/create-pr` | Create GitHub PR from branch |
-| `/git-worktree` | Manage git worktrees (auto-syncs .claude/) |
 | `/merge-prep` | Pre-merge analysis and preparation |
 | `/smart-rebase` | Smart partial rebase for squash-merge repos |
 | `/deep-explore` | Multi-wave parallel code exploration |
@@ -345,6 +344,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/pr-summary` | PR status summary (grouped by ticket) |
 | `/contract-decode` | EVM contract error/calldata decoder |
 | `/skill-health-check` | Validate skill quality and routing |
+| `/sharingan` | Analyze external repos and generate equivalent skills |
 | `/statusline-config` | Customize statusline segments and themes |
 | `/claude-health` | Claude Code config health check |
 | `/op-session` | Initialize 1Password CLI session (avoids repeated biometric prompts) |
@@ -355,7 +355,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ## Rules & Hooks
 
-14 rules (always-loaded conventions) + 7 hooks (automated guardrails).
+14 rules (always-loaded conventions) + 8 hooks (automated guardrails).
 
 > **Customization**: Edit `auto-loop-project.md` to override auto-loop behavior per project. Plugin updates won't conflict — see [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 

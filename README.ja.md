@@ -8,7 +8,7 @@
 
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-76 commands · 58 skills · 15 agents — Claude の context window のわずか ~4%
+76 commands · 60 skills · 15 agents — Claude の context window のわずか ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
 | プラグインインストール | Claude Code | フル（76 コマンド、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（58 スキル） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（60 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション — `/codex-*` コマンドに必要；未インストール時はシングルレビューモードにフォールバック）
@@ -207,11 +207,11 @@ flowchart TD
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
 | コマンド | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| スキル | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| スキル | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| フック | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| フック | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| スクリプト | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| スクリプト | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
 
 ### 極小の Context 使用量
 
@@ -276,7 +276,6 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/git-profile` | Git ID と GPG 署名プロファイルの管理 |
 | `/push-ci` | プッシュ（承認制）+ CI モニタリング |
 | `/create-pr` | ブランチから GitHub PR を作成 |
-| `/git-worktree` | git worktree の管理（.claude/ 自動同期） |
 | `/merge-prep` | マージ前の分析と準備 |
 | `/smart-rebase` | squash-merge リポジトリ向けスマート部分 rebase |
 | `/deep-explore` | マルチウェーブ並列コード探索 |
@@ -345,6 +344,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/pr-summary` | PR ステータスサマリー（チケット別グループ） |
 | `/contract-decode` | EVM コントラクトエラー/calldata デコーダー |
 | `/skill-health-check` | スキル品質とルーティングの検証 |
+| `/sharingan` | 外部リポジトリを分析し同等のスキルを生成 |
 | `/statusline-config` | ステータスラインのセグメントとテーマをカスタマイズ |
 | `/claude-health` | Claude Code 設定のヘルスチェック |
 | `/op-session` | 1Password CLI セッションの初期化（繰り返しの生体認証を回避） |
@@ -355,7 +355,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ## ルール & フック
 
-14 ルール（常時読み込みの規約）+ 7 フック（自動ガードレール）。
+14 ルール（常時読み込みの規約）+ 8 フック（自動ガードレール）。
 
 > **カスタマイズ**：`auto-loop-project.md` を編集してプロジェクトの auto-loop 動作をオーバーライドできます。プラグイン更新と競合しません — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 参照。
 

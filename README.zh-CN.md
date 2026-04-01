@@ -8,7 +8,7 @@
 
 **AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
-76 commands · 58 skills · 15 agents — 仅占 Claude context window 的 ~4%
+76 commands · 60 skills · 15 agents — 仅占 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
 | 插件安装 | Claude Code | 完整（76 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（58 skills） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（60 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（选用 — `/codex-*` 命令需要；未安装时退回单 reviewer 模式）
@@ -207,11 +207,11 @@ flowchart TD
 | 类别 | 数量 | 示例 |
 |------|------|------|
 | 命令 | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| 技能 | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| 技能 | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | 代理 | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| 钩子 | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| 钩子 | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
 | 规则 | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| 脚本 | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| 脚本 | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
 
 ### 极小的 Context 占用
 
@@ -276,7 +276,6 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/git-profile` | Git 身份与 GPG 签名 profile 管理 |
 | `/push-ci` | 推送（需审批）+ CI 监控 |
 | `/create-pr` | 从分支创建 GitHub PR |
-| `/git-worktree` | 管理 git worktree（自动同步 .claude/） |
 | `/merge-prep` | 合并前分析与准备 |
 | `/smart-rebase` | 智能局部 rebase（squash-merge 仓库适用） |
 | `/deep-explore` | 多波段并行代码探索 |
@@ -345,6 +344,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/pr-summary` | PR 状态摘要（按 ticket 分组） |
 | `/contract-decode` | EVM 合约错误/calldata 解码器 |
 | `/skill-health-check` | 验证 Skill 质量与 routing |
+| `/sharingan` | 分析外部 repo 并生成等效 skill |
 | `/statusline-config` | 自定义状态栏区段与主题 |
 | `/claude-health` | Claude Code 配置健康检查 |
 | `/op-session` | 初始化 1Password CLI session（避免重复生物识别提示） |
@@ -355,7 +355,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ## 规则与钩子
 
-14 条规则（常驻加载的规范）+ 7 个钩子（自动化防护栏）。
+14 条规则（常驻加载的规范）+ 8 个钩子（自动化防护栏）。
 
 > **定制化**：编辑 `auto-loop-project.md` 可覆写项目的 auto-loop 行为。插件更新不会冲突 — 详见 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 

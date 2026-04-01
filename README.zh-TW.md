@@ -8,7 +8,7 @@
 
 **AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
-76 commands · 58 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+76 commands · 60 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
 | Plugin 安裝 | Claude Code | 完整（76 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（58 skills） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（60 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用 — `/codex-*` 指令需要；未安裝時退回單 reviewer 模式）
@@ -207,11 +207,11 @@ flowchart TD
 | 類別 | 數量 | 範例 |
 |------|------|------|
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| Hooks | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
 
 ### 極小的 Context 佔用
 
@@ -276,7 +276,6 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/git-profile` | Git 身份與 GPG 簽名 profile 管理 |
 | `/push-ci` | 推送（需核准）+ CI 監控 |
 | `/create-pr` | 從 branch 建立 GitHub PR |
-| `/git-worktree` | 管理 git worktree（自動同步 .claude/） |
 | `/merge-prep` | 合併前分析與準備 |
 | `/smart-rebase` | 智慧局部 rebase（squash-merge 倉庫適用） |
 | `/deep-explore` | 多波段平行程式碼探索 |
@@ -345,6 +344,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/pr-summary` | PR 狀態摘要（依 ticket 分組） |
 | `/contract-decode` | EVM 合約錯誤/calldata 解碼器 |
 | `/skill-health-check` | 驗證 Skill 品質與 routing |
+| `/sharingan` | 分析外部 repo 並產生等效 skill |
 | `/statusline-config` | 自訂 statusline 區段與主題 |
 | `/claude-health` | Claude Code 設定健康檢查 |
 | `/op-session` | 初始化 1Password CLI session（避免重複生物辨識提示） |
@@ -355,7 +355,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ## Rules & Hooks
 
-14 條 rules（常駐載入的慣例）+ 7 個 hooks（自動化護欄）。
+14 條 rules（常駐載入的慣例）+ 8 個 hooks（自動化護欄）。
 
 > **客製化**：編輯 `auto-loop-project.md` 可覆寫專案的 auto-loop 行為。Plugin 更新不會衝突 — 詳見 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 
