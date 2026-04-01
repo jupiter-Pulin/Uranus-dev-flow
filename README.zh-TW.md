@@ -32,7 +32,7 @@
 /project-setup
 ```
 
-一個指令自動偵測 framework、package manager、資料庫、entry point 和 script 指令。安裝 12 條 rules + 5 個 hooks。
+一個指令自動偵測 framework、package manager、資料庫、entry point 和 script 指令。安裝部分 rules 與 hooks；完整 plugin 包含 14 條 rules + 9 個 hooks。
 
 使用 `--lite` 僅設定 CLAUDE.md（跳過 rules/hooks）。
 
@@ -209,9 +209,9 @@ flowchart TD
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
+| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
 
 ### 極小的 Context 佔用
 
@@ -339,7 +339,6 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/de-ai-flavor` | 移除 AI 痕跡 |
 | `/generate-runner` | 為任何生態系產生自訂 precommit runner |
 | `/safe-remove` | 安全移除 plugin 資產 |
-
 | `/pr-review` | PR self-review |
 | `/pr-summary` | PR 狀態摘要（依 ticket 分組） |
 | `/contract-decode` | EVM 合約錯誤/calldata 解碼器 |
@@ -355,7 +354,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ## Rules & Hooks
 
-14 條 rules（常駐載入的慣例）+ 8 個 hooks（自動化護欄）。
+14 條 rules（常駐載入的慣例）+ 9 個 hooks（自動化護欄）。
 
 > **客製化**：編輯 `auto-loop-project.md` 可覆寫專案的 auto-loop 行為。Plugin 更新不會衝突 — 詳見 [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md)。
 

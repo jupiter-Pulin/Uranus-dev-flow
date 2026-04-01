@@ -32,7 +32,7 @@
 /project-setup
 ```
 
-1つのコマンドでフレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを自動検出します。12個のルール + 5個のフックをインストールします。
+1つのコマンドでフレームワーク、パッケージマネージャー、データベース、エントリポイント、スクリプトを自動検出します。ルールとフックのサブセットをインストールします。完全なプラグインには14ルール + 9フックが含まれます。
 
 `--lite` で CLAUDE.md のみ設定（ルール/フックをスキップ）。
 
@@ -209,9 +209,9 @@ flowchart TD
 | コマンド | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | スキル | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| フック | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
+| フック | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| スクリプト | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
+| スクリプト | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
 
 ### 極小の Context 使用量
 
@@ -339,7 +339,6 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/de-ai-flavor` | AI 生成の痕跡を除去 |
 | `/generate-runner` | 任意のエコシステム向けカスタム precommit runner 生成 |
 | `/safe-remove` | プラグインアセットの安全な削除 |
-
 | `/pr-review` | PR セルフレビュー |
 | `/pr-summary` | PR ステータスサマリー（チケット別グループ） |
 | `/contract-decode` | EVM コントラクトエラー/calldata デコーダー |
@@ -355,7 +354,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ## ルール & フック
 
-14 ルール（常時読み込みの規約）+ 8 フック（自動ガードレール）。
+14 ルール（常時読み込みの規約）+ 9 フック（自動ガードレール）。
 
 > **カスタマイズ**：`auto-loop-project.md` を編集してプロジェクトの auto-loop 動作をオーバーライドできます。プラグイン更新と競合しません — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 参照。
 

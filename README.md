@@ -32,7 +32,7 @@
 /project-setup
 ```
 
-One command auto-detects framework, package manager, database, entrypoints, and scripts. Installs 12 rules + 5 hooks.
+One command auto-detects framework, package manager, database, entrypoints, and scripts. Installs a subset of rules and hooks; the full plugin bundles 14 rules + 9 hooks.
 
 Use `--lite` to only configure CLAUDE.md (skip rules/hooks).
 
@@ -209,9 +209,9 @@ flowchart TD
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 8 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard |
+| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature, feature-resolver |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
 
 ### Minimal Context Footprint
 
@@ -339,7 +339,6 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/de-ai-flavor` | Remove AI-generated artifacts from documents |
 | `/generate-runner` | Generate customized precommit runner for any ecosystem |
 | `/safe-remove` | Safely remove plugin assets |
-
 | `/pr-review` | PR self-review |
 | `/pr-summary` | PR status summary (grouped by ticket) |
 | `/contract-decode` | EVM contract error/calldata decoder |
@@ -355,7 +354,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ## Rules & Hooks
 
-14 rules (always-loaded conventions) + 8 hooks (automated guardrails).
+14 rules (always-loaded conventions) + 9 hooks (automated guardrails).
 
 > **Customization**: Edit `auto-loop-project.md` to override auto-loop behavior per project. Plugin updates won't conflict — see [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 

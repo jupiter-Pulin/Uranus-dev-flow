@@ -8,7 +8,7 @@
 
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-76 commands · 58 skills · 15 agents — Claude context window의 ~4%만 사용
+76 commands · 60 skills · 15 agents — Claude context window의 ~4%만 사용
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -32,7 +32,7 @@
 /project-setup
 ```
 
-하나의 명령어로 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트를 자동 감지합니다. 12개 Rules + 5개 Hooks를 설치합니다.
+하나의 명령어로 프레임워크, 패키지 매니저, 데이터베이스, 엔트리포인트, 스크립트를 자동 감지합니다. Rules와 Hooks의 서브셋을 설치합니다. 전체 플러그인에는 14개 Rules + 9개 Hooks가 포함됩니다.
 
 `--lite`로 CLAUDE.md만 설정 (Rules/Hooks 스킵).
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
 | 플러그인 설치 | Claude Code | 전체 (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (58 skills) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (60 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` 명령에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
@@ -207,11 +207,11 @@ flowchart TD
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
 
 ### 최소한의 Context 사용량
 
@@ -276,7 +276,6 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/git-profile` | Git 아이덴티티 및 GPG 서명 프로파일 관리 |
 | `/push-ci` | 푸시 (승인 필요) + CI 모니터링 |
 | `/create-pr` | 브랜치에서 GitHub PR 생성 |
-| `/git-worktree` | git worktree 관리 (.claude/ 자동 동기화) |
 | `/merge-prep` | 병합 전 분석 및 준비 |
 | `/smart-rebase` | squash-merge 리포지토리용 스마트 부분 rebase |
 | `/deep-explore` | 멀티웨이브 병렬 코드 탐색 |
@@ -340,11 +339,11 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/de-ai-flavor` | AI 생성 흔적 제거 |
 | `/generate-runner` | 모든 에코시스템을 위한 맞춤형 precommit runner 생성 |
 | `/safe-remove` | 플러그인 에셋 안전 제거 |
-
 | `/pr-review` | PR 셀프 리뷰 |
 | `/pr-summary` | PR 상태 요약 (티켓별 그룹) |
 | `/contract-decode` | EVM 컨트랙트 에러/calldata 디코더 |
 | `/skill-health-check` | 스킬 품질 및 라우팅 검증 |
+| `/sharingan` | 외부 리포지토리 분석 및 동등한 스킬 생성 |
 | `/statusline-config` | 상태 표시줄 세그먼트 및 테마 커스터마이즈 |
 | `/claude-health` | Claude Code 설정 상태 점검 |
 | `/op-session` | 1Password CLI 세션 초기화 (반복 생체 인증 방지) |
@@ -355,7 +354,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ## 규칙 & Hook
 
-14개 규칙 (상시 로드 컨벤션) + 7개 Hook (자동 가드레일).
+14개 규칙 (상시 로드 컨벤션) + 9개 Hook (자동 가드레일).
 
 > **커스터마이징**: `auto-loop-project.md`를 편집하여 프로젝트별 auto-loop 동작을 오버라이드할 수 있습니다. 플러그인 업데이트와 충돌하지 않습니다 — [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md) 참조.
 

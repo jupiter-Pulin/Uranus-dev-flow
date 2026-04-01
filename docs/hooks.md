@@ -8,6 +8,8 @@
 | `pre-edit-guard` | Before Edit/Write | Prevent editing .env/.git |
 | `stop-guard` | Before stop | Block or warn on incomplete reviews + stale-state git check (strict after install, warn in plugin runtime) |
 | `post-compact-auto-loop` | After context compact | Re-inject auto-loop rules from state file |
+| `post-skill-auto-loop` | After Skill tool | Detect review/precommit gate sentinels and update state |
+| `session-init` | SessionStart (startup) | Initialize session state (drift sentinel, output style detection) |
 | `user-prompt-review-guard` | Before each prompt | Inject pending review reminder with cooldown (5min default) |
 
 Hooks are safe by default. Use environment variables to customize:

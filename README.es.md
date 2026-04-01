@@ -8,7 +8,7 @@
 
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
-76 commands · 58 skills · 15 agents — ~4% de la ventana de context de Claude
+76 commands · 60 skills · 15 agents — ~4% de la ventana de context de Claude
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -32,7 +32,7 @@
 /project-setup
 ```
 
-Un solo comando autodetecta framework, package manager, base de datos, entry points y scripts. Instala 12 rules + 5 hooks.
+Un solo comando autodetecta framework, package manager, base de datos, entry points y scripts. Instala un subconjunto de rules y hooks; el plugin completo incluye 14 rules + 9 hooks.
 
 Usa `--lite` para solo configurar CLAUDE.md (sin rules/hooks).
 
@@ -139,7 +139,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
 | Instalar plugin | Claude Code | Completa (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (58 skills) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (60 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional — los comandos `/codex-*` lo requieren; sin él, se usa modo single-reviewer)
@@ -207,11 +207,11 @@ flowchart TD
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
 | Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 58 | project-setup, code-explore, smart-commit, contract-decode, deep-research |
+| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
-| Hooks | 7 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop |
+| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 12 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, worktree-claude-sync, build-codex-artifacts, resolve-feature |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
 
 ### Mínimo consumo de context
 
@@ -276,7 +276,6 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/git-profile` | Gestor de identidad Git y perfil de firma GPG |
 | `/push-ci` | Push (con aprobación) + monitoreo de CI |
 | `/create-pr` | Crear GitHub PR desde branch |
-| `/git-worktree` | Gestionar git worktrees (sincronización automática de .claude/) |
 | `/merge-prep` | Análisis y preparación pre-merge |
 | `/smart-rebase` | Rebase parcial inteligente para repos con squash-merge |
 | `/deep-explore` | Exploración de código paralela multi-onda |
@@ -340,11 +339,11 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/de-ai-flavor` | Eliminar artefactos generados por IA de documentos |
 | `/generate-runner` | Generar runner de precommit personalizado para cualquier ecosistema |
 | `/safe-remove` | Eliminación segura de activos del plugin |
-
 | `/pr-review` | Self-review de PR |
 | `/pr-summary` | Resumen de estado de PRs (agrupados por ticket) |
 | `/contract-decode` | Decodificador de errores/calldata de contratos EVM |
 | `/skill-health-check` | Validar calidad y routing de skills |
+| `/sharingan` | Analizar repos externos y generar skills equivalentes |
 | `/statusline-config` | Personalizar segmentos y temas de la línea de estado |
 | `/claude-health` | Verificación de configuración de Claude Code |
 | `/op-session` | Inicializar sesión de 1Password CLI (evita solicitudes biométricas repetidas) |
@@ -355,7 +354,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ## Reglas & Hooks
 
-14 reglas (convenciones siempre cargadas) + 7 hooks (guardrails automatizados).
+14 reglas (convenciones siempre cargadas) + 9 hooks (guardrails automatizados).
 
 > **Personalización**: Edita `auto-loop-project.md` para sobrescribir el comportamiento de auto-loop por proyecto. Las actualizaciones del plugin no conflictuarán — ver [Rule Override Pattern](docs/features/rule-override-pattern/2-tech-spec.md).
 
