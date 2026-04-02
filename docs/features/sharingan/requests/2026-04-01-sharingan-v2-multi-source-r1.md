@@ -1,0 +1,60 @@
+# Sharingan v2: Multi-Source Input — R1 設計基建
+
+> **Created**: 2026-04-01
+> **Status**: Pending
+> **Priority**: P2
+> **Tech Spec**: [2-tech-spec.md](../2-tech-spec.md) §7
+
+## Background
+
+Sharingan v1 僅接受 GitHub URL。Best Practices Audit（2026-04-01）+ Claude/Codex adversarial debate 達成 Nash Equilibrium，設計出 Delegation-First Router-Dispatcher 架構。R1 負責建立 v2 的設計基建：SourceBundle 規格、Input Classification 參考文件、及 routing signature 更新。
+
+## Requirements
+
+- 定義 SourceBundle 中間格式（canonical IR，解耦來源擷取與 skill 合成）
+- 定義 Input Classification prompt template + confidence threshold
+- 定義 3 source strategies 的正規化規則
+- 更新 routing signature 支援多源輸入的 MECE boundary
+- 更新 allowed-tools 加入 WebSearch/WebFetch/Skill
+
+## Scope
+
+| Scope | Description |
+|-------|-------------|
+| In | SourceBundle reference、Input Classification reference、routing signature 更新、allowed-tools 更新 |
+| Out | classifier / adapter 實作（R2）、scan-repo.js 改動（R2）、新測試（R2）、security envelope 實作（R2） |
+
+## Related Files
+
+| File | Action | Description |
+|------|--------|-------------|
+| `skills/sharingan/references/source-bundle.md` | New | SourceBundle 規格 + normalization 規則 |
+| `skills/sharingan/references/input-classification.md` | New | LLM classifier prompt + confidence threshold |
+| `skills/sharingan/SKILL.md` | Modify | 更新 routing signature + allowed-tools + Trigger |
+| `commands/sharingan.md` | Modify | argument-hint 改為 `<input>`、allowed-tools 更新 |
+
+## Acceptance Criteria
+
+- [ ] AC1: `references/source-bundle.md` 定義 SourceBundle schema（source/knowledge/repo_analysis/synthesis_hints），包含 github_repo + external_evidence + local_code_context 三種 strategy 的正規化範例
+- [ ] AC2: `references/input-classification.md` 定義 LLM classifier prompt template，包含 confidence threshold（建議 0.7）、low-confidence guard 流程、5+ 輸入分類範例
+- [ ] AC3: SKILL.md routing signature 更新為 output-based MECE："Replicate knowledge from any source as sd0x-dev-flow skill definition"，含 Use when + Not for + Output（2+ cues）
+- [ ] AC4: SKILL.md allowed-tools 新增 `WebSearch`, `WebFetch`, `Skill`
+- [ ] AC5: SKILL.md Trigger 區段擴展接受任意輸入描述，但保留 temporary guard：Phase 0B + adapters 實作前（R2），非 GitHub 輸入顯示「v2 planned, currently GitHub URL only」提示
+- [ ] AC6: `commands/sharingan.md` argument-hint 更新為 `<input>` + `--source` optional flag
+- [ ] AC7: `commands/sharingan.md` allowed-tools 與 SKILL.md allowed-tools 同步更新（新增 WebSearch, WebFetch, Skill）
+- [ ] Pass `/codex-review-doc`
+
+## Progress
+
+| Phase | Status | Note |
+|-------|--------|------|
+| Analysis | Done | Best Practices Audit + adversarial debate (Nash Equilibrium) |
+| Development | - | |
+| Testing | - | N/A (docs only, /codex-review-doc) |
+| Acceptance | - | |
+
+## References
+
+- Tech Spec §7: [2-tech-spec.md](../2-tech-spec.md) — v2 Multi-Source Input Architecture
+- Best Practices Audit: 2026-04-01, threadId `019d48fb-9dd0-7473-9aa2-439fd492b813`
+- Industry sources: [clig.dev](https://clig.dev/), [Block Engineering](https://engineering.block.xyz/blog/3-principles-for-designing-agent-skills), [AWS Routing Pattern](https://docs.aws.amazon.com/prescriptive-guidance/latest/agentic-ai-patterns/routing-dynamic-dispatch-patterns.html)
