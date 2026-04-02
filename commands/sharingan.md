@@ -1,7 +1,7 @@
 ---
-description: Analyze external GitHub repos and auto-generate equivalent sd0x-dev-flow skill definitions.
-argument-hint: <github-url> [--mode analyze|generate] [--skill <name>] [--batch-size N] [--target-dir <path>] [--dry-run]
-allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUserQuestion
+description: Replicate knowledge from any source as sd0x-dev-flow skill definition.
+argument-hint: <input> [--source auto|github_repo|external_evidence|local_code_context] [--mode analyze|generate] [--skill <name>] [--batch-size N] [--target-dir <path>] [--dry-run]
+allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUserQuestion, WebSearch, WebFetch, Skill
 ---
 
 **Must read and follow the skill below before executing this command:**
@@ -11,6 +11,8 @@ allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUser
 @skills/sharingan/references/dependency-graph-algorithm.md
 @skills/sharingan/references/output-template.md
 @skills/sharingan/references/quality-checklist.md
+@skills/sharingan/references/source-bundle.md
+@skills/sharingan/references/input-classification.md
 
 ## Context
 
@@ -20,7 +22,7 @@ allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUser
 
 ## Task
 
-Analyze an external GitHub repository and optionally generate equivalent sd0x-dev-flow skill definitions.
+Replicate knowledge from any source and optionally generate equivalent sd0x-dev-flow skill definitions. Currently supports GitHub URLs; other sources are v2 planned.
 
 ### Arguments
 
@@ -30,10 +32,11 @@ $ARGUMENTS
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `<github-url>` | Required | GitHub repo URL |
+| `<input>` | Required | Any input: GitHub URL, web URL, description, or local path |
+| `--source` | `auto` | Override strategy: `github_repo` / `external_evidence` / `local_code_context` (v2 planned; currently only `github_repo` active) |
 | `--mode` | `analyze` | `analyze` (report only) / `generate` (report + files) |
-| `--skill <name>` | auto-detect | Filter to single skill |
-| `--batch-size` | `3` | Skills per batch (1-5) |
+| `--skill <name>` | auto-detect | Filter to single skill (github_repo only) |
+| `--batch-size` | `3` | Skills per batch, 1-5 (github_repo only) |
 | `--target-dir` | `skills/` | Output directory |
 | `--dry-run` | `false` | Show plan without writing files |
 

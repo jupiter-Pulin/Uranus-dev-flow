@@ -1,15 +1,15 @@
 ---
 name: sharingan
-description: "Analyze external GitHub repos and auto-generate equivalent sd0x-dev-flow skill definitions. Use when: copying skills from external repos, adapting plugins to sd0x-dev-flow format, reverse-engineering skill structure. Not for: creating skills from scratch (use skill-creator), project onboarding (use repo-intake), code review (use codex-review-fast). Output: analysis report + generated SKILL.md files with 3-layer validation."
-allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUserQuestion
+description: "Replicate knowledge from any source as sd0x-dev-flow skill definition. Use when: copying skills from repos, adapting patterns from articles/papers/code, converting knowledge to skill format. Not for: research without skill output (use deep-research), creating skills from scratch (use skill-creator), project onboarding (use repo-intake). Output: analysis report + generated SKILL.md files with 3-layer validation."
+allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUserQuestion, WebSearch, WebFetch, Skill
 ---
 
 # Sharingan — Skill Replication
 
 ## Trigger
 
-- Keywords: sharingan, copy skill, replicate skill, clone skill, analyze repo skills, import skill, adapt plugin, skill migration
-- User provides a GitHub URL and wants to create equivalent sd0x-dev-flow skills
+- Keywords: sharingan, copy skill, replicate skill, clone skill, analyze repo skills, import skill, adapt plugin, skill migration, learn from article, extract pattern, replicate from code
+- User provides any input (GitHub URL, web URL, description, local path) and wants to create sd0x-dev-flow skill definitions
 
 ## When NOT to Use
 
@@ -63,6 +63,11 @@ bash scripts/run-skill.sh sharingan scan-repo.js <url> --format json
 2. Check `gh auth status` (must be authenticated)
 3. Parse `--mode`, `--skill`, `--batch-size`, `--target-dir` flags
 4. Validate `--target-dir` repo-root containment
+5. **v2 input type routing**:
+   - If input matches `GITHUB_URL_RE` → proceed with existing v1 pipeline (Phase 1)
+   - If input does NOT match `GITHUB_URL_RE` → output: "v2 planned, currently GitHub URL only" and halt
+
+> **Temporary guard**: Phase 0B classifier and source strategy adapters are not yet implemented (see R2). Non-GitHub input is recognized in the trigger but gated at Phase 0 until R2 implementation completes.
 
 ### Phase 1: SCAN (deterministic, via scan-repo.js)
 
@@ -175,3 +180,5 @@ See `references/output-template.md` for full template.
 - `references/dependency-graph-algorithm.md` — DAG construction + cycle handling
 - `references/output-template.md` — Analysis and generation report templates
 - `references/quality-checklist.md` — L1/L2/L3 validation criteria
+- `references/source-bundle.md` — SourceBundle normalized intermediate format (v2)
+- `references/input-classification.md` — LLM input classifier prompt template + confidence rules (v2)
