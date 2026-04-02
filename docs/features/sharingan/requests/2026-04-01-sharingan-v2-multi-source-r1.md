@@ -21,8 +21,15 @@ Sharingan v1 僅接受 GitHub URL。Best Practices Audit（2026-04-01）+ Claude
 
 | Scope | Description |
 |-------|-------------|
-| In | SourceBundle reference、Input Classification reference、routing signature 更新、allowed-tools 更新 |
+| In | SourceBundle reference、Input Classification reference、routing signature 更新、allowed-tools 更新、reference preload 註冊 |
 | Out | classifier / adapter 實作（R2）、scan-repo.js 改動（R2）、新測試（R2）、security envelope 實作（R2） |
+
+### R1/R2 檔案所有權劃分
+
+| File | R1 Ownership | R2 Ownership |
+|------|-------------|-------------|
+| `skills/sharingan/SKILL.md` | frontmatter、Trigger、allowed-tools、References 區段 | Phase 0B workflow、strategy dispatch、SourceBundle normalization 區段 |
+| `commands/sharingan.md` | argument-hint、allowed-tools、references preload | v2 workflow 步驟 |
 
 ## Related Files
 
@@ -39,9 +46,10 @@ Sharingan v1 僅接受 GitHub URL。Best Practices Audit（2026-04-01）+ Claude
 - [ ] AC2: `references/input-classification.md` 定義 LLM classifier prompt template，包含 confidence threshold（建議 0.7）、low-confidence guard 流程、5+ 輸入分類範例
 - [ ] AC3: SKILL.md routing signature 更新為 output-based MECE："Replicate knowledge from any source as sd0x-dev-flow skill definition"，含 Use when + Not for + Output（2+ cues）
 - [ ] AC4: SKILL.md allowed-tools 新增 `WebSearch`, `WebFetch`, `Skill`
-- [ ] AC5: SKILL.md Trigger 區段擴展接受任意輸入描述，但保留 temporary guard：Phase 0B + adapters 實作前（R2），非 GitHub 輸入顯示「v2 planned, currently GitHub URL only」提示
+- [ ] AC5: SKILL.md Trigger 區段擴展接受任意輸入描述，但保留 temporary guard：Phase 0B + adapters 實作前（R2），非 GitHub 輸入時 SKILL.md Phase 0 步驟輸出包含 `v2 planned, currently GitHub URL only` 字串，可用 `grep "v2 planned" skills/sharingan/SKILL.md` 驗證
 - [ ] AC6: `commands/sharingan.md` argument-hint 更新為 `<input>` + `--source` optional flag
 - [ ] AC7: `commands/sharingan.md` allowed-tools 與 SKILL.md allowed-tools 同步更新（新增 WebSearch, WebFetch, Skill）
+- [ ] AC8: `commands/sharingan.md` references preload 新增 `@skills/sharingan/references/source-bundle.md` 和 `@skills/sharingan/references/input-classification.md`，SKILL.md References 區段同步列出
 - [ ] Pass `/codex-review-doc`
 
 ## Progress
@@ -52,6 +60,8 @@ Sharingan v1 僅接受 GitHub URL。Best Practices Audit（2026-04-01）+ Claude
 | Development | - | |
 | Testing | - | N/A (docs only, /codex-review-doc) |
 | Acceptance | - | |
+
+**Status**: Not Started
 
 ## References
 

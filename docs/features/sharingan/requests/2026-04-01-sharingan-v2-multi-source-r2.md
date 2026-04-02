@@ -27,6 +27,10 @@ R1 建立 SourceBundle 規格與 Input Classification 參考文件後，R2 負�
 | In | Phase 0B classifier、strategy adapters、scan-repo.js SourceBundle builder、security envelope、v2 tests |
 | Out | SourceBundle spec（R1）、routing signature（R1）、v2 cache 機制（future） |
 
+### R1/R2 檔案所有權劃分
+
+See [R1](./2026-04-01-sharingan-v2-multi-source-r1.md) Scope section for the section-level ownership table. R2 owns: SKILL.md Phase 0B workflow + strategy dispatch + SourceBundle normalization sections; commands/sharingan.md v2 workflow steps.
+
 ## Related Files
 
 | File | Action | Description |
@@ -46,7 +50,7 @@ R1 建立 SourceBundle 規格與 Input Classification 參考文件後，R2 負�
 - [ ] AC5: scan-repo.js 導出 `toSourceBundle(analysis)` function，將 v1 SourceAnalysis 轉換為 SourceBundle format
 - [ ] AC6: Security envelope 完整實作（tech spec §7.8 全部規則）：HTTPS-only、deny private addresses（127.0.0.1、10.x、172.16-31.x、192.168.x）、payload ≤ 500KB、timeout ≤ 30s、untrusted content isolation（sanitize before prompt）、no execution（永不執行 fetched code）、cross-verification（單一來源不自動採信）
 - [ ] AC7: Classifier + adapter 實作遵循 R1 參考文件：`input-classification.md` prompt template 用於 Phase 0B、`source-bundle.md` schema 用於 SourceBundle 輸出
-- [ ] AC8: 測試覆蓋 — classifier（GitHub/URL/description/local 各 1）、SourceBundle builder、SSRF protection（private IP rejection）、v1 regression（`node --test test/scripts/sharingan-scan-repo.test.js` 全通過）
+- [ ] AC8: 測試覆蓋 — classifier（GitHub/URL/description/local 各 1）、SourceBundle builder（斷言 `source.type`、`source.origin`、`knowledge.intent` 欄位存在）、security envelope（SSRF private IP rejection、HTTPS-only enforcement、payload limit rejection）、v1 regression（`node --test test/scripts/sharingan-scan-repo.test.js && node --test test/commands/sharingan.test.js` 全通過）
 - [ ] Pass `/codex-review-fast`
 - [ ] Pass `/precommit`
 
@@ -58,6 +62,8 @@ R1 建立 SourceBundle 規格與 Input Classification 參考文件後，R2 負�
 | Development | - | Blocked on R1 |
 | Testing | - | |
 | Acceptance | - | |
+
+**Status**: Not Started (blocked on R1)
 
 ## References
 
