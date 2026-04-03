@@ -63,23 +63,32 @@ Phase 6.5: Install Scripts (unless --lite or --detect-only)
     ├─ Update manifest .sd0x/install-state.json
     └─ Output scripts install report
     │
+Phase 6.7: Configure Environment Variables (unless --detect-only or --lite)
+    │
+    ├─ Detect model context size (1M → recommend auto-compact window)
+    ├─ Build env var catalog (STOP_GUARD_MODE + model-aware vars)
+    ├─ Present recommendations, wait for user confirmation
+    ├─ Merge into .claude/settings.json env object
+    └─ Output env config report
+    │
 Phase 7: Final Verification Report
     │
     ├─ Summarize all phases
-    ├─ Closed-loop check (CLAUDE.md + rules + hooks)
+    ├─ Closed-loop check (CLAUDE.md + rules + hooks + env)
     └─ Output next steps
 ```
 
 ### Flag Short-Circuit Semantics
 
-| Flag | Phase 1-2 | Phase 3-4 | Phase 5-6.5 | Phase 7 |
-|------|-----------|-----------|-----------|---------|
-| (none) | Execute | Execute | Execute | Full report |
-| `--detect-only` | Execute | Skip | Skip | Detection results only |
-| `--lite` | Execute | Execute | Skip | CLAUDE.md only |
-| `--no-rules` | Execute | Execute | Skip rules | Report |
-| `--no-hooks` | Execute | Execute | Skip hooks | Report |
-| `--guard-mode warn` | Execute | Execute | Execute (stop-guard uses warn) | Report |
+| Flag | Phase 1-2 | Phase 3-4 | Phase 5-6.5 | Phase 6.7 | Phase 7 |
+|------|-----------|-----------|-----------|-----------|---------|
+| (none) | Execute | Execute | Execute | Execute | Full report |
+| `--detect-only` | Execute | Skip | Skip | Skip | Detection results only |
+| `--lite` | Execute | Execute | Skip | Skip | CLAUDE.md only |
+| `--no-rules` | Execute | Execute | Skip rules | Execute | Report |
+| `--no-hooks` | Execute | Execute | Skip hooks | Execute | Report |
+| `--env-only` | Skip | Skip | Skip | Execute | Env report only (skill-level directive) |
+| `--guard-mode warn` | Execute | Execute | Execute | Execute (STOP_GUARD_MODE=warn) | Report |
 
 ## Phase 1: Detect Project Environment
 
@@ -302,17 +311,14 @@ Hook definition mapping (uses `$CLAUDE_PROJECT_DIR` for portability):
 }
 ```
 
-Stop-guard mode is configured via `env.STOP_GUARD_MODE` in settings, with resolution: env `STOP_GUARD_MODE` > default `warn`.
-
-> **Default strict mode**: `/project-setup` writes `"env": {"STOP_GUARD_MODE": "strict"}` by default. Use `--guard-mode warn` to set warn-only mode. The hook itself defaults to `warn` when no env var is set.
+> **Note**: Environment variables (including `STOP_GUARD_MODE`) are now configured in **Phase 6.7** (independent of hook installation). Phase 6.3 only handles hook definition merging.
 
 Merge strategy:
 - Read existing settings file (create `{}` if not exists)
 - **Legacy migration**: scan for bare `.claude/hooks/<name>.sh` paths → upgrade to `"$CLAUDE_PROJECT_DIR"/.claude/hooks/<name>.sh`
 - For each event: append-only merge (skip if same command path exists)
-- **Stop hook mode merge**: mode is stored in `env.STOP_GUARD_MODE` (not in the command string). `/project-setup` writes `{"env": {"STOP_GUARD_MODE": "<MODE>"}}` to the target settings file, merging with existing `env` keys
 - **Coexistence detection**: if `hooks/hooks.json` exists at repo root (= plugin source repo), warn that plugin hooks and installed hooks may coexist. Runtime arbitration handles dedup automatically
-- Write updated settings back
+- Write updated settings back (hook definitions only — env vars deferred to Phase 6.7)
 
 ### 6.4 Output Hooks Report
 
@@ -390,6 +396,82 @@ Same 3-level fallback as Phase 5.1, but search for `scripts/precommit-runner.js`
 **Installed**: N / **Skipped**: M / **Conflicts**: K
 ```
 
+## Phase 6.7: Configure Environment Variables
+
+**Skip if**: `--detect-only` or `--lite`.
+**Run exclusively with**: `--env-only` (skip all other phases, jump directly to 6.7 → 7).
+
+**Purpose**: Write recommended environment variables to `.claude/settings.json` `env` object, **independent of hook installation**. This phase runs even when `--no-hooks` is specified.
+
+### 6.7.1 Env Var Catalog
+
+| Variable | Default | Condition | Description |
+|----------|---------|-----------|-------------|
+| `STOP_GUARD_MODE` | `strict` | Always (override: `--guard-mode warn`) | Stop-guard enforcement mode |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `456000` | 1M context model detected | Auto-compact window size (tokens) — delays compaction to preserve more context |
+
+### 6.7.2 Large Context Model Detection
+
+Determine whether `CLAUDE_CODE_AUTO_COMPACT_WINDOW` should be recommended:
+
+1. **Self-awareness check**: Claude can inspect its own system environment description for "1M context" indicators (e.g. model description includes "1M context" or "(with 1M context)")
+2. **Detected** → include `CLAUDE_CODE_AUTO_COMPACT_WINDOW: "456000"` in recommendations with note: "1M context model detected"
+3. **Not detected or uncertain** → ask user: "Are you using a 1M context model? (e.g. Claude Opus 4.6 1M)" — include in recommendations only on confirmation
+4. **User declines** → omit `CLAUDE_CODE_AUTO_COMPACT_WINDOW` from recommendations
+
+### 6.7.3 Interactive Flow
+
+1. Read existing `env` values from **both** `.claude/settings.local.json` and `.claude/settings.json` (create `{}` if not exists). Runtime precedence: `settings.local.json` > `settings.json`
+2. Build recommendations table showing **effective** current value:
+
+   ```markdown
+   ## Environment Variables
+
+   | Variable | Current (effective) | Source | Recommended | Action |
+   |----------|---------------------|--------|-------------|--------|
+   | STOP_GUARD_MODE | warn | settings.json | strict | Update |
+   | CLAUDE_CODE_AUTO_COMPACT_WINDOW | (not set) | — | 456000 | Add (1M model) |
+   ```
+
+3. Present to user for confirmation — user may accept all, modify values, or skip specific vars
+4. Apply confirmed changes to `.claude/settings.json` (default) or `.claude/settings.local.json` (with `--local`)
+
+### 6.7.4 Merge Strategy
+
+- Read existing settings file (create `{}` if not exists)
+- Merge env vars into `env` object:
+  - If key does not exist → **Add**
+  - If key exists and value matches recommended → **Skip**
+  - If key exists and value differs → **Update** (only after user confirmation)
+- Preserve all existing `env` keys not in the catalog (do not drop unknown keys)
+- Preserve all non-`env` keys in settings (hooks, etc.)
+- Write updated settings back
+
+> **Note**: Runtime mode resolution for `STOP_GUARD_MODE` follows: env var > `settings.local.json` > `settings.json` > default `warn`. See `hooks/stop-guard.sh` for canonical precedence.
+
+### 6.7.5 Interaction with Phase 6.3 and `/install-hooks`
+
+- Phase 6.3 (within `/project-setup`) defers env writes to Phase 6.7
+- `/install-hooks` (standalone command) retains its own `env.STOP_GUARD_MODE` write — it operates independently
+- When both run in the same session, Phase 6.7 runs after Phase 6 and writes to the same target file
+- `--no-hooks` skips Phase 6 but Phase 6.7 still runs → env vars are always configured
+
+### 6.7.6 Output Env Config Report
+
+```markdown
+## Environment Config Report
+
+**Target**: <repo-root>/.claude/settings.json (or settings.local.json with --local)
+
+| Variable | Value | Effective Source | Status |
+|----------|-------|-----------------|--------|
+| STOP_GUARD_MODE | strict | settings.json | ✅ Updated |
+| CLAUDE_CODE_AUTO_COMPACT_WINDOW | 456000 | settings.json | ✅ Added (1M model) |
+
+**Model**: Opus 4.6 (1M context) → auto-compact window recommended
+**Precedence note**: Runtime resolves env > settings.local.json > settings.json > default
+```
+
 ## Phase 7: Final Verification Report
 
 Summarize all phases and perform closed-loop check:
@@ -403,7 +485,8 @@ Summarize all phases and perform closed-loop check:
 | Rule files | `.claude/rules/auto-loop.md` exists | ✅ |
 | Hook enforcement | `stop-guard` in `.claude/settings.json` | ✅ |
 | Script runners | `.claude/scripts/precommit-runner.js` exists | ✅ (unless `--lite` or `--detect-only`) |
-| Guard mode | `env.STOP_GUARD_MODE` = `strict` in settings | ✅ (unless `--guard-mode warn`) |
+| Guard mode | `env.STOP_GUARD_MODE` = `strict` in target settings file | ✅ (unless `--guard-mode warn`) |
+| Auto-compact window | `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` in target settings file | ✅ (1M model only) |
 
 ### Output
 
@@ -417,6 +500,7 @@ Summarize all phases and perform closed-loop check:
 | Rules | ✅ 11/11 managed rules + 1 override template |
 | Hooks | ✅ 4/4 installed + settings merged |
 | Scripts | ✅ 3/3 runner scripts installed |
+| Env Config | ✅ STOP_GUARD_MODE=strict, AUTO_COMPACT_WINDOW=456000 (1M) |
 
 ### Closed-Loop Status
 ✅ Auto-loop engine fully configured (strict mode)
@@ -424,6 +508,7 @@ Summarize all phases and perform closed-loop check:
 (or ⚠️ Partial — missing: hooks (enforcement layer inactive))
 (or ⚠️ Partial — missing: rules)
 (or ⚠️ Partial — missing: scripts (runner not installed))
+(or ℹ️ Auto-compact window not set — standard context model detected)
 
 ### Next Steps
 - Run `/repo-intake` for a full project scan
@@ -441,6 +526,8 @@ Summarize all phases and perform closed-loop check:
 - [ ] `.claude/settings.json` contains hook definitions (unless `--no-hooks` or `--lite`)
 - [ ] `.claude/scripts/` contains `precommit-runner.js`, `verify-runner.js`, and `lib/utils.js` (unless `--lite` or `--detect-only`)
 - [ ] `.claude/CLAUDE.md` contains `@rules/auto-loop.md` reference (unless `--lite`)
+- [ ] `env.STOP_GUARD_MODE` is set in target settings file (unless `--detect-only` or `--lite`)
+- [ ] `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` is set in target settings file when 1M model detected (unless `--detect-only` or `--lite`)
 
 ## References
 
