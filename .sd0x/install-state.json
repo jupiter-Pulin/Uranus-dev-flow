@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "installed_at": "2026-04-02T08:45:00Z",
-  "plugin_version": "2.2.11",
+  "plugin_version": "2.2.12",
   "hook_scripts": {
     "pre-edit-guard.sh": {
       "hash": "693ded505b858af9e9d5ac38ee39da706162b2c0"
