@@ -525,6 +525,16 @@ function runHeuristics(inputs, files, gates, root, featureCtx) {
     });
   }
 
+  // 12b. requirements-advisory: suggest /req-analyze when feature has tech-spec but no requirements doc
+  if (featureCtx && featureCtx.key && featureCtx.has_tech_spec && !featureCtx.has_requirements) {
+    findings.push({
+      id: 'requirements-advisory',
+      priority: 'P3',
+      message: `Feature "${featureCtx.key}" has tech-spec but no Phase 1 requirements doc (advisory)`,
+      suggestion: `/req-analyze ${featureCtx.key}`,
+    });
+  }
+
   // 13. doc-sync-needed: precommit passed + feature has tech-spec + code in diff
   if (reviewState && gates.precommit.passed && featureCtx && featureCtx.key) {
     if (featureCtx.has_tech_spec) {

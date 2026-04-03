@@ -22,6 +22,9 @@ function setupFeatureDir(root, featureName, opts = {}) {
   if (opts.techSpec) {
     writeFileSync(join(featureDir, '2-tech-spec.md'), '# Tech Spec\n');
   }
+  if (opts.requirements) {
+    writeFileSync(join(featureDir, '1-requirements.md'), '# Requirements\n');
+  }
   if (opts.requests) {
     mkdirSync(join(featureDir, 'requests'), { recursive: true });
   }
@@ -82,6 +85,36 @@ test('Level 1 featureKey with invalid slug returns null', () => {
   const result = resolveFeatureContext(root, 'main', [], { featureKey: '../escape' });
   assert.equal(result.key, null);
   assert.equal(result.source, 'none');
+});
+
+// --- has_requirements detection ---
+
+test('has_requirements is true when 1-requirements.md exists', () => {
+  const root = createTempRoot();
+  const featureDir = setupFeatureDir(root, 'req-test', { techSpec: true, requests: true });
+  writeFileSync(join(featureDir, '1-requirements.md'), '# Requirements\n');
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'req-test' });
+  assert.equal(result.has_requirements, true);
+  assert.equal(result.has_tech_spec, true);
+  assert.equal(result.has_requests, true);
+});
+
+test('has_requirements is false when no requirements file exists', () => {
+  const root = createTempRoot();
+  setupFeatureDir(root, 'no-req', { techSpec: true, requests: true });
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'no-req' });
+  assert.equal(result.has_requirements, false);
+});
+
+test('has_requirements detects variant filenames like 1-requirements-v2.md', () => {
+  const root = createTempRoot();
+  const featureDir = setupFeatureDir(root, 'req-variant', {});
+  writeFileSync(join(featureDir, '1-requirements-v2.md'), '# Requirements v2\n');
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'req-variant' });
+  assert.equal(result.has_requirements, true);
 });
 
 // --- Level 2: branch name ---

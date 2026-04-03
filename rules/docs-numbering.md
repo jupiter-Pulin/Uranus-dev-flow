@@ -33,7 +33,7 @@ docs/features/<feature>/
 | Number | Phase              | Output Command       | Required    |
 |--------|--------------------|---------------------|-------------|
 | 0      | Feasibility study  | `/feasibility-study` | Recommended |
-| 1      | Requirements spec  | -                    | As needed   |
+| 1      | Requirements spec  | `/req-analyze`       | Recommended |
 | 2      | Technical spec     | `/tech-spec`         | Required    |
 | 3      | Architecture design| `/architecture`      | Recommended |
 | 4+     | Implementation/Appendix | -               | As needed   |

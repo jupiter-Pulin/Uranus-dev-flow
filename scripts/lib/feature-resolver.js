@@ -20,13 +20,15 @@ function probe(docsBase, key, techSpecPattern) {
     if (!fs.statSync(docsPath).isDirectory()) return null;
   } catch { return null; }
   let hasTechSpec = false;
+  let hasRequirements = false;
   let hasRequests = false;
   try {
     const entries = fs.readdirSync(docsPath);
     hasTechSpec = entries.some(e => techSpecPattern.test(e));
+    hasRequirements = entries.some(e => /^1-requirements/.test(e));
     hasRequests = entries.includes('requests');
   } catch { /* ignore */ }
-  return { key, docs_path: `docs/features/${key}`, has_tech_spec: hasTechSpec, has_requests: hasRequests };
+  return { key, docs_path: `docs/features/${key}`, has_tech_spec: hasTechSpec, has_requirements: hasRequirements, has_requests: hasRequests };
 }
 
 /**
@@ -39,7 +41,7 @@ function probe(docsBase, key, techSpecPattern) {
  * @param {string} [options.docsBase] - Override docs base directory (default: <root>/docs/features)
  * @param {string} [options.featureKey] - Explicit feature key (Level 1 override)
  * @param {RegExp} [options.techSpecPattern] - Pattern to match tech-spec files (default: /^2-tech-spec/)
- * @returns {{ key: string|null, source: string, confidence: string|null, docs_path: string|null, has_tech_spec: boolean, has_requests: boolean }}
+ * @returns {{ key: string|null, source: string, confidence: string|null, docs_path: string|null, has_tech_spec: boolean, has_requirements: boolean, has_requests: boolean }}
  */
 function resolveFeatureContext(root, branch, changedPaths, options) {
   const opts = options || {};
@@ -47,14 +49,14 @@ function resolveFeatureContext(root, branch, changedPaths, options) {
   const featureKey = opts.featureKey || null;
   const techSpecPattern = opts.techSpecPattern || /^2-tech-spec/;
 
-  const nullResult = { key: null, source: 'none', confidence: null, docs_path: null, has_tech_spec: false, has_requests: false };
+  const nullResult = { key: null, source: 'none', confidence: null, docs_path: null, has_tech_spec: false, has_requirements: false, has_requests: false };
 
   // Level 1: explicit feature key
   if (featureKey) {
     if (!SLUG_RE.test(featureKey)) return nullResult;
     const info = probe(docsBase, featureKey, techSpecPattern);
     if (info) return { ...info, source: 'cli', confidence: 'high' };
-    return { key: featureKey, source: 'cli', confidence: 'high', docs_path: `docs/features/${featureKey}`, has_tech_spec: false, has_requests: false };
+    return { key: featureKey, source: 'cli', confidence: 'high', docs_path: `docs/features/${featureKey}`, has_tech_spec: false, has_requirements: false, has_requests: false };
   }
 
   // Level 2: branch feat/<key> (single segment only to prevent path issues)
@@ -63,7 +65,7 @@ function resolveFeatureContext(root, branch, changedPaths, options) {
     const key = branchMatch[1];
     const info = probe(docsBase, key, techSpecPattern);
     if (info) return { ...info, source: 'branch', confidence: 'high' };
-    return { key, source: 'branch', confidence: 'high', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requests: false };
+    return { key, source: 'branch', confidence: 'high', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requirements: false, has_requests: false };
   }
 
   // Level 3: changed paths under docs/features/<key>/
@@ -74,7 +76,7 @@ function resolveFeatureContext(root, branch, changedPaths, options) {
     const key = featurePathMatch[1];
     const info = probe(docsBase, key, techSpecPattern);
     if (info) return { ...info, source: 'diff', confidence: 'medium' };
-    return { key, source: 'diff', confidence: 'medium', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requests: false };
+    return { key, source: 'diff', confidence: 'medium', docs_path: `docs/features/${key}`, has_tech_spec: false, has_requirements: false, has_requests: false };
   }
 
   // Level 3b: changed paths under skills/<key>/ or commands/<key>.md
