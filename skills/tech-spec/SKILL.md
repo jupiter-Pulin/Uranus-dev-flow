@@ -1,6 +1,6 @@
 ---
 name: tech-spec
-description: "Tech spec generation and review. Use when: designing features, writing specs, requirement analysis. Not for: implementation (use feature-dev), architecture advice (use codex-architect). Output: numbered tech spec document."
+description: "Tech spec generation and review. Use when: designing features, writing specs, spec review. Not for: requirements analysis (use req-analyze), implementation (use feature-dev), architecture advice (use codex-architect). Output: numbered tech spec document."
 allowed-tools: Read, Grep, Glob, Bash(git:*), Write
 ---
 
@@ -8,7 +8,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Write
 
 ## Trigger
 
-- Keywords: tech spec, technical specification, spec review, review spec, requirement analysis, feature design
+- Keywords: tech spec, technical specification, spec review, review spec, feature design
 
 ## When NOT to Use
 

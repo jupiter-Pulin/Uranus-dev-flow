@@ -46,7 +46,17 @@ node scripts/resolve-feature-cli.js --feature statusline-config
   "source": "branch",
   "confidence": "high",
   "docs_path": "docs/features/statusline-config",
+  "doc_inventory": [
+    { "file": "2-tech-spec.md", "type": "tech-spec", "namespace": "lifecycle", "confidence": "high", "is_canonical": true }
+  ],
+  "canonical_docs": {
+    "tech_spec": { "file": "2-tech-spec.md", "path": "2-tech-spec.md" },
+    "architecture": null,
+    "feasibility": null,
+    "requirements": null
+  },
   "has_tech_spec": true,
+  "has_requirements": false,
   "has_requests": true
 }
 ```
@@ -72,9 +82,15 @@ When creating or updating documents, enforce bidirectional links:
 
 | When creating... | Must link to... | Link format |
 |-----------------|----------------|-------------|
-| Request doc | Tech spec (if exists) | `> **Tech Spec**: [Link](../2-tech-spec.md)` |
+| Requirements doc | Tech spec (if exists) | `> **Tech Spec**: [Link](./<canonical_docs.tech_spec.file>)` |
+| Requirements doc | Active request(s) | `> **Requests**: [Title](./requests/YYYY-MM-DD-*.md)` |
+| Request doc | Requirements (if exists) | `> **Requirements**: [Link](../<canonical_docs.requirements.file>)` |
+| Request doc | Tech spec (if exists) | `> **Tech Spec**: [Link](../<canonical_docs.tech_spec.file>)` |
+| Tech spec | Requirements (if exists) | `> **Requirements**: [Link](./<canonical_docs.requirements.file>)` |
 | Tech spec | Active request(s) | `> **Requests**: [Title](./requests/YYYY-MM-DD-*.md)` |
-| Update-docs report | Both | In report summary section |
+| Update-docs report | All applicable | In report summary section |
+
+**Filename resolution**: Use `canonical_docs.<role>.file` from `feature-resolver.js` output instead of hardcoded filenames. Variant filenames (e.g. `1-requirements-v2.md`) are supported. Fallback to default names (`1-requirements.md`, `2-tech-spec.md`) only when `canonical_docs` is unavailable.
 
 **Lazy repair**: On any skill invocation, check existing links are valid. Fix broken relative paths silently.
 

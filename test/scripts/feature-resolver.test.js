@@ -233,14 +233,15 @@ test('Custom docsBase overrides default', () => {
   assert.equal(result.has_tech_spec, true);
 });
 
-test('Custom techSpecPattern matches alternative naming', () => {
+test('taxonomy-based detection finds tech-spec without techSpecPattern param', () => {
   const root = createTempRoot();
   const featureDir = join(root, 'docs', 'features', 'alt');
   mkdirSync(featureDir, { recursive: true });
-  writeFileSync(join(featureDir, 'spec.md'), '');
+  writeFileSync(join(featureDir, '2-tech-spec.md'), '');
 
-  const result = resolveFeatureContext(root, 'feat/alt', [], { techSpecPattern: /^spec/ });
+  const result = resolveFeatureContext(root, 'feat/alt', []);
   assert.equal(result.has_tech_spec, true);
+  assert.notEqual(result.canonical_docs.tech_spec, null);
 });
 
 // --- Priority order ---
@@ -297,4 +298,65 @@ test('CLI without args returns valid JSON (auto-detect mode)', () => {
   assert.ok('key' in result, 'output must have key field');
   assert.ok('source' in result, 'output must have source field');
   assert.ok('confidence' in result, 'output must have confidence field');
+});
+
+// --- doc_inventory + canonical_docs (expanded probe) ---
+
+test('probe returns doc_inventory array', () => {
+  const root = createTempRoot();
+  setupFeatureDir(root, 'inv-test', { techSpec: true, requests: true });
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'inv-test' });
+  assert.ok(Array.isArray(result.doc_inventory), 'doc_inventory must be an array');
+  assert.ok(result.doc_inventory.length > 0, 'doc_inventory should have entries');
+});
+
+test('canonical_docs.tech_spec populated when 2-tech-spec.md exists', () => {
+  const root = createTempRoot();
+  setupFeatureDir(root, 'canon-test', { techSpec: true });
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'canon-test' });
+  assert.notEqual(result.canonical_docs.tech_spec, null);
+  assert.equal(result.canonical_docs.tech_spec.file, '2-tech-spec.md');
+});
+
+test('canonical_docs.tech_spec is null when no tech-spec exists', () => {
+  const root = createTempRoot();
+  setupFeatureDir(root, 'no-spec', {});
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'no-spec' });
+  assert.equal(result.canonical_docs.tech_spec, null);
+});
+
+test('has_tech_spec derived from canonical_docs', () => {
+  const root = createTempRoot();
+  setupFeatureDir(root, 'derived-bool', { techSpec: true, requirements: true });
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'derived-bool' });
+  assert.equal(result.has_tech_spec, true);
+  assert.equal(result.has_requirements, true);
+});
+
+test('nullResult includes doc_inventory and normalized canonical_docs', () => {
+  const root = createTempRoot();
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: '../escape' });
+  assert.ok(Array.isArray(result.doc_inventory));
+  assert.equal(result.doc_inventory.length, 0);
+  assert.ok(typeof result.canonical_docs === 'object');
+  assert.equal(result.canonical_docs.tech_spec, null);
+  assert.equal(result.canonical_docs.architecture, null);
+  assert.equal(result.canonical_docs.feasibility, null);
+  assert.equal(result.canonical_docs.requirements, null);
+});
+
+test('fallback paths return normalized canonical_docs with null roles', () => {
+  const root = createTempRoot();
+  mkdirSync(join(root, 'docs', 'features'), { recursive: true });
+
+  const result = resolveFeatureContext(root, 'main', [], { featureKey: 'nonexistent-feat' });
+  assert.equal(result.key, 'nonexistent-feat');
+  assert.equal(result.canonical_docs.tech_spec, null);
+  assert.equal(result.canonical_docs.requirements, null);
+  assert.equal(result.canonical_docs.architecture, null);
+  assert.equal(result.canonical_docs.feasibility, null);
 });

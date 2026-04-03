@@ -35,6 +35,10 @@ Decompose → Constraints → Code research → Solutions → Codex discussion �
 
 ### Phase 1: Requirement Decomposition
 
+**Input source priority**:
+1. If `canonical_docs.requirements` is non-null → consume as authoritative requirement source, validate via 5-Why
+2. Otherwise → extract requirements from user input via 5-Why analysis
+
 Use "5 Why" to uncover essence:
 1. Surface requirement (what user asks for)
 2. Underlying problem (why they need it)
