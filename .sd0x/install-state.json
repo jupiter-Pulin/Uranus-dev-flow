@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "installed_at": "2026-04-02T08:45:00Z",
+  "plugin_version": "2.2.11",
+  "hook_scripts": {
+    "pre-edit-guard.sh": {
+      "hash": "693ded505b858af9e9d5ac38ee39da706162b2c0"
+    },
+    "post-edit-format.sh": {
+      "hash": "ed06feac48109f90c6c6fcb574886ead8b28921b"
+    },
+    "post-tool-review-state.sh": {
+      "hash": "1d3643532b93787a1d0fd2c887824b8fefe06b26"
+    },
+    "stop-guard.sh": {
+      "hash": "5a798d81950c0f3474f107715f27eeff9c5191a3"
+    },
+    "post-compact-auto-loop.sh": {
+      "hash": "29e7dd43b039baf4c0a6e6c791c7106e98acb478"
+    },
+    "post-skill-auto-loop.sh": {
+      "hash": "0b9de6fad78a2a3bccafa7bc54f71ed3a91382b8"
+    },
+    "user-prompt-review-guard.sh": {
+      "hash": "051b066d06eaba7390bd0571ef4a51346c0901d8"
+    }
+  }
+}
