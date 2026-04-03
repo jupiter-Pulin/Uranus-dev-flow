@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "id": "feasibility",
+      "namespace": "lifecycle",
+      "phase": 0,
+      "canonical_filename": "0-feasibility-study.md",
+      "canonical_dirname": "0-feasibility-study",
+      "variant_pattern": "^0-feasibility",
+      "heading_signals": ["Feasibility", "可行性"],
+      "sync_handler": "generic"
+    },
+    {
+      "id": "requirements",
+      "namespace": "lifecycle",
+      "phase": 1,
+      "canonical_filename": "1-requirements.md",
+      "variant_pattern": "^1-requirements",
+      "heading_signals": ["Requirements", "需求"],
+      "sync_handler": null
+    },
+    {
+      "id": "tech-spec",
+      "namespace": "lifecycle",
+      "phase": 2,
+      "canonical_filename": "2-tech-spec.md",
+      "variant_pattern": "^2-tech-spec",
+      "exclude_pattern": "-fp-brief\\.md$",
+      "heading_signals": ["Technical Spec", "技術規格"],
+      "sync_handler": "tech-spec"
+    },
+    {
+      "id": "architecture",
+      "namespace": "lifecycle",
+      "phase": 3,
+      "canonical_filename": "3-architecture.md",
+      "variant_pattern": "^3-architecture",
+      "heading_signals": ["Architecture", "架構"],
+      "sync_handler": "generic"
+    },
+    {
+      "id": "implementation",
+      "namespace": "lifecycle",
+      "phase": 4,
+      "canonical_filename": "4-implementation.md",
+      "variant_pattern": "^4-implementation",
+      "heading_signals": ["Implementation", "實作"],
+      "sync_handler": "generic"
+    },
+    {
+      "id": "fp-brief",
+      "namespace": "ancillary",
+      "semantic_pattern": "-fp-brief\\.md$",
+      "heading_signals": ["First-Principles Brief", "第一性原理"],
+      "sync_handler": null
+    },
+    {
+      "id": "checklist",
+      "namespace": "ancillary",
+      "semantic_pattern": "^checklist-|確認事項|checklist",
+      "heading_signals": ["Checklist", "確認清單", "確認事項"],
+      "sync_handler": "generic"
+    },
+    {
+      "id": "runbook",
+      "namespace": "ancillary",
+      "semantic_pattern": "^runbook-|操作手冊|runbook",
+      "heading_signals": ["Runbook", "SOP", "操作手冊"],
+      "sync_handler": null
+    },
+    {
+      "id": "adr",
+      "namespace": "ancillary",
+      "semantic_pattern": "^adr-|decision",
+      "heading_signals": ["Decision Record", "ADR", "架構決策"],
+      "sync_handler": null
+    },
+    {
+      "id": "handoff",
+      "namespace": "ancillary",
+      "semantic_pattern": "^handoff-|交接",
+      "heading_signals": ["Hand-off", "交接", "Handoff"],
+      "sync_handler": null
+    },
+    {
+      "id": "briefing",
+      "namespace": "ancillary",
+      "semantic_pattern": "^briefing-",
+      "heading_signals": ["Briefing", "簡報", "Brief"],
+      "sync_handler": null
+    }
+  ],
+  "fallback_type": "appendix",
+  "canonical_roles": {
+    "tech_spec": "tech-spec",
+    "architecture": "architecture",
+    "feasibility": "feasibility",
+    "requirements": "requirements"
+  },
+  "precedence": [
+    "override",
+    "exclude",
+    "canonical_filename",
+    "variant_or_semantic_pattern",
+    "lifecycle_prefix_fallback",
+    "heading_signal",
+    "fallback"
+  ]
+}
