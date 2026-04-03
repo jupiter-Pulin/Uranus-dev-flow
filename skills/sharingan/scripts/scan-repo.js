@@ -509,6 +509,93 @@ function mapFormat(skill, localContext) {
 }
 
 // ---------------------------------------------------------------------------
+// Security Envelope (v2)
+// ---------------------------------------------------------------------------
+function validateSecureUrl(url) {
+  if (!url || typeof url !== 'string') return { valid: false, error: 'URL is required' };
+  let parsed;
+  try { parsed = new URL(url); } catch { return { valid: false, error: `Invalid URL: ${url}` }; }
+  if (parsed.protocol !== 'https:') return { valid: false, error: 'Only HTTPS URLs allowed' };
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const denyPatterns = [
+    /^127\./,
+    /^10\./,
+    /^172\.(1[6-9]|2\d|3[01])\./,
+    /^192\.168\./,
+    /^localhost$/i,
+    /^::1$/,
+    /^\[::1\]$/,
+    /^0\.0\.0\.0$/,
+    /^169\.254\./,                 // link-local (cloud metadata)
+    /^::ffff:/i,          // IPv4-mapped IPv6
+    /^fc[0-9a-f]{2}:/i,   // IPv6 unique local (fc00::/7)
+    /^fd[0-9a-f]{2}:/i,   // IPv6 unique local (fd00::/8)
+    /^fe80:/i,             // IPv6 link-local
+  ];
+  for (const pat of denyPatterns) {
+    if (pat.test(host)) return { valid: false, error: `Private/reserved address denied: ${host}` };
+  }
+  return { valid: true, parsed };
+}
+
+function validatePayloadSize(content, maxBytes = 500000) {
+  if (!content) return { valid: true, byteLength: 0 };
+  const len = Buffer.byteLength(content, 'utf8');
+  if (len > maxBytes) {
+    return { valid: false, error: `Payload ${len} bytes exceeds limit ${maxBytes}`, byteLength: len };
+  }
+  return { valid: true, byteLength: len };
+}
+
+// ---------------------------------------------------------------------------
+// SourceBundle Builder (v2)
+// ---------------------------------------------------------------------------
+function toSourceBundle(analysis) {
+  if (!analysis.skills || analysis.skills.length === 0) return null;
+  const allTools = new Set();
+  const patterns = analysis.skills.map(s => {
+    for (const t of (s.dependencies?.tools || [])) allTools.add(t);
+    return {
+      name: s.name,
+      description: (s.frontmatter?.description) || '',
+      workflow: (s.body_sections || []).join(' → ') || null,
+      code_examples: [],
+      source_ref: s.source_path || '',
+    };
+  });
+
+  const intent = patterns.length > 0
+    ? `Replicate ${analysis.repo?.name || 'repo'} as sd0x-dev-flow skill`
+    : 'No skills found in repository';
+
+  return {
+    source: {
+      type: 'github_repo',
+      origin: analysis.repo?.url || '',
+      confidence: 'high',
+      fetched_at: new Date().toISOString(),
+    },
+    knowledge: {
+      intent,
+      patterns,
+      conventions: [],
+      tools_mentioned: [...allTools],
+    },
+    repo_analysis: analysis,
+    synthesis_hints: {
+      suggested_skill_name: patterns.length === 1 ? patterns[0].name : null,
+      suggested_triggers: [],
+      suggested_exclusions: [],
+      untranslatable: (analysis.untranslatable || []).map(u => ({
+        element: u.element,
+        reason: u.reason,
+        suggestion: u.suggestion,
+      })),
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Sanitization
 // ---------------------------------------------------------------------------
 function sanitize(s) {
@@ -724,6 +811,9 @@ module.exports = {
   sanitize,
   renderMarkdown,
   GITHUB_URL_RE,
+  validateSecureUrl,
+  validatePayloadSize,
+  toSourceBundle,
 };
 
 if (require.main === module) main();

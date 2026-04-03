@@ -264,6 +264,120 @@ test('sanitize — strips control characters but keeps newlines', () => {
   assert.ok(result.includes('helloworld'));
 });
 
+// ═══════════════════════════════════════════════
+// Group 7: Input Classification — Phase 0A boundary (4 tests)
+// ═══════════════════════════════════════════════
+
+test('GITHUB_URL_RE matches valid GitHub URL', () => {
+  assert.equal(scanRepo.GITHUB_URL_RE.test('https://github.com/owner/repo'), true);
+});
+
+test('GITHUB_URL_RE rejects non-GitHub URL', () => {
+  assert.equal(scanRepo.GITHUB_URL_RE.test('https://gitlab.com/owner/repo'), false);
+});
+
+test('GITHUB_URL_RE rejects plain description', () => {
+  assert.equal(scanRepo.GITHUB_URL_RE.test('retry pattern with backoff'), false);
+});
+
+test('GITHUB_URL_RE rejects local file path', () => {
+  assert.equal(scanRepo.GITHUB_URL_RE.test('src/utils/helper.js'), false);
+});
+
+// ═══════════════════════════════════════════════
+// Group 8: SourceBundle builder (4 tests)
+// ═══════════════════════════════════════════════
+
+const sampleAnalysis = {
+  repo: { owner: 'test-org', name: 'test-repo', url: 'https://github.com/test-org/test-repo', type: 'plugin' },
+  skills: [{
+    name: 'error-handler',
+    source_path: 'skills/error-handler/SKILL.md',
+    frontmatter: { description: 'Centralized error handling' },
+    body_sections: ['Trigger', 'Workflow', 'Output'],
+    dependencies: { skills: [], rules: [], tools: ['Read', 'Grep'], mcp_servers: [] },
+  }],
+  untranslatable: [{ element: 'CustomTool', reason: 'Not available', suggestion: 'Remove or replace' }],
+};
+
+test('toSourceBundle sets source.type to github_repo', () => {
+  const bundle = scanRepo.toSourceBundle(sampleAnalysis);
+  assert.equal(bundle.source.type, 'github_repo');
+});
+
+test('toSourceBundle maps repo.url to source.origin', () => {
+  const bundle = scanRepo.toSourceBundle(sampleAnalysis);
+  assert.equal(bundle.source.origin, 'https://github.com/test-org/test-repo');
+});
+
+test('toSourceBundle derives knowledge.intent from repo name', () => {
+  const bundle = scanRepo.toSourceBundle(sampleAnalysis);
+  assert.ok(bundle.knowledge.intent.includes('test-repo'));
+});
+
+test('toSourceBundle returns null for empty analysis', () => {
+  const emptyAnalysis = { repo: { url: 'https://github.com/test/empty', name: 'empty' }, skills: [], untranslatable: [] };
+  assert.equal(scanRepo.toSourceBundle(emptyAnalysis), null);
+});
+
+test('toSourceBundle preserves untranslatable in synthesis_hints', () => {
+  const bundle = scanRepo.toSourceBundle(sampleAnalysis);
+  assert.equal(bundle.synthesis_hints.untranslatable.length, 1);
+  assert.equal(bundle.synthesis_hints.untranslatable[0].element, 'CustomTool');
+});
+
+// ═══════════════════════════════════════════════
+// Group 9: Security envelope (4 tests)
+// ═══════════════════════════════════════════════
+
+test('validateSecureUrl rejects HTTP URL', () => {
+  const r = scanRepo.validateSecureUrl('http://example.com/resource');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('HTTPS'));
+});
+
+test('validateSecureUrl rejects loopback 127.0.0.1', () => {
+  const r = scanRepo.validateSecureUrl('https://127.0.0.1/admin');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('Private'));
+});
+
+test('validateSecureUrl rejects private 192.168.1.1', () => {
+  const r = scanRepo.validateSecureUrl('https://192.168.1.1/api');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('Private'));
+});
+
+test('validateSecureUrl rejects IPv4-mapped IPv6 loopback', () => {
+  const r = scanRepo.validateSecureUrl('https://[::ffff:127.0.0.1]/admin');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('Private'));
+});
+
+test('validateSecureUrl rejects IPv6 unique local fc00::', () => {
+  const r = scanRepo.validateSecureUrl('https://[fc00::1]/api');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('Private'));
+});
+
+test('validateSecureUrl rejects cloud metadata 169.254.169.254', () => {
+  const r = scanRepo.validateSecureUrl('https://169.254.169.254/latest/meta-data/');
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('Private'));
+});
+
+test('validateSecureUrl accepts valid public HTTPS URL', () => {
+  const r = scanRepo.validateSecureUrl('https://example.com/resource');
+  assert.equal(r.valid, true);
+});
+
+test('validatePayloadSize rejects oversized content', () => {
+  const large = 'x'.repeat(600000);
+  const r = scanRepo.validatePayloadSize(large);
+  assert.equal(r.valid, false);
+  assert.ok(r.error.includes('exceeds'));
+});
+
 // Cleanup
 test.after(() => {
   for (const d of tempDirs) {

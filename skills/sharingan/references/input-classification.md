@@ -53,6 +53,7 @@ Respond with exactly:
 ## User Input
 
 {INPUT}
+
 ```
 
 ## Confidence Threshold

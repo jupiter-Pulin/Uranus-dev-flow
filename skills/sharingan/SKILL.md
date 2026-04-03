@@ -23,7 +23,8 @@ allowed-tools: Read, Grep, Glob, Bash(gh:*), Bash(node:*), Write, Agent, AskUser
 
 ## Argument Validation
 
-- `<github-url>` must match `^https://github\.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+/?$`
+- Phase 0A: `<github-url>` must match `^https://github\.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+/?$`
+- Phase 0B: non-GitHub URL must pass `validateSecureUrl()` (HTTPS-only, deny private addresses)
 - `--skill` and `--target-dir` reject `..`, absolute paths, symlink escape
 - `--target-dir` must pass repo-root containment: `fs.realpathSync` + `path.relative` prefix check
 - `--batch-size` clamped to 1-5
@@ -54,20 +55,40 @@ flowchart TD
 
 ### Phase 0: Input Validation
 
-```bash
-# Run scanner for validation + classification
-bash scripts/run-skill.sh sharingan scan-repo.js <url> --format json
-```
+1. Parse `--mode`, `--skill`, `--batch-size`, `--target-dir`, `--source` flags
+2. Validate `--target-dir` repo-root containment
+3. **v2 input type routing** (Phase 0A deterministic fast-path):
+   - If input matches `GITHUB_URL_RE` → `github_repo` strategy → Phase 1
+   - If no match → Phase 0B
 
-1. Validate GitHub URL format
-2. Check `gh auth status` (must be authenticated)
-3. Parse `--mode`, `--skill`, `--batch-size`, `--target-dir` flags
-4. Validate `--target-dir` repo-root containment
-5. **v2 input type routing**:
-   - If input matches `GITHUB_URL_RE` → proceed with existing v1 pipeline (Phase 1)
-   - If input does NOT match `GITHUB_URL_RE` → output: "v2 planned, currently GitHub URL only" and halt
+### Phase 0B: Input Classification (LLM Semantic Classifier)
 
-> **Temporary guard**: Phase 0B classifier and source strategy adapters are not yet implemented (see R2). Non-GitHub input is recognized in the trigger but gated at Phase 0 until R2 implementation completes.
+When Phase 0A misses, classify via LLM prompt (`references/input-classification.md`):
+
+1. Send input to classifier → receive `{ strategy, confidence, reasoning }`
+2. **Confidence gate**: `>= 0.7` proceed; `< 0.7` → AskUserQuestion (1 retry, then default `external_evidence`)
+3. **Security gate** (for `external_evidence` with URL input): `validateSecureUrl(url)` — HTTPS-only, deny private addresses
+4. **Strategy dispatch**:
+
+| Strategy | Handler | Output |
+|----------|---------|--------|
+| `github_repo` | Phase 0A only (never from classifier) | SourceAnalysis → `toSourceBundle()` |
+| `external_evidence` | `/deep-research --budget low` delegation | SourceBundle |
+| `local_code_context` | Read/Grep on specified paths | SourceBundle |
+
+1. **SourceBundle normalization**: All strategies produce SourceBundle format (`references/source-bundle.md`) → enter Phase 2
+
+### Security Envelope
+
+| Rule | Enforcement |
+|------|-------------|
+| HTTPS-only | `validateSecureUrl()` rejects non-HTTPS |
+| Deny private addresses | `validateSecureUrl()` rejects 127.x, 10.x, 172.16-31.x, 192.168.x, localhost, ::1 |
+| Payload limit | `validatePayloadSize()` rejects > 500KB |
+| Timeout | 30s timeout on external fetches |
+| Sanitize | `sanitize()` on all external content before prompt composition |
+| No execution | Never execute fetched code/scripts |
+| Cross-verification | Single-source evidence flagged for manual review |
 
 ### Phase 1: SCAN (deterministic, via scan-repo.js)
 
@@ -121,7 +142,8 @@ See `references/quality-checklist.md` for full criteria.
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `<github-url>` | Required | GitHub repo URL |
+| `<input>` | Required | Any input: GitHub URL, web URL, description, or local path |
+| `--source` | `auto` | Override strategy: `github_repo` / `external_evidence` / `local_code_context` |
 | `--mode` | `analyze` | `analyze` (report only) / `generate` (report + files) |
 | `--skill <name>` | auto-detect | Filter to single skill |
 | `--batch-size` | `3` | Skills per batch (1-5) |
@@ -144,7 +166,7 @@ See `references/output-template.md` for full template.
 
 ## Verification
 
-- [ ] Phase 0: URL validated, gh authenticated, target-dir contained
+- [ ] Phase 0: Input validated (Phase 0A regex or Phase 0B classifier + security gate), target-dir contained
 - [ ] Phase 1: scan-repo.js ran successfully, repo classified
 - [ ] Phase 2: All skills analyzed, format mapped
 - [ ] Phase 3: Files generated with confidence tags (generate mode only)

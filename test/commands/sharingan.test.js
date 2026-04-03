@@ -14,6 +14,8 @@ const refFiles = [
   'dependency-graph-algorithm.md',
   'output-template.md',
   'quality-checklist.md',
+  'source-bundle.md',
+  'input-classification.md',
 ];
 
 // ═══════════════════════════════════════════════
@@ -101,4 +103,30 @@ test('all 4 reference files exist', () => {
 
 test('scan-repo.js script exists', () => {
   assert.ok(existsSync(scriptPath), 'scan-repo.js should exist');
+});
+
+// ═══════════════════════════════════════════════
+// v2 validation (3 tests)
+// ═══════════════════════════════════════════════
+
+test('sharingan command has <input> in argument-hint', () => {
+  const content = readFileSync(commandPath, 'utf8');
+  assert.ok(content.includes('<input>'), 'argument-hint should use <input>');
+});
+
+test('sharingan command has --source flag', () => {
+  const content = readFileSync(commandPath, 'utf8');
+  assert.ok(content.includes('--source'), 'should document --source flag');
+});
+
+test('sharingan allowed-tools match between SKILL.md and command', () => {
+  const skillContent = readFileSync(skillPath, 'utf8');
+  const cmdContent = readFileSync(commandPath, 'utf8');
+  const parseTools = c => {
+    const m = c.match(/allowed-tools:\s*(.+)/);
+    return m ? m[1].split(',').map(t => t.trim()).sort() : [];
+  };
+  const skillTools = parseTools(skillContent);
+  const cmdTools = parseTools(cmdContent);
+  assert.deepEqual(skillTools, cmdTools, 'SKILL.md and command allowed-tools should match');
 });
