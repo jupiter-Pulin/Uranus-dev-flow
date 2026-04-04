@@ -16,7 +16,7 @@ Monitor GitHub Actions CI runs for the current HEAD (or a specified SHA) until c
 ## Workflow
 
 ```
-Auto-detect (branch + SHA) → Find matching runs → Watch all → Verdict
+Auto-detect (branch + SHA) → Find matching runs → Quick-check status → Watch or Report → Verdict
 ```
 
 ### Step 1: Resolve Target
@@ -53,30 +53,50 @@ If still no runs found after retries:
 - Check: gh run list --branch <branch>
 ```
 
-### Step 3: Monitor Runs
+### Step 3a: Quick Status Check
 
-For each matching run, monitor with `gh run watch`:
+Before starting a long-running watch, check if runs are already completed:
+
+```bash
+gh run view <run-id> --json status,conclusion,name,url
+```
+
+| Result | Action |
+|--------|--------|
+| All runs completed | Skip to Step 4 (Verdict) immediately — no watching needed |
+| Some completed, some in progress | Report completed verdicts, watch remaining (Step 3b) |
+| All in progress | Proceed to Step 3b |
+
+### Step 3b: Watch Runs
+
+For each in-progress run, monitor with `gh run watch`:
 
 ```bash
 gh run watch <run-id> --exit-status
 ```
 
-**Execution mode**: `gh run watch` is a long-running blocking command. Background mode is the default to keep the conversation responsive.
+**Execution mode**: `gh run watch` is a long-running blocking command. Foreground mode is the default for reliable verdict reporting.
 
 | Mode | When | Behavior |
 |------|------|----------|
-| Background (default) | No `--foreground` flag | Use Bash `run_in_background: true`. Report monitoring started, **then end the turn immediately** so the user can continue other work. When the background task notification arrives, read output and report verdict. |
-| Foreground | `--foreground` flag passed | Execute inline (blocking). Claude waits for completion before responding. Only use when the caller explicitly needs to block on CI result. |
+| Foreground (default) | No `--background` flag | Execute `gh run watch` inline (blocking). Claude waits for completion, then reports verdict. Reliable. |
+| Background | `--background` flag passed | Launch with `Bash(run_in_background: true)`. Provide manual check command. **Do NOT promise auto-reporting** — background notifications in forked context are unreliable. |
 
-**Background mode (default) — critical behavior**:
-1. Launch each `gh run watch` with `run_in_background: true`
-2. Immediately inform the user: "CI monitoring started for run `<id>`, I'll report when it completes"
-3. **End the current turn** — do NOT wait for the background tasks. The user can continue chatting, ask questions, or start new tasks while CI runs.
-4. When each background task notification arrives, read the output file (from the task notification's `output_file` path) using Read tool, then parse `gh run watch` output for pass/fail status and emit the verdict.
+**Foreground mode (default) — behavior**:
+1. Execute `gh run watch <run-id> --exit-status` inline
+2. Wait for completion (blocking)
+3. Parse output for pass/fail status
+4. Report verdict
 
-**Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), monitor all. In background mode, launch each as a separate background task. Report verdict for each individually.
+**Background mode (`--background`) — honest behavior**:
+1. Quick-check (Step 3a) first — if already completed, report immediately and skip background
+2. If still running, launch `gh run watch` with `Bash(run_in_background: true)`
+3. Inform the user honestly: "CI monitoring launched in background for run `<id>`. Background notifications may not auto-report reliably. To check manually: `gh run view <id>` or re-run `/watch-ci`"
+4. **Do NOT promise "I'll report when it completes"** — background notification delivery is not guaranteed in forked context
 
-**Timeout enforcement**: Default 10 minutes (configurable via `--timeout`). If any run exceeds timeout, stop monitoring and report as timeout.
+**Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), monitor all. In foreground mode, watch sequentially. In background mode, launch each as a separate background task.
+
+**Timeout enforcement**: Default 10 minutes (configurable via `--timeout`). Since `gh run watch` has no native timeout flag, enforce via Bash tool's `timeout` parameter (milliseconds): set `timeout: TIMEOUT_MIN * 60 * 1000`. If the Bash call returns a timeout error, report the run as timed out. Timeout applies per individual `gh run watch` invocation, not to the entire monitoring session.
 
 ### Step 4: Verdict
 
@@ -88,6 +108,16 @@ gh run watch <run-id> --exit-status
 
 Overall verdict = worst individual result (any fail → overall fail).
 
+## Prohibited Actions
+
+```
+❌ Running `gh run view` once and treating that as "monitoring" — one-shot status check is NOT watching
+❌ Promising "I'll report when it completes" in background mode — background notifications in forked context are unreliable
+❌ Skipping the quick-check step (Step 3a) — always check status before deciding to watch
+❌ Reporting "CI monitoring started" without actually launching `gh run watch`
+❌ Using `gh run list` results as the final verdict — list shows status at query time, not completion
+```
+
 ## Arguments
 
 | Argument | Description | Default |
@@ -96,7 +126,7 @@ Overall verdict = worst individual result (any fail → overall fail).
 | `--branch <branch>` | Branch to filter runs | `git rev-parse --abbrev-ref HEAD` |
 | `--timeout <min>` | Watch timeout in minutes | 10 |
 | `--run-id <id>` | Monitor a specific run ID directly | auto-detect |
-| `--foreground` | Run `gh run watch` in foreground (blocking) | background |
+| `--background` | Launch `gh run watch` in background (may not auto-report reliably) | foreground |
 
 ## Output
 
@@ -125,17 +155,21 @@ Overall verdict = worst individual result (any fail → overall fail).
 
 ```
 Input: /watch-ci
-Action: Auto-detect HEAD SHA → find matching runs → launch background watch → "CI monitoring started, I'll report when it completes" → end turn → (user continues chatting) → background completes → read output → report verdict
+Action: Auto-detect HEAD SHA → find matching runs → quick-check status
+  If completed → report verdict immediately
+  If still running → foreground watch (blocking) → wait → report verdict
 
 Input: /watch-ci --sha abc1234
-Action: Find runs for specified SHA → background watch → verdict on completion
+Action: Find runs for SHA → quick-check → watch if needed → verdict
 
 Input: /watch-ci --run-id 12345678
-Action: Watch specific run in background → verdict on completion
+Action: Quick-check run 12345678 → watch if still running → verdict
 
-Input: /watch-ci --foreground
-Action: Auto-detect → find runs → blocking watch → verdict (user waits)
+Input: /watch-ci --background
+Action: Auto-detect → find runs → quick-check
+  If completed → report immediately (no background needed)
+  If still running → launch background watch → "CI monitoring launched, check manually with `gh run view <id>`"
 
 Input: Is CI passing?
-Action: Auto-detect → find runs → background watch → verdict
+Action: Auto-detect → find runs → quick-check → watch if needed → verdict
 ```

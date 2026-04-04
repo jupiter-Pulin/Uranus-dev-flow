@@ -156,8 +156,8 @@ After successful push, invoke `/watch-ci` to monitor CI runs:
 
 - Pass `--sha <HEAD_SHA>` and `--branch <BRANCH>` from Phase 0
 - Pass `--timeout` from arguments (default 10)
-- `/watch-ci` runs in background mode (default) — CI monitoring launches, then the user can continue other work while waiting for results
-- `/watch-ci` handles run discovery, monitoring, retry logic, and verdict reporting
+- `/watch-ci` runs in foreground mode (default) — Claude waits for CI completion and reports verdict
+- `/watch-ci` handles run discovery, quick-check, monitoring, retry logic, and verdict reporting
 
 This delegation keeps push authorization logic separate from read-only CI monitoring. See `@skills/watch-ci/SKILL.md` for CI monitoring details.
 
@@ -197,14 +197,14 @@ Input: /push-ci
 Phase 0: Preflight — branch feat/auth, 3 commits ahead, remote OK
 Phase 1: Show plan → user approves
 Phase 2: git push origin feat/auth
-Phase 3: /watch-ci --sha <HEAD> --branch feat/auth (background — monitoring started, user can continue)
+Phase 3: /watch-ci --sha <HEAD> --branch feat/auth (foreground — wait for CI verdict)
 ```
 
 ```
 Input: /push-ci --timeout 15
 Phase 0-1: Same as above
 Phase 2: git push
-Phase 3: /watch-ci --timeout 15
+Phase 3: /watch-ci --sha <HEAD> --branch <branch> --timeout 15
 ```
 
 ```
@@ -221,5 +221,5 @@ Phase 0: Preflight — ⚠️ "main is a protected branch" → AskUserQuestion p
 User: Continue → proceed
 Phase 1: Show plan → user approves push
 Phase 2: git push origin main
-Phase 3: /watch-ci (background — monitoring started, verdict reported when complete)
+Phase 3: /watch-ci (foreground — wait for CI verdict)
 ```

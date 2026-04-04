@@ -1,6 +1,6 @@
 ---
 description: Monitor GitHub Actions CI runs for current HEAD or specified SHA
-argument-hint: [--sha <sha>] [--branch <branch>] [--timeout <min>] [--run-id <id>] [--foreground]
+argument-hint: [--sha <sha>] [--branch <branch>] [--timeout <min>] [--run-id <id>] [--background]
 allowed-tools: Bash(gh:*), Bash(git:*), Read
 ---
 
@@ -16,7 +16,7 @@ allowed-tools: Bash(gh:*), Bash(git:*), Read
 
 ## Task
 
-Monitor GitHub Actions CI runs until completion and report verdict.
+Monitor GitHub Actions CI runs and report verdict. Default: foreground (blocking, reliable). Use `--background` for non-blocking mode (may not auto-report).
 
 ### Arguments
 
@@ -30,7 +30,7 @@ $ARGUMENTS
 | `--branch <branch>` | Branch to filter runs | current branch |
 | `--timeout <min>` | Watch timeout in minutes | 10 |
 | `--run-id <id>` | Monitor a specific run ID directly | auto-detect |
-| `--foreground` | Run `gh run watch` in foreground (blocking) | background |
+| `--background` | Launch monitoring in background (may not auto-report reliably) | foreground |
 
 ## Examples
 
@@ -46,4 +46,7 @@ $ARGUMENTS
 
 # Watch with longer timeout
 /watch-ci --timeout 20
+
+# Launch in background (may not auto-report)
+/watch-ci --background
 ```
