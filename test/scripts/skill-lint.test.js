@@ -9,6 +9,7 @@ const { tmpdir } = require('node:os');
 const {
   checkAgentEntitlement,
   checkTaskEntitlement,
+  checkCrossSkillRefPaths,
   detectInvalidAgentRefs,
   detectAgentToolsSyntax,
 } = require('../../skills/skill-health-check/scripts/skill-lint.js');
@@ -87,6 +88,79 @@ describe('checkTaskEntitlement', () => {
     const fm = { 'allowed-tools': 'Read' };
     const result = checkTaskEntitlement(body, fm);
     assert.equal(result.pass, true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// checkCrossSkillRefPaths
+// ---------------------------------------------------------------------------
+
+describe('checkCrossSkillRefPaths', () => {
+  let tmpDir;
+
+  function setup(structure) {
+    tmpDir = mkdtempSync(join(tmpdir(), 'xref-test-'));
+    for (const [path, content] of Object.entries(structure)) {
+      const full = join(tmpDir, path);
+      const dir = full.replace(/\/[^/]+$/, '');
+      require('node:fs').mkdirSync(dir, { recursive: true });
+      writeFileSync(full, content);
+    }
+    return tmpDir;
+  }
+
+  function teardown() {
+    if (tmpDir) rmSync(tmpDir, { recursive: true });
+  }
+
+  test('local reference exists -> pass', () => {
+    const base = setup({
+      'skill-a/SKILL.md': '---\nname: skill-a\n---\nSee `references/guide.md`',
+      'skill-a/references/guide.md': '# Guide',
+    });
+    // Tests the local-exists early return (skillDir param controls local lookup)
+    const result = checkCrossSkillRefPaths('skill-a', join(base, 'skill-a'), 'See `references/guide.md`');
+    assert.equal(result.pass, true);
+    teardown();
+  });
+
+  test('cross-skill path @skills/<parent>/references/ -> pass (skipped)', () => {
+    const base = setup({
+      'skill-a/SKILL.md': '---\nname: skill-a\n---\n',
+      'skill-b/SKILL.md': '---\nname: skill-b\n---\nSee `@skills/skill-a/references/guide.md`',
+      'skill-a/references/guide.md': '# Guide',
+    });
+    const result = checkCrossSkillRefPaths('skill-b', join(base, 'skill-b'), 'See `@skills/skill-a/references/guide.md`');
+    assert.equal(result.pass, true);
+    teardown();
+  });
+
+  test('bare reference not local and not in any other skill -> pass (not a cross-skill issue)', () => {
+    const base = setup({
+      'skill-a/SKILL.md': '---\nname: skill-a\n---\nSee `references/missing.md`',
+    });
+    // missing.md doesn't exist anywhere — that's a different check (references-routing), not cross-skill
+    const result = checkCrossSkillRefPaths('skill-a', join(base, 'skill-a'), 'See `references/missing.md`');
+    assert.equal(result.pass, true);
+    teardown();
+  });
+
+  test('no references mentioned -> pass', () => {
+    const result = checkCrossSkillRefPaths('skill-a', '/tmp/nonexistent', 'No refs here.');
+    assert.equal(result.pass, true);
+  });
+
+  test('bare reference not local but exists in another skill -> P1', () => {
+    // Uses the real module-global skillsDir (consistent with other check functions).
+    // routing-signature-guide.md uniquely exists in skill-health-check/references/
+    const fakeSkillDir = mkdtempSync(join(tmpdir(), 'fake-skill-'));
+    const body = 'See `references/routing-signature-guide.md` for details';
+    const result = checkCrossSkillRefPaths('fake-skill', fakeSkillDir, body);
+    assert.equal(result.pass, false, 'should detect non-local reference found in another skill');
+    assert.equal(result.severity, 'P1');
+    assert.ok(result.message.includes('routing-signature-guide.md'));
+    assert.ok(result.message.includes('skill-health-check'));
+    rmSync(fakeSkillDir, { recursive: true });
   });
 });
 

@@ -31,7 +31,7 @@ Run automated lint → Review manual dimensions → Produce integrated report �
 ### Step 1: Automated Lint
 
 ```bash
-bash scripts/run-skill.sh skill-health-check skill-lint.js --fix-hint
+node skills/skill-health-check/scripts/skill-lint.js --fix-hint
 ```
 
 **Script I/O contract:**
@@ -40,13 +40,14 @@ bash scripts/run-skill.sh skill-health-check skill-lint.js --fix-hint
 |-----------|-------------|
 | `--skills-dir <path>` | Skills directory (default: `./skills`) |
 | `--commands-dir <path>` | Commands directory (default: `./commands`) |
+| `--agents-dir <path>` | Agents directory (default: `./agents`) |
 | `--json` | Output JSON instead of markdown |
 | `--fix-hint` | Include fix suggestions |
 | Exit 0 | All pass |
 | Exit 1 | Warnings only (P2) |
 | Exit 2 | Errors found (P0/P1) |
 
-**Automated checks (9 items):**
+**Per-skill checks (12 items):**
 
 | # | Check | Severity | Criteria |
 |---|-------|----------|----------|
@@ -59,14 +60,19 @@ bash scripts/run-skill.sh skill-health-check skill-lint.js --fix-hint
 | 7 | Scripts contract | P2 | Each script filename referenced in SKILL.md body |
 | 8 | Line count | P2 | Warning >150, flag >250 |
 | 9 | Allowed-tools sync | P1 | SKILL.md `allowed-tools` matches command `allowed-tools` (command is authoritative) |
+| 10 | Agent entitlement | P2 | Body describes `Agent()` dispatch but `allowed-tools` lacks Agent |
+| 11 | Task entitlement | P2 | Body describes `Task()` dispatch but `allowed-tools` lacks Task |
+| 12 | Cross-skill ref path | P1 | Bare ref paths not found locally but existing in another skill → must use `@skills/<parent>/` prefix |
 
-**Cross-skill checks (3 items):**
+**Cross-skill checks (5 items):**
 
 | # | Check | Severity | Criteria |
 |---|-------|----------|----------|
-| 10 | Orphan detection | P2 | Commands ↔ Skills pairing |
-| 11 | Description overlap | P2 | Jaccard similarity >60% flagged |
-| 12 | Argument hint | P2 | Command with skill reference has `argument-hint` in frontmatter |
+| 13 | Orphan detection | P2 | Commands ↔ Skills pairing |
+| 14 | Description overlap | P2 | Jaccard similarity >60% flagged |
+| 15 | Argument hint | P2 | Command with skill reference has `argument-hint` in frontmatter |
+| 16 | Agent ref validity | P1 | `subagent_type` references in skills/commands must exist in `agents/` |
+| 17 | Agent tools syntax | P2 | Agent `.md` tools field uses canonical format (ToolName or `Bash(<prefix>:*)`) |
 
 ### Step 2: Manual Review (when comprehensive audit requested)
 
@@ -99,9 +105,9 @@ Only run Step 2 when user explicitly requests deep audit. Default: Step 1 only.
 
 ## Per-Skill Results
 
-| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | Lines | Status |
-|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|
-| name  | ✅/🟡/⚪ | ...    | ...    | ...          | ...  | ✅/⚪/— | ✅/🟡   | N     | ✅/🟡/⚪/🔴 |
+| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | AgEnt | TskEnt | Lines | Status |
+|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|-------|--------|
+| name  | ✅/🟡/⚪ | ...    | ...    | ...          | ...  | ✅/⚪/— | ✅/🟡   | ✅/⚪ | ✅/⚪  | N     | ✅/🟡/⚪/🔴 |
 
 ## P0 (Must Fix)
 - **skill-name**: Issue → Fix recommendation

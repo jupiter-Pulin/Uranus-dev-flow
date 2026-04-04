@@ -284,6 +284,52 @@ function checkTaskEntitlement(body, fm) {
   };
 }
 
+function checkCrossSkillRefPaths(skillName, skillDir, body) {
+  // Same regex as skills-schema.test.js — group 1 captures @skills/<name>/ prefix
+  const refPattern = /`?(@skills\/[^/]+\/)?@?(?:\.\/)?references\/([^`\s)]+\.md)`?/g;
+  const mismatches = [];
+  let match;
+
+  while ((match = refPattern.exec(body)) !== null) {
+    if (match[1]) continue; // Already using cross-skill path — OK
+
+    const refFile = match[2];
+    const localPath = join(skillDir, 'references', refFile);
+    if (existsSync(localPath)) continue; // Exists locally — OK
+
+    // Not local — check if it lives in another skill's references/
+    const parentSkill = findRefInOtherSkills(refFile, skillName);
+    if (parentSkill) {
+      mismatches.push({ refFile, parentSkill });
+    }
+  }
+
+  if (mismatches.length === 0) return { pass: true };
+
+  const details = mismatches
+    .map((m) => `references/${m.refFile} → @skills/${m.parentSkill}/references/${m.refFile}`)
+    .join('; ');
+  return {
+    pass: false,
+    severity: 'P1',
+    message: `Non-local reference(s) need cross-skill path: ${details}`,
+    fix: 'Use @skills/<parent>/references/<file>.md for cross-skill references',
+  };
+}
+
+function findRefInOtherSkills(refFile, excludeSkill) {
+  if (!isDir(skillsDir)) return null;
+  const matches = [];
+  for (const d of readdirSync(skillsDir)) {
+    if (d === excludeSkill) continue;
+    const p = join(skillsDir, d);
+    if (!statSync(p).isDirectory()) continue;
+    if (existsSync(join(p, 'references', refFile))) matches.push(d);
+  }
+  // Ambiguous if 2+ skills share the same filename — not clearly cross-skill
+  return matches.length === 1 ? matches[0] : null;
+}
+
 // ---------------------------------------------------------------------------
 // Skill-level checks
 // ---------------------------------------------------------------------------
@@ -311,6 +357,7 @@ function lintSkill(skillName, skillDir, commandFiles) {
   findings.push({ check: 'allowed-tools-sync', ...checkAllowedToolsSync(skillName, fm, commandFiles) });
   findings.push({ check: 'agent-entitlement', ...checkAgentEntitlement(body, fm) });
   findings.push({ check: 'task-entitlement', ...checkTaskEntitlement(body, fm) });
+  findings.push({ check: 'cross-skill-ref-path', ...checkCrossSkillRefPaths(skillName, skillDir, body) });
 
   return { name: skillName, path: skillPath, fm, body, findings };
 }
@@ -690,6 +737,7 @@ if (require.main === module) {
     bodyAfterFrontmatter,
     checkAgentEntitlement,
     checkTaskEntitlement,
+    checkCrossSkillRefPaths,
     detectInvalidAgentRefs,
     detectAgentToolsSyntax,
   };
