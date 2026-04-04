@@ -230,6 +230,24 @@ Exclude changes outside the scope path. If no changes remain after filtering →
 
 If no changes → report "No uncommitted changes" and stop.
 
+**Session-aware filtering** (default, disable with `--all`):
+
+After collecting changes and applying exclusion/scope rules above, filter by session commit scope:
+
+1. Read `.claude_review_state.json` field `session_commit_scope`
+2. Validate `session_commit_scope.session_id` matches current session
+3. If `--all` flag passed, or scope is unavailable/invalid → skip filtering (legacy behavior)
+4. Otherwise, classify remaining files:
+
+| Condition | Result | Display |
+|-----------|--------|---------|
+| Already staged (passed safety checks) | **Include** | Normal |
+| Unstaged/untracked + in `touched_files` + NOT in `baseline_dirty_files` | **Include** | Normal |
+| Unstaged/untracked + in `touched_files` + in `baseline_dirty_files` | **Include** | ⚠️ Warning badge |
+| Unstaged/untracked + NOT in `touched_files` | **Exclude** | Show in "Excluded" section |
+
+If all unstaged files are excluded and nothing is staged → report "No session changes to commit. Use `--all` to include pre-existing changes." and stop.
+
 ### Step 4: Group (High Cohesion)
 
 Each group should form a semantically complete commit.
@@ -258,6 +276,7 @@ Show grouping plan and ask user to confirm. Include identity, signing, and AI gu
 ```
 ## Commit Plan
 
+**Selection mode**: session-aware (default)
 **Author**: Jane Doe <jane@company.com> (local config)
 **Signing**: enabled (GPG, key: ABCD1234)
 **AI guard**: active (commit-msg hook installed)
@@ -267,6 +286,16 @@ Show grouping plan and ask user to confirm. Include identity, signing, and AI gu
 | 1 | fix  | 3     | Fix circuit breaker logic |
 | 2 | test | 2     | Add RPC client unit tests |
 | 3 | docs | 4     | Update performance audit docs |
+
+### Excluded — pre-existing uncommitted (not touched this session)
+| File | Status | Reason |
+|------|--------|--------|
+| src/legacy.ts | M | Not touched in this session |
+| config/dev.json | M | Not touched in this session |
+
+⚠️ `src/config.ts` was already dirty before this session and was edited during this session. Pre-existing changes will be included.
+
+> To include all uncommitted changes: rerun with `--all`
 
 Adjust grouping?
 ```
@@ -372,8 +401,8 @@ Execute mode: Proceed to next group automatically after successful commit.
 git status --short
 ```
 
-- Still has unhandled changes (committable files) → return to Step 4
-- Only excluded files remain (`.env*`, `*.pem`, etc.) → stop with warning summary listing excluded files
+- Still has unhandled changes (committable files in included set) → return to Step 4
+- Only excluded files remain (sensitive files, or session-excluded pre-existing files) → stop with warning summary listing excluded files
 - All clear → output summary table
 
 After each commit, run **post-commit AI trailer detection** (hard stop on leak): scan `git log -1 --format='%B'` for forbidden patterns. When `--ai-co-author` is active, strip the exact allowed line (`Co-Authored-By: Claude <noreply@anthropic.com>`) before scanning — same logic as `validate_msg()`. If any remaining match → **immediately stop** all remaining groups + output amend guidance. See [execute-mode.md § Post-commit Detection](references/execute-mode.md) for implementation. **Do NOT auto-amend** — amending is a destructive git operation reserved for the developer.
@@ -409,6 +438,7 @@ AI attribution is **off by default**. The developer owns the commit. Only add th
 - **No secrets**: Sensitive files must be warned about, never included
 - **No unauthorized execution**: Without `--execute` flag, **never** directly execute git add/commit
 - **No silent execution**: In `--execute` mode, must use `AskUserQuestion` for approval before executing commits
+- **No silent inclusion of pre-existing changes**: Without `--all`, do not silently include unstaged files that were not touched in this session
 
 ## Bundled References
 

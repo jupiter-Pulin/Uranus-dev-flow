@@ -150,6 +150,25 @@ if (query && query.includes('iteration_history.current_round = 0')) {
   process.exit(0);
 }
 
+// Handle session_commit_scope validity check (D-5)
+if (query && query.includes('session_commit_scope.session_id') && query.includes('baseline_dirty_files')) {
+  const scs = data.session_commit_scope;
+  const valid = scs && scs.session_id === data.session_id && scs.baseline_dirty_files !== null && scs.baseline_dirty_files !== undefined;
+  process.stdout.write(valid ? 'yes' : 'no');
+  process.exit(0);
+}
+
+// Handle session_commit_scope.touched_files append (D-5)
+if (query && query.includes('session_commit_scope.touched_files') && vars.f) {
+  if (!data.session_commit_scope) data.session_commit_scope = {};
+  const files = data.session_commit_scope.touched_files || [];
+  if (!files.includes(vars.f)) files.push(vars.f);
+  files.sort();
+  data.session_commit_scope.touched_files = files;
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 // Handle schema migration: .schema_version = 2 | .iteration_history //= {...}
 if (query && query.includes('schema_version = 2') && query.includes('iteration_history')) {
   data.schema_version = 2;
@@ -786,4 +805,138 @@ test('arbitration: registered in settings.local.json defers', () => {
   });
   assert.equal(result.status, 0, 'should defer via settings.local.json');
   assert.equal(readState(workDir), null, 'should not create state when deferred');
+});
+
+// =============================================================================
+// D-5: Session Commit Scope — touched_files tracking
+// =============================================================================
+
+test('D-5: code edit adds file to session_commit_scope.touched_files', () => {
+  const workDir = makeTempDir('sd0x-format-scope-code-');
+  const binDir = setupStubBin();
+  // Init git repo so _track_session_touched_file can resolve repo root
+  spawnSync('git', ['init', '--initial-branch=main'], { cwd: workDir });
+  // Use realpath to handle macOS /var -> /private/var symlink
+  const resolvedWorkDir = realpathSync(workDir);
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      schema_version: 2,
+      session_id: 'sess-1',
+      session_commit_scope: {
+        session_id: 'sess-1',
+        baseline_dirty_files: [],
+        touched_files: [],
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: `${resolvedWorkDir}/src/app.ts`,
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state.session_commit_scope, 'should have session_commit_scope');
+  assert.ok(
+    state.session_commit_scope.touched_files.includes('src/app.ts'),
+    'should add repo-relative path to touched_files'
+  );
+});
+
+test('D-5: doc edit adds file to session_commit_scope.touched_files', () => {
+  const workDir = makeTempDir('sd0x-format-scope-doc-');
+  const binDir = setupStubBin();
+  spawnSync('git', ['init', '--initial-branch=main'], { cwd: workDir });
+  const resolvedWorkDir = realpathSync(workDir);
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      schema_version: 2,
+      session_id: 'sess-2',
+      session_commit_scope: {
+        session_id: 'sess-2',
+        baseline_dirty_files: [],
+        touched_files: [],
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: `${resolvedWorkDir}/docs/readme.md`,
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(
+    state.session_commit_scope.touched_files.includes('docs/readme.md'),
+    'should track doc file in touched_files'
+  );
+});
+
+test('D-5: non-code/non-doc file (.json) adds to touched_files via catch-all', () => {
+  const workDir = makeTempDir('sd0x-format-scope-json-');
+  const binDir = setupStubBin();
+  spawnSync('git', ['init', '--initial-branch=main'], { cwd: workDir });
+  const resolvedWorkDir = realpathSync(workDir);
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      schema_version: 2,
+      session_id: 'sess-json',
+      session_commit_scope: {
+        session_id: 'sess-json',
+        baseline_dirty_files: [],
+        touched_files: [],
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: `${resolvedWorkDir}/config/settings.json`,
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(
+    state.session_commit_scope.touched_files.includes('config/settings.json'),
+    'should track .json file via catch-all block'
+  );
+});
+
+test('D-5: scope invalid (session_id mismatch) does not track', () => {
+  const workDir = makeTempDir('sd0x-format-scope-mismatch-');
+  const binDir = setupStubBin();
+  spawnSync('git', ['init', '--initial-branch=main'], { cwd: workDir });
+  const resolvedWorkDir = realpathSync(workDir);
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      schema_version: 2,
+      session_id: 'current-sess',
+      session_commit_scope: {
+        session_id: 'old-sess',  // mismatched
+        baseline_dirty_files: [],
+        touched_files: [],
+      },
+    })
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    filePath: `${resolvedWorkDir}/src/app.ts`,
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.deepEqual(
+    state.session_commit_scope.touched_files, [],
+    'should not track when scope session_id mismatches'
+  );
 });

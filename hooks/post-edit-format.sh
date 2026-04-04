@@ -254,11 +254,60 @@ _track_changed_file() {
   return 0
 }
 
+# Track file for session commit scope (D-5)
+# Stores repo-relative paths; never reset on review pass (independent lifecycle).
+_track_session_touched_file() {
+  local file_path="$1"
+  [[ ! -f "$STATE_FILE" ]] && return 0
+
+  # Guard: only append when session_commit_scope is valid
+  local scope_valid
+  scope_valid=$(jq -r '
+    if (.session_commit_scope.session_id == .session_id) and
+       (.session_commit_scope.baseline_dirty_files != null)
+    then "yes" else "no" end
+  ' "$STATE_FILE" 2>/dev/null) || return 0
+  [[ "$scope_valid" != "yes" ]] && return 0
+
+  # Normalize to repo-relative path
+  local rel_path="$file_path"
+  if [[ "$file_path" = /* ]]; then
+    local repo_root
+    repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
+    repo_root="${repo_root%/}/"
+    if [[ "$file_path" = "$repo_root"* ]]; then
+      rel_path="${file_path#"$repo_root"}"
+    else
+      return 0  # Outside repo — ignore
+    fi
+  fi
+
+  local tmp _before_size _after_size
+  _before_size=$(wc -c < "$STATE_FILE" 2>/dev/null || echo 0)
+  tmp=$(mktemp)
+  if jq --arg f "$rel_path" '
+    .session_commit_scope.touched_files = (
+      (.session_commit_scope.touched_files // []) + [$f] | unique
+    )
+  ' "$STATE_FILE" > "$tmp" 2>/dev/null; then
+    _after_size=$(wc -c < "$tmp" 2>/dev/null || echo 0)
+    if [[ "$_after_size" -ge "$_before_size" ]]; then
+      mv "$tmp" "$STATE_FILE"
+    else
+      rm -f "$tmp" 2>/dev/null
+    fi
+  else
+    rm -f "$tmp" 2>/dev/null
+  fi
+  return 0
+}
+
 # Track code changes (all recognized code extensions)
 if echo "$file_path" | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|kts|rb|php|swift|c|cpp|cc|h|hpp|cs|scala|ex|exs)$'; then
   if _lock; then
     update_change_flag "has_code_change"
     _track_changed_file "$file_path" || true
+    _track_session_touched_file "$file_path" || true
     # Set review phase to pending (D-4) — graceful on jq failure
     (
       local _phase_tmp; _phase_tmp=$(mktemp)
@@ -302,6 +351,7 @@ if echo "$file_path" | grep -Eq '\.(md|mdx)$'; then
   if _lock; then
     update_change_flag "has_doc_change"
     _track_changed_file "$file_path"
+    _track_session_touched_file "$file_path" || true
     invalidate_review "doc_review"
     invalidate_aggregate_gate
     # Clear any stale sidecar marker (successful locked write supersedes prior lock-failure markers)
@@ -317,6 +367,12 @@ if echo "$file_path" | grep -Eq '\.(md|mdx)$'; then
     invalidate_aggregate_gate 2>/dev/null || true
     echo "[Edit Hook] Doc change detected (degraded — lock contention, sidecar marker set): $file_path" >&2
   fi
+fi
+
+# Track non-code/non-doc files for session commit scope (D-5)
+# Covers .json, .yml, .sh, .toml, lockfiles etc. that aren't in the code/doc branches above.
+if ! echo "$file_path" | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|kts|rb|php|swift|c|cpp|cc|h|hpp|cs|scala|ex|exs|md|mdx)$'; then
+  _track_session_touched_file "$file_path" || true
 fi
 
 exit 0

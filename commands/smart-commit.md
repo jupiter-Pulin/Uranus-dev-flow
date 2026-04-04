@@ -1,6 +1,6 @@
 ---
 description: Smart batch commit — group changes by cohesion, generate commit messages matching project style, output git commands (or execute directly with --execute)
-argument-hint: [--execute] [--scope <path>] [--type <type>] [--ai-co-author] [--sign] [--no-sign]
+argument-hint: [--execute] [--all] [--scope <path>] [--type <type>] [--ai-co-author] [--sign] [--no-sign]
 allowed-tools: Bash(git:*), Read, Grep, Glob, AskUserQuestion
 ---
 
@@ -31,6 +31,7 @@ Follow the `smart-commit` skill workflow:
 
 Arguments:
 - `--execute`: Execute `git add` + `git commit` directly (overrides manual mode, requires user approval via AskUserQuestion)
+- `--all`: Include all uncommitted changes (disable session-aware filtering)
 - `--scope <path>`: Only include changes under this path
 - `--type <type>`: Force all commits to use this type (feat/fix/docs/etc.)
 - `--ai-co-author`: Add `Co-Authored-By: Claude <noreply@anthropic.com>` trailer to commit messages (off by default)
