@@ -7,7 +7,7 @@
  * Validates all skills against routing, progressive loading, and structural criteria.
  *
  * Usage:
- *   node skill-lint.js [--skills-dir <path>] [--commands-dir <path>] [--agents-dir <path>] [--json] [--fix-hint]
+ *   node skill-lint.js [--skills-dir <path>] [--agents-dir <path>] [--json] [--fix-hint]
  *
  * Exit codes:
  *   0 = all pass
@@ -32,7 +32,6 @@ const fixHint = args.includes('--fix-hint');
 
 const cwd = process.cwd();
 const skillsDir = resolve(argVal('--skills-dir', join(cwd, 'skills')));
-const commandsDir = resolve(argVal('--commands-dir', join(cwd, 'commands')));
 const agentsDir = resolve(argVal('--agents-dir', join(cwd, 'agents')));
 
 // ---------------------------------------------------------------------------
@@ -224,36 +223,7 @@ function checkLineCount(content) {
   return { pass: true };
 }
 
-function checkAllowedToolsSync(skillName, skillFm, commandFiles) {
-  if (!skillFm || !skillFm['allowed-tools']) return { pass: true };
-
-  const stripQuotes = (s) => s.replace(/^["']|["']$/g, '').trim();
-  const skillTools = stripQuotes(skillFm['allowed-tools']);
-
-  for (const cmdFile of commandFiles) {
-    const content = normalizeContent(readFileSync(join(commandsDir, cmdFile), 'utf8'));
-    const cmdName = basename(cmdFile, '.md');
-
-    // Match via @skills/ reference or same-name convention
-    const refMatch = content.match(/@skills\/([^/]+)\//);
-    const boundSkill = refMatch ? refMatch[1] : cmdName;
-    if (boundSkill !== skillName) continue;
-
-    const cmdFm = parseFrontmatter(content);
-    if (!cmdFm || !cmdFm['allowed-tools']) continue;
-
-    const cmdTools = stripQuotes(cmdFm['allowed-tools']);
-    if (skillTools !== cmdTools) {
-      return {
-        pass: false,
-        severity: 'P1',
-        message: `allowed-tools mismatch with command "${cmdName}"`,
-        fix: 'Sync allowed-tools — command file is authoritative',
-      };
-    }
-  }
-  return { pass: true };
-}
+// checkAllowedToolsSync removed (Phase B — skills-only architecture)
 
 function checkAgentEntitlement(body, fm) {
   if (!fm) return { pass: true };
@@ -266,7 +236,7 @@ function checkAgentEntitlement(body, fm) {
     pass: false,
     severity: 'P2',
     message: 'Body describes Agent() dispatch but allowed-tools lacks Agent',
-    fix: 'Add Agent to allowed-tools in both SKILL.md and command.md',
+    fix: 'Add Agent to allowed-tools in SKILL.md',
   };
 }
 
@@ -280,7 +250,7 @@ function checkTaskEntitlement(body, fm) {
     pass: false,
     severity: 'P2',
     message: 'Body describes Task() dispatch but allowed-tools lacks Task',
-    fix: 'Add Task to allowed-tools in both SKILL.md and command.md',
+    fix: 'Add Task to allowed-tools in SKILL.md',
   };
 }
 
@@ -334,7 +304,7 @@ function findRefInOtherSkills(refFile, excludeSkill) {
 // Skill-level checks
 // ---------------------------------------------------------------------------
 
-function lintSkill(skillName, skillDir, commandFiles) {
+function lintSkill(skillName, skillDir) {
   const skillPath = join(skillDir, 'SKILL.md');
   if (!existsSync(skillPath)) {
     return { name: skillName, findings: [{ pass: false, severity: 'P0', message: 'SKILL.md not found' }] };
@@ -354,7 +324,6 @@ function lintSkill(skillName, skillDir, commandFiles) {
   findings.push({ check: 'references-routing', ...checkReferencesRouting(skillDir, body) });
   findings.push({ check: 'scripts-contract', ...checkScriptsContract(skillDir, body) });
   findings.push({ check: 'line-count', ...checkLineCount(content) });
-  findings.push({ check: 'allowed-tools-sync', ...checkAllowedToolsSync(skillName, fm, commandFiles) });
   findings.push({ check: 'agent-entitlement', ...checkAgentEntitlement(body, fm) });
   findings.push({ check: 'task-entitlement', ...checkTaskEntitlement(body, fm) });
   findings.push({ check: 'cross-skill-ref-path', ...checkCrossSkillRefPaths(skillName, skillDir, body) });
@@ -366,60 +335,10 @@ function lintSkill(skillName, skillDir, commandFiles) {
 // Cross-skill checks
 // ---------------------------------------------------------------------------
 
-function detectOrphans(skillNames, commandFiles) {
-  const findings = [];
-
-  // Commands that reference skills (via @skills/ directive or same-name convention)
-  const commandSkillMap = {};
-  for (const cmdFile of commandFiles) {
-    const content = readFileSync(join(commandsDir, cmdFile), 'utf8');
-    const cmdName = basename(cmdFile, '.md');
-    const match = content.match(/@skills\/([^/]+)\//);
-    if (match) {
-      commandSkillMap[cmdName] = match[1];
-    } else if (skillNames.includes(cmdName)) {
-      // Command name matches a skill directory — implicit binding
-      commandSkillMap[cmdName] = cmdName;
-    } else {
-      commandSkillMap[cmdName] = null;
-    }
-  }
-
-  // Orphan commands (no skill reference, excluding known utility-only)
-  const utilityCommands = new Set([
-    'precommit', 'precommit-fast', 'verify', 'simplify',
-    'doc-refactor', 'zh-tw', 'pr-review', 'install-hooks',
-    'install-rules', 'install-scripts', 'update-docs', 'project-brief',
-  ]);
-
-  for (const [cmd, skill] of Object.entries(commandSkillMap)) {
-    if (!skill && !utilityCommands.has(cmd)) {
-      findings.push({
-        check: 'orphan-command',
-        pass: false,
-        severity: 'P2',
-        message: `Command "${cmd}" has no skill reference`,
-      });
-    }
-  }
-
-  // Orphan skills (no command references them)
-  const referencedSkills = new Set(Object.values(commandSkillMap).filter(Boolean));
-  // Domain KB skills that don't need commands
-  const domainKB = new Set(['portfolio', 'request-tracking']);
-
-  for (const skill of skillNames) {
-    if (!referencedSkills.has(skill) && !domainKB.has(skill)) {
-      findings.push({
-        check: 'orphan-skill',
-        pass: false,
-        severity: 'P2',
-        message: `Skill "${skill}" has no command referencing it`,
-      });
-    }
-  }
-
-  return findings;
+function detectOrphans(skillNames) {
+  // Orphan detection simplified (skills-only architecture)
+  // CLAUDE.md coverage check handled by claude-md-coverage.test.js
+  return [];
 }
 
 function detectDescriptionOverlap(skillResults) {
@@ -445,55 +364,16 @@ function detectDescriptionOverlap(skillResults) {
   return findings;
 }
 
-function detectMissingArgumentHints(skillNames, commandFiles) {
-  const findings = [];
-  const argHintStatus = {}; // skillName -> true | false | null
-
-  // Parse all commands to find skill references and argument-hint (array per skill)
-  const commandsBySkill = {};
-  for (const cmdFile of commandFiles) {
-    const content = normalizeContent(readFileSync(join(commandsDir, cmdFile), 'utf8'));
-    const fm = parseFrontmatter(content);
-    const cmdName = basename(cmdFile, '.md');
-    const match = content.match(/@skills\/([^/]+)\//);
-    const referencedSkill = match ? match[1] : null;
-    if (referencedSkill) {
-      if (!commandsBySkill[referencedSkill]) commandsBySkill[referencedSkill] = [];
-      commandsBySkill[referencedSkill].push({
-        cmdName,
-        hasArgHint: !!(fm && fm['argument-hint']),
-      });
-    }
-  }
-
+function detectMissingArgumentHints(skillNames) {
+  // argument-hint check removed (Phase B — skills-only architecture)
+  const argHintStatus = {};
   for (const skillName of skillNames) {
-    const cmds = commandsBySkill[skillName];
-    if (!cmds) {
-      argHintStatus[skillName] = null; // No matching command
-      continue;
-    }
-    const missing = cmds.filter((c) => !c.hasArgHint);
-    if (missing.length === 0) {
-      argHintStatus[skillName] = true;
-    } else {
-      argHintStatus[skillName] = false;
-      for (const cmd of missing) {
-        findings.push({
-          check: 'argument-hint',
-          pass: false,
-          severity: 'P2',
-          skill: skillName,
-          message: `Command "${cmd.cmdName}" lacks \`argument-hint\` — no parameter hints in Claude Code UI`,
-          fix: 'Add `argument-hint: "<usage>"` to command frontmatter',
-        });
-      }
-    }
+    argHintStatus[skillName] = null;
   }
-
-  return { findings, argHintStatus };
+  return { findings: [], argHintStatus };
 }
 
-function detectInvalidAgentRefs(skillResults, commandFiles, _agentsDir) {
+function detectInvalidAgentRefs(skillResults, _agentsDir) {
   if (!isDir(_agentsDir)) return [];
   const knownAgents = new Set(
     readdirSync(_agentsDir).filter((f) => f.endsWith('.md')).map((f) => basename(f, '.md'))
@@ -522,24 +402,6 @@ function detectInvalidAgentRefs(skillResults, commandFiles, _agentsDir) {
     }
   }
 
-  for (const cmdFile of commandFiles) {
-    const content = normalizeContent(readFileSync(join(commandsDir, cmdFile), 'utf8'));
-    const cmdName = basename(cmdFile, '.md');
-    for (const m of content.matchAll(refPattern)) {
-      const name = m[1];
-      if (BUILTINS.has(name) || name.includes(':') || knownAgents.has(name)) continue;
-      const key = `cmd:${cmdName}:${name}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      findings.push({
-        check: 'agent-ref-validity',
-        pass: false,
-        severity: 'P1',
-        message: `subagent_type "${name}" not found in agents/ (command: ${cmdName})`,
-        fix: `Create agents/${name}.md or fix the reference`,
-      });
-    }
-  }
   return findings;
 }
 
@@ -592,18 +454,14 @@ function main() {
     return statSync(p).isDirectory() && existsSync(join(p, 'SKILL.md'));
   });
 
-  const commandFiles = isDir(commandsDir)
-    ? readdirSync(commandsDir).filter((f) => f.endsWith('.md'))
-    : [];
-
   // Per-skill checks
-  const skillResults = skillDirs.map((d) => lintSkill(d, join(skillsDir, d), commandFiles));
+  const skillResults = skillDirs.map((d) => lintSkill(d, join(skillsDir, d)));
 
   // Cross-skill checks
-  const orphanFindings = detectOrphans(skillDirs, commandFiles);
+  const orphanFindings = detectOrphans(skillDirs);
   const overlapFindings = detectDescriptionOverlap(skillResults);
-  const { findings: argHintFindings, argHintStatus } = detectMissingArgumentHints(skillDirs, commandFiles);
-  const agentRefFindings = detectInvalidAgentRefs(skillResults, commandFiles, agentsDir);
+  const { findings: argHintFindings, argHintStatus } = detectMissingArgumentHints(skillDirs);
+  const agentRefFindings = detectInvalidAgentRefs(skillResults, agentsDir);
   const agentToolsSyntaxFindings = detectAgentToolsSyntax(agentsDir);
 
   // Aggregate
@@ -644,7 +502,6 @@ function main() {
       overallPass,
       stats: {
         skills: skillDirs.length,
-        commands: commandFiles.length,
         checks: passCount + allFindings.length,
         pass: passCount,
         warnings: warnCount,
@@ -664,7 +521,6 @@ function main() {
   console.log(`| Metric | Value |`);
   console.log(`|--------|-------|`);
   console.log(`| Skills scanned | ${skillDirs.length} |`);
-  console.log(`| Commands scanned | ${commandFiles.length} |`);
   console.log(`| Checks passed | ${passCount} |`);
   console.log(`| P0 (Must Fix) | ${p0Count} |`);
   console.log(`| P1 (Should Fix) | ${p1Count} |`);
@@ -673,8 +529,8 @@ function main() {
 
   // Per-skill summary
   console.log('## Per-Skill Results\n');
-  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | ArgHint | AT-Sync | AgEnt | TskEnt | Lines | Status |');
-  console.log('|-------|---------|----------|--------|--------------|------|---------|---------|-------|--------|-------|--------|');
+  console.log('| Skill | Routing | When-NOT | Output | Verification | Refs | AgEnt | TskEnt | Lines | Status |');
+  console.log('|-------|---------|----------|--------|--------------|------|-------|--------|-------|--------|');
   for (const result of skillResults) {
     const get = (check) => {
       const f = result.findings.find((x) => x.check === check);
@@ -683,12 +539,9 @@ function main() {
     };
     const lines = existsSync(result.path) ? countLines(readFileSync(result.path, 'utf8')) : 0;
     const issues = result.findings.filter((f) => !f.pass);
-    const hasArgHintIssue = argHintStatus[result.name] === false;
-    const status = (issues.length === 0 && !hasArgHintIssue) ? '✅' : issues.some((f) => f.severity === 'P0') ? '🔴' : issues.some((f) => f.severity === 'P1') ? '🟡' : '⚪';
-    const argHint = argHintStatus[result.name] === true ? '✅' : argHintStatus[result.name] === false ? '⚪' : '—';
-    const atSync = get('allowed-tools-sync');
+    const status = issues.length === 0 ? '✅' : issues.some((f) => f.severity === 'P0') ? '🔴' : issues.some((f) => f.severity === 'P1') ? '🟡' : '⚪';
     console.log(
-      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${argHint} | ${atSync} | ${get('agent-entitlement')} | ${get('task-entitlement')} | ${lines} | ${status} |`
+      `| ${result.name} | ${get('routing-signature')} | ${get('when-not')} | ${get('output')} | ${get('verification')} | ${get('references-routing')} | ${get('agent-entitlement')} | ${get('task-entitlement')} | ${lines} | ${status} |`
     );
   }
   console.log();

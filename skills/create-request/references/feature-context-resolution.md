@@ -7,9 +7,9 @@ Shared algorithm for resolving "current feature" across document lifecycle skill
 
 ## Resolution Cascade
 
-Two layers work together: the **behavior layer** (command `.md` files handle `$ARGUMENTS`) and the **code layer** (`feature-resolver.js` handles programmatic detection).
+Two layers work together: the **behavior layer** (skill `SKILL.md` files handle `$ARGUMENTS`) and the **code layer** (`feature-resolver.js` handles programmatic detection).
 
-### Behavior Layer (command `.md` responsibility)
+### Behavior Layer (skill SKILL.md responsibility)
 
 | Priority | Signal | Handling |
 |----------|--------|----------|
@@ -22,7 +22,7 @@ Two layers work together: the **behavior layer** (command `.md` files handle `$A
 |-------|--------|-----------|------------|
 | 1 | `--feature <key>` | Explicit key parameter | high |
 | 2 | Branch name | `git branch --show-current` matches `feat/<key>` | high |
-| 3 | Changed paths | `git diff --name-only HEAD` matches `docs/features/<key>/`, `skills/<key>/`, or `commands/<key>.md` | medium |
+| 3 | Changed paths | `git diff --name-only HEAD` matches `docs/features/<key>/` or `skills/<key>/` | medium |
 | 4 | Single feature dir | `ls docs/features/` has exactly 1 directory | low |
 | - | Not found | None of the above | null — Gate: Need Human |
 

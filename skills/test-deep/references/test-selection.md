@@ -22,8 +22,7 @@ Collect all matching candidates (deduplicate by path):
 | `src/<path>/<name>.ts` | `test/e2e/<path>/<name>.e2e.test.ts` |
 | `lib/<name>.js` | `test/<name>.test.js`, `test/scripts/lib/<name>.test.js` |
 | `scripts/<name>.sh` | `test/scripts/<name>.test.js` |
-| `skills/<name>/**` | `test/commands/<name>.test.js` |
-| `commands/<name>.md` | `test/commands/<name>.test.js` |
+| `skills/<name>/**` | `test/skills/<name>.test.js` |
 
 **Glob expansion**: For each candidate pattern, run `Glob` to confirm file exists. Only confirmed files enter the test set.
 

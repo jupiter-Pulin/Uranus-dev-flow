@@ -82,9 +82,9 @@ function resolveFeatureContext(root, branch, changedPaths, options) {
     return { key, source: 'diff', confidence: 'medium', docs_path: `docs/features/${key}`, doc_inventory: [], canonical_docs: emptyCanonical, has_tech_spec: false, has_requirements: false, has_requests: false };
   }
 
-  // Level 3b: changed paths under skills/<key>/ or commands/<key>.md
+  // Level 3b: changed paths under skills/<key>/
   const skillPathMatch = changedPaths
-    .map(p => p.match(/^(?:skills|commands)\/([^/.]+)/))
+    .map(p => p.match(/^skills\/([^/.]+)/))
     .find(m => m);
   if (skillPathMatch && SLUG_RE.test(skillPathMatch[1])) {
     const key = skillPathMatch[1];

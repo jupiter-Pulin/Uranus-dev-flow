@@ -169,16 +169,6 @@ test('Level 3b changed skills/<key>/ path resolves when feature dir exists', () 
   assert.equal(result.confidence, 'medium');
 });
 
-test('Level 3b changed commands/<key>.md path resolves when feature dir exists', () => {
-  const root = createTempRoot();
-  setupFeatureDir(root, 'smart-commit', { techSpec: true });
-
-  const result = resolveFeatureContext(root, 'main', ['commands/smart-commit.md']);
-  assert.equal(result.key, 'smart-commit');
-  assert.equal(result.source, 'diff');
-  assert.equal(result.confidence, 'medium');
-});
-
 test('Level 3b skills path does not match when no feature dir exists', () => {
   const root = createTempRoot();
   mkdirSync(join(root, 'docs', 'features'), { recursive: true });

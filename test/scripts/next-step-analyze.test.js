@@ -160,16 +160,15 @@ test('auth file touched — P1 security-hotspot', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 5: New command, no README
+// Test 5: New skill, no README
 // ---------------------------------------------------------------------------
-test('new command added, no README — P2 readme-missing', () => {
+test('new skill added, no README — P2 readme-missing', () => {
   const dir = createTempRepo();
-  mkdirSync(join(dir, 'commands'), { recursive: true });
-  addAndCommitFile(dir, 'commands/existing.md', '# existing');
-  // Add a new command file (uncommitted change via diff HEAD)
-  writeFileSync(join(dir, 'commands/new-cmd.md'), '# new');
-  // Stage + commit so it shows in diff HEAD~1..HEAD style
-  // Actually, git diff HEAD shows unstaged changes, so just write it
+  mkdirSync(join(dir, 'skills', 'existing-skill'), { recursive: true });
+  addAndCommitFile(dir, 'skills/existing-skill/SKILL.md', '# existing');
+  // Add a new skill file (uncommitted change via diff HEAD)
+  mkdirSync(join(dir, 'skills', 'new-skill'), { recursive: true });
+  writeFileSync(join(dir, 'skills/new-skill/SKILL.md'), '# new');
   writeReviewState(dir);
 
   const { output } = runAnalyze(dir);
@@ -218,13 +217,13 @@ test('max findings cap — suppressed count correct', () => {
   const dir = createTempRepo();
   // Create conditions for many findings
   mkdirSync(join(dir, 'src'), { recursive: true });
-  mkdirSync(join(dir, 'commands'), { recursive: true });
   mkdirSync(join(dir, 'skills', 'test-skill'), { recursive: true });
+  mkdirSync(join(dir, 'skills', 'new-skill'), { recursive: true });
   addAndCommitFile(dir, 'src/auth.ts', 'a');
   addAndCommitFile(dir, 'src/token.ts', 'b');
   addAndCommitFile(dir, 'src/password.ts', 'c');
-  addAndCommitFile(dir, 'commands/a.md', 'x');
   addAndCommitFile(dir, 'skills/test-skill/SKILL.md', 'y');
+  addAndCommitFile(dir, 'skills/new-skill/SKILL.md', 'x');
   addAndCommitFile(dir, 'README.md', 'r1');
   addAndCommitFile(dir, 'README.zh-TW.md', 'r2');
   addAndCommitFile(dir, 'migration/001.sql', 'z');
@@ -232,8 +231,8 @@ test('max findings cap — suppressed count correct', () => {
   writeFileSync(join(dir, 'src/auth.ts'), 'a2');
   writeFileSync(join(dir, 'src/token.ts'), 'b2');
   writeFileSync(join(dir, 'src/password.ts'), 'c2');
-  writeFileSync(join(dir, 'commands/a.md'), 'x2');
   writeFileSync(join(dir, 'skills/test-skill/SKILL.md'), 'y2');
+  writeFileSync(join(dir, 'skills/new-skill/SKILL.md'), 'x2');
   writeFileSync(join(dir, 'README.md'), 'r1b');
   writeFileSync(join(dir, 'migration/001.sql'), 'z2');
   writeReviewState(dir, {

@@ -9,7 +9,6 @@
 ├── settings.local.json     # Personal config (git-ignored)
 ├── README.md               # Workflow documentation
 ├── agents/                 # Subagent role definitions
-├── commands/               # Slash command entry points
 ├── rules/                  # Auto-loaded rules
 ├── skills/                 # On-demand knowledge bases
 │   └── {name}/
@@ -39,27 +38,26 @@ cache/
 | Item | Convention | Example |
 |------|------------|---------|
 | Skill directory | kebab-case | `code-explore/` |
-| Command file | kebab-case.md | `codex-review-fast.md` |
+| Skill file | SKILL.md + references/ | `skills/codex-review-fast/SKILL.md` |
 | Rule file | kebab-case.md | `auto-loop.md` |
 | Reference dir | `references/` (plural) | `skills/x/references/` |
 | Script file | kebab-case.js/sh | `verify-runner.js` |
 
-## Command-Skill Pairing Rules
+## Skill Entry Point Rules
 
-| Skill Type | Needs Command? | Notes |
-|------------|----------------|-------|
-| Workflow skill | ✅ Required | `feature-dev`, `bug-fix`, etc. |
-| Review skill | ✅ Required | `codex-code-review`, etc. |
-| Domain KB | ❌ Not needed | `portfolio`, `aum` — referenced by other skills |
-| External | ❌ Not needed | `agent-browser` — not maintained here |
-| Tool skill | ✅ Recommended | `git-worktree`, `skill-creator` (external), etc. |
+| Skill Type | Structure | Notes |
+|------------|-----------|-------|
+| Workflow skill | `skills/<name>/SKILL.md` | `feature-dev`, `bug-fix`, etc. |
+| Review skill | `skills/<name>/SKILL.md` | `codex-code-review`, etc. |
+| Domain KB | `skills/<name>/SKILL.md` | `portfolio`, `aum` — referenced by other skills |
+| External | N/A | `agent-browser` — not maintained here |
+| Tool skill | `skills/<name>/SKILL.md` | `git-worktree`, `skill-creator` (external), etc. |
 
 ## Governance Limits
 
 | Metric | Suggested Limit | When Exceeded |
 |--------|-----------------|---------------|
-| Commands | 50 | Consider grouping or merging similar |
-| Skills | 30 | Check for overlap |
+| Skills | 50 | Consider grouping or merging similar |
 | Agents | 20 | Ensure each has distinct role |
 | Rules | 15 | Merge related rules |
 | Cache | 50MB | Clean old cache |

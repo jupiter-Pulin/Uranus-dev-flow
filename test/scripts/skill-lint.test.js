@@ -176,7 +176,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'test-skill',
       body: 'Use Agent({ subagent_type: "strict-reviewer", prompt: "review" })',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 
@@ -185,7 +185,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'deep-explore',
       body: 'Agent({ subagent_type: "Explore", prompt: "search" })',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 
@@ -194,7 +194,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'fallback-skill',
       body: 'subagent_type: "general-purpose"',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 
@@ -203,7 +203,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'review-skill',
       body: 'subagent_type: "pr-review-toolkit:code-reviewer"',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 
@@ -212,7 +212,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'broken-skill',
       body: 'Agent({ subagent_type: "nonexistent-agent-xyz", prompt: "help" })',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 1);
     assert.equal(findings[0].severity, 'P1');
     assert.ok(findings[0].message.includes('nonexistent-agent-xyz'));
@@ -223,7 +223,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'multi-ref',
       body: 'subagent_type: "Explore"\nsubagent_type: "missing-bot"',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 1);
     assert.ok(findings[0].message.includes('missing-bot'));
   });
@@ -233,7 +233,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'table-skill',
       body: '| subagent_type: strict-reviewer | used in table |',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 
@@ -242,7 +242,7 @@ describe('detectInvalidAgentRefs', () => {
       name: 'simple-skill',
       body: 'This skill uses no agents at all.',
     }];
-    const findings = detectInvalidAgentRefs(skillResults, [], realAgentsDir);
+    const findings = detectInvalidAgentRefs(skillResults, realAgentsDir);
     assert.equal(findings.length, 0);
   });
 });

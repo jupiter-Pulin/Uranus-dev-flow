@@ -212,7 +212,7 @@ Find the plugin's `rules/` directory using this priority (short-circuit on first
 
 > **Note**: `/project-setup` uses fresh-install semantics (install new / skip identical / warn on conflict; no smart merge).
 > For smart merge (section merge, legacy migration, `--legacy-strategy`), run `/install-rules` directly.
-> After rule installation, `/install-rules` automatically creates `auto-loop-project.md` (user-owned override template) if it doesn't exist. See `commands/install-rules.md` Phase 3.6.
+> After rule installation, `/install-rules` automatically creates `auto-loop-project.md` (user-owned override template) if it doesn't exist. See `skills/install-rules/SKILL.md`.
 
 ### 5.3 Backfill CLAUDE.md (Closed-Loop Guarantee)
 

@@ -14,7 +14,7 @@ npm run test:unit
 # Integration tests only
 npm run test:integration
 
-# Command schema validation
+# Skill schema validation
 npm run test:schema
 ```
 
@@ -23,8 +23,7 @@ npm run test:schema
 ```
 scripts/          # Runner scripts (JS + Bash)
   lib/utils.js    # Shared utilities
-commands/         # Slash commands (Markdown + YAML frontmatter)
-skills/           # Workflow definitions
+skills/           # Slash commands + workflow definitions (SKILL.md + YAML frontmatter)
 agents/           # Specialized sub-agents
 hooks/            # Git/review hooks
 rules/            # Always-on rules

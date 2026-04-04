@@ -48,7 +48,6 @@
 
 #### {skill-name}
 - `skills/{name}/SKILL.md` — {confidence}
-- `commands/{name}.md` — {confidence}
 - `skills/{name}/references/` — {N files}
 
 **Routing Signature**: {generated}
@@ -58,7 +57,7 @@
 - [ ] Review each SKILL.md for accuracy
 - [ ] Add entries to CLAUDE.md command table
 - [ ] Run `/skill-health-check` for full validation
-- [ ] Write tests in `test/commands/{skill}.test.js`
+- [ ] Write tests in `test/skills/{skill}.test.js`
 - [ ] Test invocation: `/{skill-name} <test-input>`
 ```
 

@@ -11,17 +11,16 @@
 
 | Pattern | Location | Regex | Example |
 |---------|----------|-------|---------|
-| Command → Skill binding | `commands/*.md` | `@skills/<name>/` | `@skills/create-skill/SKILL.md` |
 | Agent skills field | `agents/*.md` | `^skills:\s*.*<name>` (YAML frontmatter) | `skills: create-skill` |
 | Hook command path | `hooks/hooks.json` | `"command":\s*".*<name>.*"` | `"command": "scripts/create-skill.sh"` |
-| Allowed-tools binding | `commands/*.md`, `skills/*/SKILL.md` | `allowed-tools:.*<name>` (only if tool-specific) | Rare; usually generic tool names |
+| Allowed-tools binding | `skills/*/SKILL.md` | `allowed-tools:.*<name>` (only if tool-specific) | Rare; usually generic tool names |
 
 ## PATCHABLE Patterns
 
 | Pattern | Location | Patch Strategy |
 |---------|----------|---------------|
-| Command table row | `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.template.md` | Remove entire row |
-| README command row | `README.md` + 5 locale variants | Remove row + decrement count in summary line |
+| Skill table row | `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.template.md` | Remove entire row |
+| README skill row | `README.md` + 5 locale variants | Remove row + decrement count in summary line |
 | Prose mention | `rules/*.md`, `skills/*/SKILL.md` | Remove or reword the mention |
 | "When NOT to Use" | Other `skills/*/SKILL.md` | Remove the line referencing the target |
 | Archived docs | `docs/features/*/requests/archived/*` | Skip (preserve history) |
@@ -32,7 +31,6 @@
 
 | Check | Command | Classification |
 |-------|---------|---------------|
-| Command binding | `grep -rn "@skills/<name>/" commands/ --include="*.md"` | BLOCKER |
 | Agent preload | `grep -rn "^skills:.*<name>" agents/ --include="*.md"` | BLOCKER |
 | CLAUDE.md table | `grep -n "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md` | PATCHABLE |
 | README tables | `grep -n "/<name>" README*.md` | PATCHABLE |
@@ -41,25 +39,14 @@
 | Hook refs | `grep -n "<name>" hooks/hooks.json` | BLOCKER (if command path) |
 | Test files | `grep -rn "<name>" test/ --include="*.test.js"` | PATCHABLE |
 
-**Files to delete**: `skills/<name>/` (entire directory) + `commands/<name>.md` (if exists) + `test/commands/<name>.test.js` (if exists) + `test/skills/<name>*.test.js` (if exists)
-
-### command
-
-| Check | Command | Classification |
-|-------|---------|---------------|
-| CLAUDE.md table | `grep -n "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md` | PATCHABLE |
-| README tables | `grep -n "/<name>" README*.md` | PATCHABLE |
-| Skill references | `grep -rn "/<name>" skills/ --include="*.md"` | PATCHABLE |
-| Test files | `grep -rn "<name>" test/commands/ --include="*.test.js"` | PATCHABLE |
-
-**Files to delete**: `commands/<name>.md` + `test/commands/<name>.test.js` (if exists)
+**Files to delete**: `skills/<name>/` (entire directory) + `test/skills/<name>*.test.js` (if exists)
 
 ### agent
 
 | Check | Command | Classification |
 |-------|---------|---------------|
 | Skill invocation | `grep -rn "strict-reviewer\|<name>" skills/ --include="*.md"` | PATCHABLE (usually) |
-| Task tool usage | `grep -rn "subagent_type.*<name>" skills/ commands/ --include="*.md"` | BLOCKER |
+| Task tool usage | `grep -rn "subagent_type.*<name>" skills/ --include="*.md"` | BLOCKER |
 
 **Files to delete**: `agents/<name>.md`, `.claude/agents/<name>.md` (if separate copy)
 
@@ -77,8 +64,7 @@
 | Check | Command | Classification |
 |-------|---------|---------------|
 | Hook command path | `grep -n "<name>" hooks/hooks.json` | BLOCKER |
-| Skill script ref | `grep -rn "scripts/<name>" skills/ commands/ --include="*.md"` | BLOCKER |
-| run-skill.sh usage | `grep -rn "run-skill.sh.*<name>" commands/ --include="*.md"` | BLOCKER |
+| Skill script ref | `grep -rn "scripts/<name>" skills/ --include="*.md"` | BLOCKER |
 | Test files | `grep -rn "<name>" test/scripts/ --include="*.test.js"` | PATCHABLE |
 
 **Files to delete**: `scripts/<name>.*` + `test/scripts/<name>.test.js` (if exists)
@@ -89,7 +75,7 @@
 |-------|---------|---------------|
 | hooks.json entry | Read `hooks/hooks.json`, find entry | Direct removal from JSON |
 | .claude/ mirror | Check `.claude/hooks/` or `.claude/settings.json` | PATCHABLE |
-| Install-hooks ref | `grep -rn "<name>" commands/install-hooks.md skills/*/SKILL.md` | PATCHABLE |
+| Install-hooks ref | `grep -rn "<name>" skills/*/SKILL.md` | PATCHABLE |
 | Test files | `grep -rn "<name>" test/hooks/ --include="*.test.js"` | PATCHABLE |
 
 **Files to delete**: Hook script file + JSON entry + `test/hooks/<name>.test.js` (if exists)
@@ -98,9 +84,8 @@
 
 | Asset Type | Verification Commands |
 |------------|----------------------|
-| skill | `grep -rn "@skills/<name>/" . --include="*.md"` + `grep -rn "skills:.*<name>" agents/` + `grep -rn "/<name>" CLAUDE.md README*.md` |
-| command | `grep -rn "/<name>" CLAUDE.md README*.md commands/` |
-| agent | `grep -rn "<name>" skills/ commands/ --include="*.md"` + check `.claude/agents/` |
+| skill | `grep -rn "skills:.*<name>" agents/` + `grep -rn "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md README*.md skills/ --include="*.md"` |
+| agent | `grep -rn "<name>" skills/ --include="*.md"` + check `.claude/agents/` |
 | rule | `grep -rn "@rules/<name>" . --include="*.md"` |
 | script | `grep -rn "scripts/<name>" . --include="*.md"` + `grep -n "<name>" hooks/hooks.json` |
 | hook | `grep -rn "<name>" hooks/ .claude/` |

@@ -122,7 +122,7 @@ Legacy session files (without `OP_AUTH_MODE`) are auto-detected as token mode if
 
 | Limitation | Cause | Workaround |
 |-----------|-------|------------|
-| `ls` on home-dir paths blocked in `!` context checks | Claude Code sandbox may restrict `ls`/`find` to working directory in command template expansion | Use `test -f` via `bash -c` wrapper; see `commands/op-session.md` |
+| `ls` on home-dir paths blocked in `!` context checks | Claude Code sandbox may restrict `ls`/`find` to working directory in command template expansion | Use `test -f` via `bash -c` wrapper; see `skills/op-session/SKILL.md` |
 | `allowed-tools` cannot be narrowed to specific script paths | `${CLAUDE_PLUGIN_ROOT}` unavailable in command markdown ([#9354](https://github.com/anthropics/claude-code/issues/9354)) | Keep `Bash(bash:*)` until upstream fix |
 | Context check is best-effort UI | Sandbox policy may tighten | Authoritative status via `bash skills/op-session/scripts/op-session-init.sh --check` |
 | App mode fails when desktop app is locked | CLI cannot IPC with locked app | Unlock 1Password app, or run `/op-session` to reinitialize |

@@ -458,16 +458,16 @@ function runHeuristics(inputs, files, gates, root, featureCtx) {
     });
   }
 
-  // 8. readme-missing: new command added, README not updated (profile-gated)
-  if (dirExists('commands')) {
-    const newCommands = files.filter(f => f.file.startsWith('commands/') && f.file.endsWith('.md') && f.status === 'A');
+  // 8. readme-missing: new skill added, README not updated (profile-gated)
+  if (dirExists('skills')) {
+    const newSkills = files.filter(f => /^skills\/[^/]+\/SKILL\.md$/.test(f.file) && f.status === 'A');
     const readmeChanged = changedPaths.some(p => /^README(\..+)?\.md$/.test(p));
-    if (newCommands.length > 0 && !readmeChanged) {
+    if (newSkills.length > 0 && !readmeChanged) {
       findings.push({
         id: 'readme-missing',
         priority: 'P2',
-        message: `New command(s) added (${newCommands.map(f => f.file).join(', ')}) but README not updated`,
-        suggestion: 'Run /update-docs to sync README with new commands',
+        message: `New skill(s) added (${newSkills.map(f => f.file).join(', ')}) but README not updated`,
+        suggestion: 'Run /update-docs to sync README with new skills',
       });
     }
   }

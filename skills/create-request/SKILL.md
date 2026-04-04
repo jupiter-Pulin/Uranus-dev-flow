@@ -64,7 +64,7 @@ Assess whether the request should be split into multiple focused tickets. This r
 | Signal | Detection | Weight |
 |--------|-----------|--------|
 | **AC count > 8** | Count `- [ ]` items. Exclude quality-gate ACs matching: `/codex-review-fast`, `/codex-review-doc`, `/codex-review`, `/precommit`, `/precommit-fast`, `/pr-review` | Primary |
-| **Layer mixing** | **1.5a**: keyword scan for `rules/`, `hooks/`, `scripts/` in requirements text. **1.5b**: classify Related Files into behavior-layer (`.md` rules/skills/commands) vs code-layer (`.sh`/`.js` hooks/scripts) | Primary |
+| **Layer mixing** | **1.5a**: keyword scan for `rules/`, `hooks/`, `scripts/` in requirements text. **1.5b**: classify Related Files into behavior-layer (`.md` rules/skills) vs code-layer (`.sh`/`.js` hooks/scripts) | Primary |
 | **Scope breadth** | Requirements has 3+ functionally independent areas | Primary |
 | **WBS groups ≥ 2** | Tech spec has `Work Breakdown` heading with 2+ independent task groups (secondary, high-confidence only) | Secondary (×0.5) |
 | **Effort > 3 days** | Tech spec WBS has multiple M/L items | Secondary (×0.5) |
@@ -315,7 +315,7 @@ For each incomplete request doc, extract the feature name from path and search f
 # Parse "## Related Files" table → extract file paths → git log per path
 
 # Priority 2: Feature slug heuristic (fallback)
-git log --oneline --all -- skills/<feature>/ commands/<feature>.md | head -5
+git log --oneline --all -- skills/<feature>/ | head -5
 ```
 
 **Exclude docs-only commits**: Filter out commits that only touch `docs/` paths — these are doc-sync commits, not implementation evidence. A valid evidence commit must touch at least one non-docs file.

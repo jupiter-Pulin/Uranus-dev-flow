@@ -1,6 +1,6 @@
 ---
 name: safe-remove
-description: "Safely remove plugin assets (skill/command/agent/rule/script/hook) with dependency detection and reference cleanup. Use when: user says 'remove skill', 'delete command', 'deprecate', 'clean up unused', or /safe-remove. Not for: code refactoring (use /simplify), feature removal requiring architecture changes (manual)."
+description: "Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. Use when: user says 'remove skill', 'delete skill', 'deprecate', 'clean up unused', or /safe-remove. Not for: code refactoring (use /simplify), feature removal requiring architecture changes (manual)."
 disable-model-invocation: true
 allowed-tools: Bash(bash:*), Bash(git:*), Read, Grep, Glob, Edit, Write, AskUserQuestion
 ---
@@ -15,7 +15,7 @@ Safely remove plugin assets by discovering dependencies, classifying impact, and
 
 | Argument | Description | Default |
 |----------|-------------|---------|
-| `<type>` | Asset type: `skill`, `command`, `agent`, `rule`, `script`, `hook` | Required |
+| `<type>` | Asset type: `skill`, `agent`, `rule`, `script`, `hook` | Required |
 | `<name>` | Asset name (e.g., `create-skill`, `strict-reviewer`) | Required |
 | `--execute` | Apply removal (with AskUserQuestion confirmation) | off |
 | `--dry-run` | Output plan only (default behavior) | on |
@@ -51,8 +51,7 @@ Validate `<type>` and locate canonical files for the asset.
 
 | Type | Primary Files | Secondary Files |
 |------|--------------|-----------------|
-| `skill` | `skills/<name>/` (entire directory) | `commands/<name>.md` (if exists) |
-| `command` | `commands/<name>.md` | — |
+| `skill` | `skills/<name>/` (entire directory) | — |
 | `agent` | `agents/<name>.md` | — |
 | `rule` | `rules/<name>.md` | `.claude/rules/<name>.md` (mirror) |
 | `script` | `scripts/<name>.*` | — |
@@ -66,7 +65,6 @@ Scan the entire codebase for references to the target. Use type-specific pattern
 
 ```bash
 # Core scan — find all references
-grep -rn "@skills/<name>/" commands/ --include="*.md"
 grep -rn "^skills:.*<name>" agents/ --include="*.md"
 grep -rn "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md
 grep -rn "/<name>" README*.md
@@ -95,8 +93,7 @@ Execution order (patches first, deletes last):
    - Remove/update entries in README.md + locale variants (count + detail row)
    - Update prose mentions in other skills/rules
 2. **Delete** target files:
-   - For `skill` type: remove entire `skills/<name>/` directory + `commands/<name>.md` + `test/commands/<name>.test.js` + `test/skills/<name>*.test.js`
-   - For `command` type: remove `commands/<name>.md` + `test/commands/<name>.test.js`
+   - For `skill` type: remove entire `skills/<name>/` directory + `test/skills/<name>*.test.js`
    - For `script` type: remove `scripts/<name>.*` + `test/scripts/<name>.test.js`
    - For `hook` type: remove hook script + JSON entry + `test/hooks/<name>.test.js`
    - For other types: remove primary + secondary files per Phase 1 table
@@ -110,9 +107,8 @@ Run type-specific verification from `references/removal-policy.md`:
 
 ```bash
 # Verify no residual references (excluding archived docs)
-grep -rn "@skills/<name>/" . --include="*.md" | grep -v "archived/"
 grep -rn "^skills:.*<name>" agents/ --include="*.md"
-grep -rn "/<name>" CLAUDE.md README*.md | grep -v "archived/"
+grep -rn "/<name>" CLAUDE.md .claude/CLAUDE.md CLAUDE.template.md README*.md skills/ --include="*.md" | grep -v "archived/"
 ```
 
 If residual references found, report them. If clean, output `Verification passed`.
@@ -128,14 +124,12 @@ If residual references found, report them. If clean, output `Verification passed
 | File | Status |
 |------|--------|
 | skills/<name>/SKILL.md | DELETE |
-| commands/<name>.md | DELETE |
-| test/commands/<name>.test.js | DELETE (if exists) |
 | test/skills/<name>*.test.js | DELETE (if exists) |
 
 ### BLOCKER References (must resolve first)
 | File:Line | Pattern | Why |
 |-----------|---------|-----|
-| commands/foo.md:9 | @skills/<name>/SKILL.md | Command binding |
+| agents/foo.md:3 | skills: <name> | Agent skills field |
 
 ### PATCHABLE References (auto-fix)
 | File:Line | Current | Patch |
@@ -166,14 +160,11 @@ If residual references found, report them. If clean, output `Verification passed
 
 ```
 /safe-remove skill create-skill
-→ Dry-run plan showing 5 files to delete (skill dir + command + tests) + 12 PATCHABLE references
+→ Dry-run plan showing skill dir + tests to delete + 12 PATCHABLE references
 
 /safe-remove skill create-skill --execute
-→ AskUserQuestion → patch 12 refs → delete 5 files (incl. test/commands + test/skills) → verify clean
+→ AskUserQuestion → patch 12 refs → delete skill dir + test/skills → verify clean
 
 /safe-remove agent unused-agent
 → Dry-run: 1 file to delete, check for BLOCKER in agents skills: field
-
-/safe-remove command old-command --execute
-→ Quick removal: 2 files (command + test) + CLAUDE.md row + README rows
 ```

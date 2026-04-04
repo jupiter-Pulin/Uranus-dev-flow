@@ -37,7 +37,7 @@ Full spec: @rules/auto-loop.md
 | Change Type | Required Tests | File Mapping |
 |-------------|---------------|--------------|
 | New script/skill | `test/` required | `scripts/xxx.sh` -> `test/scripts/xxx.test.js` |
-| Modify existing logic | Existing pass + new logic | `commands/*.md` -> `test/commands/*.test.js` |
+| Modify existing logic | Existing pass + new logic | `skills/<name>/SKILL.md` -> `test/skills/<name>.test.js` |
 | Bug fix | Regression test | - |
 
 Coverage: happy path + error handling + edge cases (null, empty, extremes)

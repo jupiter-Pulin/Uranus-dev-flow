@@ -173,12 +173,12 @@ Decision logic:
 
 ### Step 2: Pre-flight Check
 
-Check precommit status based on change type. Structural `.md` files (`skills/`, `commands/`) have test coverage (e.g., `skills-schema.test.js`) that can catch reference errors CI would find.
+Check precommit status based on change type. Structural `.md` files (`skills/`) have test coverage (e.g., `skills-schema.test.js`) that can catch reference errors CI would find.
 
 | Change Type | Required Check | Rationale |
 |-------------|---------------|-----------|
 | Code files (`.ts/.js/.py/.go/.rs` etc.) | `/precommit` or `/precommit-fast` passed | Code correctness + lint |
-| Structural `.md` (`skills/**`, `commands/**`) | `/precommit-fast` passed | Schema/ref tests cover SKILL.md structure |
+| Structural `.md` (`skills/**`) | `/precommit-fast` passed | Schema/ref tests cover SKILL.md structure |
 | Other `.md` (README, docs/) | `/codex-review-doc` passed (per CLAUDE.md) | No structural tests; doc review sufficient |
 | Comments / trivial whitespace | Skip allowed | No test coverage expected |
 
@@ -189,9 +189,9 @@ Check precommit status based on change type. Structural `.md` files (`skills/`, 
 
 **Freshness**: A "passed" result is only valid if it ran after the most recent file edits in this session. Stale results from earlier in the session (before new edits) do not count.
 
-**Policy note**: This pre-flight is intentionally stricter than the base auto-loop rule (`@rules/auto-loop.md`), which only requires `/codex-review-doc` for `.md` changes. `/smart-commit` is the last gate before commit — structural `.md` files under `skills/` and `commands/` have test coverage (e.g., `skills-schema.test.js`) that can catch reference errors the doc review alone cannot detect. This extra check prevents CI failures post-push.
+**Policy note**: This pre-flight is intentionally stricter than the base auto-loop rule (`@rules/auto-loop.md`), which only requires `/codex-review-doc` for `.md` changes. `/smart-commit` is the last gate before commit — structural `.md` files under `skills/` have test coverage (e.g., `skills-schema.test.js`) that can catch reference errors the doc review alone cannot detect. This extra check prevents CI failures post-push.
 
-**Fast vs full test suite warning**: `/precommit-fast` runs a subset of tests (`test:fast`), while CI runs the full suite (`test:ci`). When changes include deletions (skills, scripts, commands), orphaned test files may only fail in CI. If the pre-flight detects that only `/precommit-fast` was run (not `/precommit`), output: `⚠️ Only fast tests ran. If you deleted files, consider /precommit (full suite) to catch orphaned imports before commit.`
+**Fast vs full test suite warning**: `/precommit-fast` runs a subset of tests (`test:fast`), while CI runs the full suite (`test:ci`). When changes include deletions (skills, scripts), orphaned test files may only fail in CI. If the pre-flight detects that only `/precommit-fast` was run (not `/precommit`), output: `⚠️ Only fast tests ran. If you deleted files, consider /precommit (full suite) to catch orphaned imports before commit.`
 
 ### Step 3: Collect Changes
 

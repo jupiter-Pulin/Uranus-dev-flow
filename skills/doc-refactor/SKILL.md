@@ -53,7 +53,6 @@ For the file specified by `$ARGUMENTS`:
 | CLAUDE.md | < 50 |
 | rules/*.md | < 30 |
 | agents/*.md | < 50 |
-| commands/*.md | < 40 |
 
 ## Output
 

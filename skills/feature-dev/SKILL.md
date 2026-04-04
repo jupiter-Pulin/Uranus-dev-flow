@@ -114,8 +114,7 @@ Use project convention from `@rules/testing-project.md`. If no override is defin
 |---------------|-------------|
 | `src/<module>/` | `test/unit/<module>/` or `test/<module>/` |
 | `scripts/<name>.sh` | `test/scripts/<name>.test.js` |
-| `skills/<name>/SKILL.md` | `test/commands/<name>.test.js` |
-| `commands/<name>.md` | `test/commands/<name>.test.js` |
+| `skills/<name>/SKILL.md` | `test/skills/<name>.test.js` |
 
 ## Output
 
