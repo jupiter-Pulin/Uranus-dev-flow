@@ -1159,6 +1159,34 @@ test('dual mode: sidecar .blocked marker forces block', () => {
   assert.equal(payload.ok, false);
 });
 
+test('sidecar .blocked marker forces doc review block (doc-only change)', () => {
+  const workDir = makeTempDir('sd0x-stop-guard-sidecar-doc-');
+  const binDir = setupStubBin();
+  const transcriptPath = join(workDir, 'transcript.json');
+  writeFileSync(transcriptPath, '[]');
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_code_change: false,
+      has_doc_change: true,
+      doc_review: { passed: true },
+      code_review: { passed: false },
+      precommit: { passed: false },
+    })
+  );
+  // Sidecar should override doc_review.passed to false
+  writeFileSync(join(workDir, '.claude_review_state.json.blocked'), 'lock_failure');
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: { transcript_path: transcriptPath },
+    env: { STOP_GUARD_MODE: 'strict' },
+  });
+  assert.equal(result.status, 2, 'sidecar should block doc-only change');
+  const payload = parseJson(result.stdout);
+  assert.equal(payload.ok, false);
+});
+
 test('backward compat: no review_mode field behaves as single mode', () => {
   const workDir = makeTempDir('sd0x-stop-guard-compat-');
   const binDir = setupStubBin();

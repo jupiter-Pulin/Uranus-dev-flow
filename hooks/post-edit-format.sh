@@ -349,22 +349,61 @@ fi
 # Track doc changes (.md, .mdx)
 if echo "$file_path" | grep -Eq '\.(md|mdx)$'; then
   if _lock; then
-    update_change_flag "has_doc_change"
+    # Atomic: merge flag set + review invalidation + aggregate gate reset (3 ops → 1 jq call)
+    init_state_file
+    _doc_now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    _doc_has_agg=$(jq 'has("aggregate_gate")' "$STATE_FILE" 2>/dev/null || echo "false")
+    _doc_tmp=$(mktemp)
+    _doc_write_ok=false
+    if [[ "$_doc_has_agg" == "true" ]]; then
+      jq --arg now "$_doc_now" '
+        .has_doc_change = true
+        | .updated_at = $now
+        | .doc_review.passed = false
+        | .aggregate_gate.executed = false
+        | .aggregate_gate.gate = null
+        | .aggregate_gate.reason = null
+      ' "$STATE_FILE" > "$_doc_tmp" && mv "$_doc_tmp" "$STATE_FILE" && _doc_write_ok=true
+    else
+      jq --arg now "$_doc_now" '
+        .has_doc_change = true
+        | .updated_at = $now
+        | .doc_review.passed = false
+      ' "$STATE_FILE" > "$_doc_tmp" && mv "$_doc_tmp" "$STATE_FILE" && _doc_write_ok=true
+    fi
+    # Non-critical array appends (graceful, own size guards)
     _track_changed_file "$file_path"
     _track_session_touched_file "$file_path" || true
-    invalidate_review "doc_review"
-    invalidate_aggregate_gate
-    # Clear any stale sidecar marker (successful locked write supersedes prior lock-failure markers)
-    rm -f "${STATE_FILE}.blocked" 2>/dev/null || true
+    # Clear sidecar only on successful write (fail-closed: preserve sidecar if write failed)
+    if [[ "$_doc_write_ok" == "true" ]]; then
+      rm -f "${STATE_FILE}.blocked" 2>/dev/null || true
+    fi
     _unlock
     echo "[Edit Hook] Doc change detected: $file_path" >&2
     echo "[Edit Hook] Invalidated doc_review + aggregate_gate" >&2
   else
-    # Fail-closed: sidecar marker (atomic) + best-effort unlocked writes
+    # Fail-closed: sidecar marker (atomic) + best-effort single unlocked jq write
     echo "edit_lock_contention" > "${STATE_FILE}.blocked" 2>/dev/null || true
-    update_change_flag "has_doc_change" 2>/dev/null || true
-    invalidate_review "doc_review" 2>/dev/null || true
-    invalidate_aggregate_gate 2>/dev/null || true
+    init_state_file
+    _doc_now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    _doc_has_agg=$(jq 'has("aggregate_gate")' "$STATE_FILE" 2>/dev/null || echo "false")
+    _doc_tmp=$(mktemp)
+    if [[ "$_doc_has_agg" == "true" ]]; then
+      jq --arg now "$_doc_now" '
+        .has_doc_change = true
+        | .updated_at = $now
+        | .doc_review.passed = false
+        | .aggregate_gate.executed = false
+        | .aggregate_gate.gate = null
+        | .aggregate_gate.reason = null
+      ' "$STATE_FILE" > "$_doc_tmp" 2>/dev/null && mv "$_doc_tmp" "$STATE_FILE" 2>/dev/null || rm -f "$_doc_tmp" 2>/dev/null
+    else
+      jq --arg now "$_doc_now" '
+        .has_doc_change = true
+        | .updated_at = $now
+        | .doc_review.passed = false
+      ' "$STATE_FILE" > "$_doc_tmp" 2>/dev/null && mv "$_doc_tmp" "$STATE_FILE" 2>/dev/null || rm -f "$_doc_tmp" 2>/dev/null
+    fi
     echo "[Edit Hook] Doc change detected (degraded — lock contention, sidecar marker set): $file_path" >&2
   fi
 fi

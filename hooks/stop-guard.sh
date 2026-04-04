@@ -115,8 +115,11 @@ if [[ -f "$STATE_FILE" ]]; then
     GUARD_MODE="strict"
     SIDECAR_REASON=$(cat "${STATE_FILE}.blocked" 2>/dev/null || echo "unknown")
     echo "[Stop Guard] Sidecar blocked marker found (reason: $SIDECAR_REASON)" >&2
-    # Force aggregate gate to BLOCKED regardless of JSON state
+    # Force aggregate gate + doc review to BLOCKED regardless of JSON state
     DUAL_GATE_PASSED="false"
+    DOC_REVIEW_PASSED="false"
+    # Fail-closed: sidecar means state may be corrupted, assume changes exist
+    [[ "$HAS_CODE_CHANGE" != "true" && "$HAS_DOC_CHANGE" != "true" ]] && { HAS_CODE_CHANGE="true"; HAS_DOC_CHANGE="true"; }
   fi
 
   # === Dual mode: prefer aggregate_gate + force strict blocking ===
@@ -153,7 +156,12 @@ if [[ -f "$STATE_FILE" ]]; then
   fi
 
   # === Stale-state git check (with cross-platform timeout) ===
-  if command -v timeout &>/dev/null; then
+  # Skip stale-state reconciliation when sidecar is present — sidecar means state is
+  # unreliable, so git-based downgrade would undo the fail-closed HAS_* forcing above.
+  if [[ -f "${STATE_FILE}.blocked" ]]; then
+    # Sidecar present → skip stale-state reconciliation (would undo fail-closed HAS_* forcing)
+    GIT_PORCELAIN="__GIT_UNAVAILABLE__"
+  elif command -v timeout &>/dev/null; then
     GIT_PORCELAIN=$(timeout 5 git status --porcelain -uno 2>/dev/null || echo "__GIT_UNAVAILABLE__")
   elif command -v gtimeout &>/dev/null; then
     GIT_PORCELAIN=$(gtimeout 5 git status --porcelain -uno 2>/dev/null || echo "__GIT_UNAVAILABLE__")

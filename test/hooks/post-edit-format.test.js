@@ -86,6 +86,21 @@ if (query && query.includes('.passed = false') && vars.key) {
   process.exit(0);
 }
 
+// Handle atomic doc write: .has_doc_change = true | .updated_at = $now | .doc_review.passed = false [| aggregate_gate reset]
+if (query && query.includes('has_doc_change = true') && query.includes('doc_review.passed = false')) {
+  data.has_doc_change = true;
+  data.updated_at = vars.now || '';
+  if (!data.doc_review) data.doc_review = {};
+  data.doc_review.passed = false;
+  if (query.includes('aggregate_gate.executed = false') && data.aggregate_gate) {
+    data.aggregate_gate.executed = false;
+    data.aggregate_gate.gate = null;
+    data.aggregate_gate.reason = null;
+  }
+  process.stdout.write(JSON.stringify(data));
+  process.exit(0);
+}
+
 // Handle has("aggregate_gate") check
 if (query && query.includes('has("aggregate_gate")')) {
   process.stdout.write(Object.prototype.hasOwnProperty.call(data, 'aggregate_gate') ? 'true' : 'false');
@@ -653,6 +668,35 @@ test('code edit clears sidecar .blocked marker', () => {
     false,
     'sidecar .blocked marker should be cleared after successful edit'
   );
+});
+
+test('doc edit atomic state update — flag + review + aggregate in single write', () => {
+  const workDir = makeTempDir('sd0x-format-doc-atomic-');
+  const binDir = setupStubBin();
+  writeFileSync(
+    join(workDir, '.claude_review_state.json'),
+    JSON.stringify({
+      has_doc_change: false,
+      has_code_change: false,
+      code_review: { executed: false, passed: false, last_run: '' },
+      doc_review: { executed: true, passed: true, last_run: 'T1' },
+      precommit: { executed: false, passed: false, last_run: '' },
+      aggregate_gate: { executed: true, gate: 'READY', reason: null },
+    })
+  );
+  runHook({
+    cwd: workDir,
+    binDir,
+    filePath: '/project/docs/readme.md',
+    env: { HOOK_NO_FORMAT: '1' },
+  });
+  const state = readState(workDir);
+  assert.ok(state, 'state file should exist');
+  assert.equal(state.has_doc_change, true, 'should set has_doc_change');
+  assert.equal(state.doc_review.passed, false, 'should invalidate doc_review');
+  assert.equal(state.aggregate_gate.executed, false, 'should reset aggregate_gate.executed');
+  assert.equal(state.aggregate_gate.gate, null, 'should null aggregate_gate.gate');
+  assert.ok(state.updated_at, 'should set updated_at');
 });
 
 test('doc edit does NOT invalidate code_review', () => {

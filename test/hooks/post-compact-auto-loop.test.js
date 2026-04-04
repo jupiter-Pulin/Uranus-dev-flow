@@ -510,6 +510,25 @@ test('R10 strategic reset injected at threshold', () => {
   );
 });
 
+test('sidecar .blocked marker forces doc review injection', () => {
+  const cwd = makeTempDir('sd0x-pc-sidecar-doc-');
+  const binDir = setupStubBin();
+  writeStateFile(cwd, {
+    has_code_change: false,
+    has_doc_change: true,
+    code_review: { passed: false },
+    doc_review: { passed: true },
+    precommit: { passed: false },
+  });
+  writeFileSync(join(cwd, '.claude_review_state.json.blocked'), 'lock_failure');
+  const result = runHook({ cwd, binDir });
+  assert.equal(result.status, 0);
+  assert.ok(
+    result.stdout.includes('/codex-review-doc'),
+    'sidecar should force doc review injection despite doc_review.passed=true'
+  );
+});
+
 test('R10 strategic reset fires only once', () => {
   const cwd = makeTempDir('sd0x-pc-r10-once-');
   const binDir = setupStubBin();

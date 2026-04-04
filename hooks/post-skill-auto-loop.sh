@@ -50,8 +50,22 @@ CODE_PASSED=$(jq -r '.code_review.passed // false' "$STATE_FILE" 2>/dev/null || 
 DOC_PASSED=$(jq -r '.doc_review.passed // false' "$STATE_FILE" 2>/dev/null || echo "false")
 PRE_PASSED=$(jq -r '.precommit.passed // false' "$STATE_FILE" 2>/dev/null || echo "false")
 
+# === Sidecar fail-closed marker ===
+if [[ -f "${STATE_FILE}.blocked" ]]; then
+  CODE_PASSED="false"
+  DOC_PASSED="false"
+  PRE_PASSED="false"
+  # Fail-closed: if no change flags set, sidecar means state write failed — assume changes exist
+  [[ "$HAS_CODE" != "true" && "$HAS_DOC" != "true" ]] && { HAS_CODE="true"; HAS_DOC="true"; }
+fi
+
 # Stale-state reconciliation (one-way: true→false only, same as stop-guard/post-compact)
-GIT_PORCELAIN=$(git status --porcelain -uno 2>/dev/null || echo "__GIT_UNAVAILABLE__")
+# Skip when sidecar present — would undo fail-closed HAS_* forcing
+if [[ -f "${STATE_FILE}.blocked" ]]; then
+  GIT_PORCELAIN="__GIT_UNAVAILABLE__"
+else
+  GIT_PORCELAIN=$(git status --porcelain -uno 2>/dev/null || echo "__GIT_UNAVAILABLE__")
+fi
 if [[ "$GIT_PORCELAIN" != "__GIT_UNAVAILABLE__" ]]; then
   if [[ "$HAS_CODE" == "true" ]]; then
     if ! echo "$GIT_PORCELAIN" | grep -qE '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|kts|rb|php|swift|c|cpp|cc|h|hpp|cs|scala|ex|exs)($|\s|")'; then

@@ -165,6 +165,24 @@ test('stale state: git clean but state says code changed → reconcile to false 
   assert.equal(result.stdout.trim(), '', 'should reconcile stale state and stay silent');
 });
 
+test('sidecar .blocked marker forces doc review reminder', () => {
+  const { dir, cooldownFile } = createWorkDir({
+    has_doc_change: true,
+    has_code_change: false,
+    doc_review: { passed: true },
+    code_review: { passed: false },
+    precommit: { passed: false },
+  });
+  writeFileSync(join(dir, 'README.md'), '# modified');
+  writeFileSync(join(dir, '.claude_review_state.json.blocked'), 'lock_failure');
+  const result = runHook(dir, { REVIEW_GUARD_COOLDOWN: '0', REVIEW_GUARD_COOLDOWN_FILE: cooldownFile });
+  assert.equal(result.status, 0);
+  assert.ok(
+    result.stdout.includes('/codex-review-doc'),
+    'sidecar should force doc review reminder despite doc_review.passed=true'
+  );
+});
+
 test('hook always exits 0 (non-blocking)', () => {
   const { dir, cooldownFile } = createWorkDir({
     has_code_change: true,

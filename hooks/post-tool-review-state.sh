@@ -178,12 +178,15 @@ update_state() {
     # Update using jq
     local tmp
     tmp=$(mktemp)
-    jq --arg key "$key" \
+    if jq --arg key "$key" \
        --argjson executed "$executed" \
        --argjson passed "$passed" \
        --arg now "$now" \
        '.[$key].executed = $executed | .[$key].passed = $passed | .[$key].last_run = $now | .updated_at = $now' \
-       "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+       "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"; then
+      # Successful locked write → state is consistent, clear stale sidecar
+      rm -f "${STATE_FILE}.blocked" 2>/dev/null || true
+    fi
     _unlock
   else
     # Fail-open for review state (not as critical as aggregate gate)

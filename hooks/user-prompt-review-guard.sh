@@ -48,6 +48,15 @@ CODE_PASSED=$(jq -r '.code_review.passed // false' "$STATE_FILE" 2>/dev/null || 
 DOC_PASSED=$(jq -r '.doc_review.passed // false' "$STATE_FILE" 2>/dev/null || echo "false")
 PRE_PASSED=$(jq -r '.precommit.passed // false' "$STATE_FILE" 2>/dev/null || echo "false")
 
+# === Sidecar fail-closed marker ===
+if [[ -f "${STATE_FILE}.blocked" ]]; then
+  CODE_PASSED="false"
+  DOC_PASSED="false"
+  PRE_PASSED="false"
+  # Fail-closed: if no change flags set, sidecar means state write failed — assume changes exist
+  [[ "$HAS_CODE" != "true" && "$HAS_DOC" != "true" ]] && { HAS_CODE="true"; HAS_DOC="true"; }
+fi
+
 # Early exit: no changes tracked = nothing to remind
 if [[ "$HAS_CODE" != "true" && "$HAS_DOC" != "true" ]]; then
   exit 0
@@ -56,7 +65,10 @@ fi
 # --- Stale-state reconciliation (one-way: true→false only) ---
 # Only run git status when state has pending changes (performance optimization)
 # Include untracked files (no -uno) to avoid false downgrade when only new files exist
-if command -v timeout &>/dev/null; then
+# Skip when sidecar present — would undo fail-closed HAS_* forcing
+if [[ -f "${STATE_FILE}.blocked" ]]; then
+  GIT_PORCELAIN="__GIT_UNAVAILABLE__"
+elif command -v timeout &>/dev/null; then
   GIT_PORCELAIN=$(timeout 3 git status --porcelain 2>/dev/null || echo "__GIT_UNAVAILABLE__")
 elif command -v gtimeout &>/dev/null; then
   GIT_PORCELAIN=$(gtimeout 3 git status --porcelain 2>/dev/null || echo "__GIT_UNAVAILABLE__")
