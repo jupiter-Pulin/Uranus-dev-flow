@@ -1,7 +1,7 @@
 # Phase C: Clean Distribution — Skills-Only npm Package
 
 > **Created**: 2026-04-01
-> **Status**: In Progress
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Commands-to-Skills Migration Tech Spec](../2-tech-spec.md)
 > **Depends On**: [Phase B: Commands Removal](./2026-04-01-phase-b-commands-removal.md)
@@ -45,9 +45,9 @@ Phase B 已刪除 `commands/` 目錄。Phase C 從 `package.json files` array �
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Phase B complete (commit `086743b`), scope confirmed per tech spec §3.4 |
-| Development | Done | `package.json` files array cleaned + version 3.0.0, `plugin.json` 3.0.0, `CHANGELOG.md` created (pending commit) |
-| Testing | Done | `npm pack --dry-run` verified 0 commands/ entries; `npm test` 1194/0 fail; `/precommit-fast` ✅ All Pass (session verification, pre-commit) |
-| Acceptance | In Progress | 6/6 AC checked; CHANGELOG.md passed `/codex-review-doc` ✅ Mergeable; awaiting commit |
+| Development | Done | `package.json` files array cleaned + version 3.0.0, `plugin.json` 3.0.0, `CHANGELOG.md` created (commit `b59aec3`) |
+| Testing | Done | `npm pack --dry-run` verified 0 commands/ entries; `npm test` 1194/0 fail; `/precommit-fast` ✅ All Pass |
+| Acceptance | Done | 6/6 AC checked; CHANGELOG.md `/codex-review-doc` ✅ Mergeable; committed `b59aec3` |
 
 ## References
 

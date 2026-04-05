@@ -1,14 +1,14 @@
 # README 多語系同步 — Skills-Only Architecture
 
 > **Created**: 2026-04-05
-> **Status**: Pending
+> **Status**: Candidate Complete
 > **Priority**: P2
 > **Tech Spec**: [Commands-to-Skills Migration Tech Spec](../2-tech-spec.md)
 > **Depends On**: [Phase C: Clean Distribution](./2026-04-01-phase-c-clean-distribution.md)
 
 ## Background
 
-Commands-to-skills 遷移進行中（Phase A-B 已完成，Phase C 待 commit）。6 個 README 檔案仍包含過時的 command 計數（"76 commands"）、command-centric 區段（`What's Included` 表格、`Commands Reference` heading、展開區塊），需要在 Phase C 完成後同步更新為 skills-only 架構描述。
+Commands-to-skills 遷移已完成（Phase A-C，commit `b59aec3`）。6 個 README 檔案已同步更新：移除過時的 command 計數、合併 What's Included 表格、重命名 Commands Reference 為 Skill Reference。
 
 ## Requirements
 
@@ -40,23 +40,23 @@ Commands-to-skills 遷移進行中（Phase A-B 已完成，Phase C 待 commit）
 
 ## Acceptance Criteria
 
-- [ ] 所有 6 個 README 不含 "76 commands" 或過時的 command 計數
-- [ ] Hero 計數行更新為實際 skill/agent 數量（驗證方式：`ls skills/ | wc -l`、`ls agents/ | wc -l`）
-- [ ] Quick Start 安裝表格不含 command 引用
-- [ ] `What's Included` 計數表格已更新（移除 Commands 列或合併為 skills-only）
-- [ ] Command-centric 展開區塊（各語系翻譯標題）已更新或移除
-- [ ] 多語系 README 與英文版結構一致
-- [ ] Pass `/codex-review-doc`
-- [ ] Pass `/precommit-fast`
+- [x] 所有 6 個 README 不含 "76 commands" 或過時的 command 計數
+- [x] Hero 計數行更新為實際 skill/agent 數量（驗證方式：`ls skills/ | wc -l`、`ls agents/ | wc -l`）
+- [x] Quick Start 安裝表格不含 command 引用
+- [x] `What's Included` 計數表格已更新（移除 Commands 列或合併為 skills-only）
+- [x] Command-centric 展開區塊（各語系翻譯標題）已更新或移除
+- [x] 多語系 README 與英文版結構一致
+- [x] Pass `/codex-review-doc`
+- [x] Pass `/precommit-fast`
 
 ## Progress
 
 | Phase | Status | Note |
 |-------|--------|------|
-| Analysis | - | |
-| Development | - | |
-| Testing | - | |
-| Acceptance | - | |
+| Analysis | Done | Explored all 6 READMEs, identified 4 sections × 6 locales to update |
+| Development | Done | Hero count, install table, What's Included, Skill Reference — all 6 locales updated |
+| Testing | Done | `grep` verification: 0 residual "76 commands" / "60 skills"; 440 tests / 0 fail; `/precommit-fast` ✅ |
+| Acceptance | Done | 8/8 AC checked; `/codex-review-doc` ✅ Mergeable |
 
 ## References
 

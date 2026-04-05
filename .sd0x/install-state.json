@@ -112,6 +112,18 @@
     },
     "verify-runner.js": {
       "hash": "b652c789db17098824685c5dc0869a198e80a710"
+    },
+    "lib/doc-classifier.js": {
+      "hash": "5ef17a9d295188215bb56387d512a41aec626bc9"
+    },
+    "lib/feature-resolver.js": {
+      "hash": "cfff2c8c2eb1b3de960009c4bcf2342771618bd7"
+    },
+    "lib/session-scope-resolver.js": {
+      "hash": "b1c0ec300ed0dd7d05c49ced918ab4835a0d82b1"
+    },
+    "lib/utils.js": {
+      "hash": "36eb760a128d461278eb19953e9d40af8769ffb0"
     }
   }
 }
