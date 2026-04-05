@@ -1,28 +1,117 @@
 {
   "schema_version": 1,
   "installed_at": "2026-04-02T08:45:00Z",
+  "updated_at": "2026-04-04T00:00:00Z",
   "plugin_version": "2.2.13",
   "hook_scripts": {
     "pre-edit-guard.sh": {
-      "hash": "693ded505b858af9e9d5ac38ee39da706162b2c0"
+      "hash": "1e3b3847f5ff3a6eac654840edc8c7152e0d3662"
     },
     "post-edit-format.sh": {
-      "hash": "ed06feac48109f90c6c6fcb574886ead8b28921b"
+      "hash": "d4cd2cf9552a0da0ac813654dedb70da8a4ce3a7"
     },
     "post-tool-review-state.sh": {
-      "hash": "1d3643532b93787a1d0fd2c887824b8fefe06b26"
+      "hash": "cb24e8fb1a2b0a863e3e5ff6eb8128742e06adab"
     },
     "stop-guard.sh": {
-      "hash": "5a798d81950c0f3474f107715f27eeff9c5191a3"
+      "hash": "d0b6ae1af13a5cdb9cbc2ca5ae5058d541e8e823"
     },
     "post-compact-auto-loop.sh": {
-      "hash": "29e7dd43b039baf4c0a6e6c791c7106e98acb478"
+      "hash": "1e575d65a1f94539443b6f0f199423cca29d75ec"
     },
     "post-skill-auto-loop.sh": {
-      "hash": "0b9de6fad78a2a3bccafa7bc54f71ed3a91382b8"
+      "hash": "54bc6cf602514121562939a02c354fec9184f39a"
     },
     "user-prompt-review-guard.sh": {
-      "hash": "051b066d06eaba7390bd0571ef4a51346c0901d8"
+      "hash": "9b7601764b77fdaff820f298a4462bd73212c2f2"
+    },
+    "session-init.sh": {
+      "hash": "c73d76edfeeeb1af1370b033d8b0c7e52fef5869"
+    }
+  },
+  "rules": {
+    "auto-loop.md": {
+      "hash": "a32b0bbd7af765fba02a9a46aa4ee069039bc0f2"
+    },
+    "auto-loop-project.md": {
+      "hash": "81ade739b0ea48e99452f11eeee79bdd43263540"
+    },
+    "codex-invocation.md": {
+      "hash": "04e8ac960b457a187ec5c1780622a0124221757b"
+    },
+    "context-management.md": {
+      "hash": "f075a5f7d4a5826865d056be36411c0cc85b7e62"
+    },
+    "docs-numbering.md": {
+      "hash": "1f228943e09940ec8e1870e46cde980e9219e38e"
+    },
+    "docs-writing.md": {
+      "hash": "4a73d44cc849f3a1ea782079b625b77f4468f854"
+    },
+    "fix-all-issues.md": {
+      "hash": "28aa6cab50236889c5217634152357ebba404b00"
+    },
+    "framework.md": {
+      "hash": "9d117a3fde7a1dcaf51b8d313a9780c7463653dd"
+    },
+    "git-workflow.md": {
+      "hash": "692b3958de72effbf8ffad58ad84721dc38a2abf"
+    },
+    "logging.md": {
+      "hash": "6dc8f5f6f025a63780dd4bbb28ae7a313498ca41"
+    },
+    "security.md": {
+      "hash": "178efb6646be1ad5f2aa367ea0753e16b6a03686"
+    },
+    "self-improvement.md": {
+      "hash": "ae545d8e9463361db9434e500be88a6a14c8c4ae"
+    },
+    "testing.md": {
+      "hash": "0b9c37a56911afa850429a52dd9a779fcc1647d6"
+    },
+    "testing-project.md": {
+      "hash": "dd4e7c1b6da8900df9e082103dc5f653bb827d0a"
+    }
+  },
+  "scripts": {
+    "commit-msg-guard.sh": {
+      "hash": "d3c5658cac6bfe0cb9868256947646564e4a73b3"
+    },
+    "dep-audit.sh": {
+      "hash": "1c4c6f730e7d1ddd5bca046cff76b5016c773a5a"
+    },
+    "emit-review-gate.sh": {
+      "hash": "210d86bd186f39b179f0ea2a2c7a6f9d0e7c8aa7"
+    },
+    "migration-audit.sh": {
+      "hash": "8745bf2bf3d3d2b9fffb74bb32855bb200ab0021"
+    },
+    "namespace-hint.sh": {
+      "hash": "aa8807ecbe236b32970db059c31eceb00da488b3"
+    },
+    "pre-push-gate.sh": {
+      "hash": "09b9e180a1f81ffd9864529be2cc3c2fd9df35f1"
+    },
+    "resolve-feature.sh": {
+      "hash": "f4fd4598ac66f21e76394fc16c144a28ea70b781"
+    },
+    "run-skill.sh": {
+      "hash": "aec23ea52d08e168a97d0dc000125a909bd25f10"
+    },
+    "build-codex-artifacts.js": {
+      "hash": "94bd49c842d99c89a78197c3f31e5413d1dd496e"
+    },
+    "classify-docs-cli.js": {
+      "hash": "3525de74c444bf41bcbf15f8a7f8ec54fce7e0d4"
+    },
+    "precommit-runner.js": {
+      "hash": "9970554954c84a2e91920df22fcfe542eea5240f"
+    },
+    "resolve-feature-cli.js": {
+      "hash": "74bf02c481895d63f5163ffd75142285e9fe02da"
+    },
+    "verify-runner.js": {
+      "hash": "b652c789db17098824685c5dc0869a198e80a710"
     }
   }
 }
