@@ -8,7 +8,7 @@
 
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-76 commands · 60 skills · 15 agents — ~4% of Claude's context window
+87 skills · 15 agents — ~4% of Claude's context window
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (60 skills) |
+| Plugin install | Claude Code | Full (87 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (87 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` commands require it; without it, review falls back to single-reviewer mode)
+**Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` skills require it; without it, review falls back to single-reviewer mode)
 
 ## Workflow Tracks
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,10 +225,10 @@ flowchart TD
 
 Skills load on-demand. Idle skills cost zero tokens.
 
-## Commands Reference
+## Skill Reference
 
-| Command | Description |
-|---------|-------------|
+| Skill | Description |
+|-------|-------------|
 | `/project-setup` | Auto-detect and configure project |
 | `/feature-dev` | Feature development workflow |
 | `/bug-fix` | Bug/Issue fix workflow |
@@ -247,12 +246,12 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>All 76 commands</summary>
+<summary>All 87 skills</summary>
 
 ### Development
 
-| Command | Description |
-|---------|-------------|
+| Skill | Description |
+|-------|-------------|
 | `/project-setup` | Auto-detect and configure project |
 | `/repo-intake` | One-time project intake scan |
 | `/install-rules` | Install plugin rules to `.claude/rules/` |
@@ -286,8 +285,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ### Review (Codex MCP)
 
-| Command | Description | Loop Support |
-|---------|-------------|--------------|
+| Skill | Description | Loop Support |
+|-------|-------------|--------------|
 | `/codex-review-fast` | Quick review (diff only) | `--continue <threadId>` |
 | `/codex-review` | Full review (lint + build) | `--continue <threadId>` |
 | `/codex-review-branch` | Full branch review | - |
@@ -301,8 +300,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ### Verification
 
-| Command | Description |
-|---------|-------------|
+| Skill | Description |
+|-------|-------------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
 | `/precommit-fast` | lint:fix -> test:unit |
@@ -315,8 +314,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ### Planning
 
-| Command | Description |
-|---------|-------------|
+| Skill | Description |
+|-------|-------------|
 | `/codex-brainstorm` | Adversarial brainstorm (Nash equilibrium) |
 | `/feasibility-study` | Feasibility analysis |
 | `/tech-spec` | Generate tech spec |
@@ -329,8 +328,8 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ### Documentation & Tooling
 
-| Command | Description |
-|---------|-------------|
+| Skill | Description |
+|-------|-------------|
 | `/update-docs` | Sync docs with code |
 | `/check-coverage` | Test coverage analysis |
 | `/create-request` | Create/update request docs |

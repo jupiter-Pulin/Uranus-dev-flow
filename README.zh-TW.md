@@ -8,7 +8,7 @@
 
 **AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
-76 commands · 60 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+87 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（76 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（60 skills） |
+| Plugin 安裝 | Claude Code | 完整（87 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（87 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用 — `/codex-*` 指令需要；未安裝時退回單 reviewer 模式）
+**需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用 — `/codex-*` skill 需要；未安裝時退回單 reviewer 模式）
 
 ## Workflow Tracks
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,9 +225,9 @@ flowchart TD
 
 Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
-## 指令參考
+## Skill 參考
 
-| 指令 | 說明 |
+| Skill | 說明 |
 |------|------|
 | `/project-setup` | 自動偵測並設定專案 |
 | `/feature-dev` | 功能開發流程 |
@@ -247,11 +246,11 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/codex-security` | OWASP Top 10 audit |
 
 <details>
-<summary>全部 76 個指令</summary>
+<summary>全部 87 個 Skill</summary>
 
 ### 開發
 
-| 指令 | 說明 |
+| Skill | 說明 |
 |------|------|
 | `/project-setup` | 自動偵測並設定專案 |
 | `/repo-intake` | 一次性專案盤點掃描 |
@@ -286,7 +285,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ### Review（Codex MCP）
 
-| 指令 | 說明 | Loop 支援 |
+| Skill | 說明 | Loop 支援 |
 |------|------|-----------|
 | `/codex-review-fast` | 快速 review（僅 diff） | `--continue <threadId>` |
 | `/codex-review` | 完整 review（lint + build） | `--continue <threadId>` |
@@ -301,7 +300,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ### 驗證
 
-| 指令 | 說明 |
+| Skill | 說明 |
 |------|------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
@@ -315,7 +314,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ### 規劃
 
-| 指令 | 說明 |
+| Skill | 說明 |
 |------|------|
 | `/codex-brainstorm` | 對抗式 brainstorming（Nash 均衡） |
 | `/feasibility-study` | 可行性分析 |
@@ -329,7 +328,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 ### 文件與工具
 
-| 指令 | 說明 |
+| Skill | 說明 |
 |------|------|
 | `/update-docs` | 同步文件與 code |
 | `/check-coverage` | Test coverage 分析 |

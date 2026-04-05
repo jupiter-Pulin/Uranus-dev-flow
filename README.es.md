@@ -8,7 +8,7 @@
 
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
-76 commands · 60 skills · 15 agents — ~4% de la ventana de context de Claude
+87 skills · 15 agents — ~4% de la ventana de context de Claude
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (60 skills) |
+| Instalar plugin | Claude Code | Completa (87 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (87 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional — los comandos `/codex-*` lo requieren; sin él, se usa modo single-reviewer)
+**Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional — los skills `/codex-*` lo requieren; sin él, se usa modo single-reviewer)
 
 ## Tracks de workflow
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,9 +225,9 @@ flowchart TD
 
 Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
-## Referencia de comandos
+## Referencia de Skills
 
-| Comando | Descripción |
+| Skill | Descripción |
 |---------|-------------|
 | `/project-setup` | Autodetección y configuración del proyecto |
 | `/feature-dev` | Workflow de desarrollo de funcionalidades |
@@ -247,11 +246,11 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/codex-security` | Auditoría OWASP Top 10 |
 
 <details>
-<summary>Los 76 comandos</summary>
+<summary>Los 87 Skills</summary>
 
 ### Desarrollo
 
-| Comando | Descripción |
+| Skill | Descripción |
 |---------|-------------|
 | `/project-setup` | Autodetección y configuración del proyecto |
 | `/repo-intake` | Escaneo inicial del proyecto (una sola vez) |
@@ -286,7 +285,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ### Review (Codex MCP)
 
-| Comando | Descripción | Loop support |
+| Skill | Descripción | Loop support |
 |---------|-------------|--------------|
 | `/codex-review-fast` | Review rápido (solo diff) | `--continue <threadId>` |
 | `/codex-review` | Review completo (lint + build) | `--continue <threadId>` |
@@ -301,7 +300,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ### Verificación
 
-| Comando | Descripción |
+| Skill | Descripción |
 |---------|-------------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
@@ -315,7 +314,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ### Planificación
 
-| Comando | Descripción |
+| Skill | Descripción |
 |---------|-------------|
 | `/codex-brainstorm` | Brainstorming adversarial (equilibrio de Nash) |
 | `/feasibility-study` | Análisis de viabilidad |
@@ -329,7 +328,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 ### Documentación y herramientas
 
-| Comando | Descripción |
+| Skill | Descripción |
 |---------|-------------|
 | `/update-docs` | Sincronizar docs con código |
 | `/check-coverage` | Análisis de test coverage |

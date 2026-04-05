@@ -10,3 +10,4 @@ settings.local.json
 
 # Local-only skills (not published)
 skills/bump-version/
+skills/readme-i18n-sync/

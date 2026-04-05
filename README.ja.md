@@ -8,7 +8,7 @@
 
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-76 commands · 60 skills · 15 agents — Claude の context window のわずか ~4%
+87 skills · 15 agents — Claude の context window のわずか ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（76 コマンド、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（60 スキル） |
+| プラグインインストール | Claude Code | フル（87 skills、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（87 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
-**必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション — `/codex-*` コマンドに必要；未インストール時はシングルレビューモードにフォールバック）
+**必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション — `/codex-*` スキルに必要；未インストール時はシングルレビューモードにフォールバック）
 
 ## ワークフロートラック
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| コマンド | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| スキル | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| スキル | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | フック | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,9 +225,9 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 スキルはオンデマンドで読み込まれます。未使用のスキルはトークンを消費しません。
 
-## コマンドリファレンス
+## Skill リファレンス
 
-| コマンド | 説明 |
+| Skill | 説明 |
 |----------|------|
 | `/project-setup` | プロジェクトの自動検出・設定 |
 | `/feature-dev` | 機能開発ワークフロー |
@@ -247,11 +246,11 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/codex-security` | OWASP Top 10 監査 |
 
 <details>
-<summary>全 76 コマンド</summary>
+<summary>全 87 Skill</summary>
 
 ### 開発
 
-| コマンド | 説明 |
+| Skill | 説明 |
 |----------|------|
 | `/project-setup` | プロジェクトの自動検出・設定 |
 | `/repo-intake` | プロジェクト初回スキャン（1回のみ） |
@@ -286,7 +285,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ### レビュー（Codex MCP）
 
-| コマンド | 説明 | ループ対応 |
+| Skill | 説明 | ループ対応 |
 |----------|------|------------|
 | `/codex-review-fast` | クイックレビュー（diff のみ） | `--continue <threadId>` |
 | `/codex-review` | フルレビュー（lint + build） | `--continue <threadId>` |
@@ -301,7 +300,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ### 検証
 
-| コマンド | 説明 |
+| Skill | 説明 |
 |----------|------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
@@ -315,7 +314,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ### プランニング
 
-| コマンド | 説明 |
+| Skill | 説明 |
 |----------|------|
 | `/codex-brainstorm` | 対立型ブレスト（ナッシュ均衡まで議論） |
 | `/feasibility-study` | フィージビリティ分析 |
@@ -329,7 +328,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 ### ドキュメント・ツール
 
-| コマンド | 説明 |
+| Skill | 説明 |
 |----------|------|
 | `/update-docs` | ドキュメントとコードの同期 |
 | `/check-coverage` | テストカバレッジ分析 |

@@ -8,7 +8,7 @@
 
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-76 commands · 60 skills · 15 agents — Claude context window의 ~4%만 사용
+87 skills · 15 agents — Claude context window의 ~4%만 사용
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (76 commands, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (60 skills) |
+| 플러그인 설치 | Claude Code | 전체 (87 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (87 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
-**요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` 명령에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
+**요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` skill에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
 
 ## 워크플로 트랙
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Commands | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| Skills | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,9 +225,9 @@ Claude의 200k context window 중 ~4%만 사용합니다. 나머지 96%는 코�
 
 Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비하지 않습니다.
 
-## 명령어 레퍼런스
+## Skill 레퍼런스
 
-| 명령어 | 설명 |
+| Skill | 설명 |
 |--------|------|
 | `/project-setup` | 프로젝트 자동 감지 및 설정 |
 | `/feature-dev` | 기능 개발 워크플로 |
@@ -247,11 +246,11 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/codex-security` | OWASP Top 10 감사 |
 
 <details>
-<summary>전체 76개 명령어</summary>
+<summary>전체 87개 Skill</summary>
 
 ### 개발
 
-| 명령어 | 설명 |
+| Skill | 설명 |
 |--------|------|
 | `/project-setup` | 프로젝트 자동 감지 및 설정 |
 | `/repo-intake` | 프로젝트 초기 스캔 (최초 1회) |
@@ -286,7 +285,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ### 리뷰 (Codex MCP)
 
-| 명령어 | 설명 | Loop 지원 |
+| Skill | 설명 | Loop 지원 |
 |--------|------|-----------|
 | `/codex-review-fast` | 빠른 리뷰 (diff만) | `--continue <threadId>` |
 | `/codex-review` | 전체 리뷰 (lint + build) | `--continue <threadId>` |
@@ -301,7 +300,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ### 검증
 
-| 명령어 | 설명 |
+| Skill | 설명 |
 |--------|------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
@@ -315,7 +314,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ### 기획
 
-| 명령어 | 설명 |
+| Skill | 설명 |
 |--------|------|
 | `/codex-brainstorm` | 대립형 브레인스토밍 (내시 균형) |
 | `/feasibility-study` | 타당성 분석 |
@@ -329,7 +328,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 ### 문서 & 도구
 
-| 명령어 | 설명 |
+| Skill | 설명 |
 |--------|------|
 | `/update-docs` | 문서-코드 동기화 |
 | `/check-coverage` | 테스트 커버리지 분석 |

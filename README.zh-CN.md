@@ -8,7 +8,7 @@
 
 **AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
-76 commands · 60 skills · 15 agents — 仅占 Claude context window 的 ~4%
+87 skills · 15 agents — 仅占 Claude context window 的 ~4%
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,11 +138,11 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
-| 插件安装 | Claude Code | 完整（76 commands、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（60 skills） |
+| 插件安装 | Claude Code | 完整（87 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（87 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
-**环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（选用 — `/codex-*` 命令需要；未安装时退回单 reviewer 模式）
+**环境要求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（选用 — `/codex-*` skills 需要；未安装时退回单 reviewer 模式）
 
 ## 工作流路径
 
@@ -206,8 +206,7 @@ flowchart TD
 
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| 命令 | 76 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-| 技能 | 60 | project-setup, code-explore, smart-commit, contract-decode, deep-research, sharingan |
+| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | 代理 | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | 钩子 | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | 规则 | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -226,9 +225,9 @@ flowchart TD
 
 Skills 按需加载。闲置 Skill 不占用任何 Token。
 
-## 命令参考
+## Skill 参考
 
-| 命令 | 说明 |
+| Skill | 说明 |
 |------|------|
 | `/project-setup` | 自动检测并配置项目 |
 | `/feature-dev` | 功能开发流程 |
@@ -247,11 +246,11 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/codex-security` | OWASP Top 10 审计 |
 
 <details>
-<summary>全部 76 个命令</summary>
+<summary>全部 87 个 Skill</summary>
 
 ### 开发
 
-| 命令 | 说明 |
+| Skill | 说明 |
 |------|------|
 | `/project-setup` | 自动检测并配置项目 |
 | `/repo-intake` | 一次性项目盘点扫描 |
@@ -286,7 +285,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ### 审查（Codex MCP）
 
-| 命令 | 说明 | 循环支持 |
+| Skill | 说明 | 循环支持 |
 |------|------|----------|
 | `/codex-review-fast` | 快速审查（仅 diff） | `--continue <threadId>` |
 | `/codex-review` | 完整审查（lint + build） | `--continue <threadId>` |
@@ -301,7 +300,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ### 验证
 
-| 命令 | 说明 |
+| Skill | 说明 |
 |------|------|
 | `/verify` | lint -> typecheck -> unit -> integration -> e2e |
 | `/precommit` | lint:fix -> build -> test:unit |
@@ -315,7 +314,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ### 规划
 
-| 命令 | 说明 |
+| Skill | 说明 |
 |------|------|
 | `/codex-brainstorm` | 对抗式头脑风暴（纳什均衡） |
 | `/feasibility-study` | 可行性分析 |
@@ -329,7 +328,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 ### 文档与工具
 
-| 命令 | 说明 |
+| Skill | 说明 |
 |------|------|
 | `/update-docs` | 同步文档与代码 |
 | `/check-coverage` | 测试覆盖率分析 |
