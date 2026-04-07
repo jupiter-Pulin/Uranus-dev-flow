@@ -1,0 +1,415 @@
+version: 1
+
+categories:
+  - id: development
+    label: Development
+    order: 1
+  - id: review
+    label: "Review (Codex MCP)"
+    order: 2
+  - id: verification
+    label: Verification
+    order: 3
+  - id: planning
+    label: Planning
+    order: 4
+  - id: docs-tooling
+    label: "Documentation & Tooling"
+    order: 5
+
+skills:
+  # ── Development ──────────────────────────────────────────
+  - command: /project-setup
+    category: development
+    featured: true
+    use_when: "First-time project configuration"
+    public: true
+  - command: /repo-intake
+    category: development
+    featured: false
+    public: true
+  - command: /install-rules
+    category: development
+    featured: false
+    public: true
+  - command: /install-hooks
+    category: development
+    featured: false
+    public: true
+  - command: /install-scripts
+    category: development
+    featured: false
+    public: true
+  - command: /codex-setup
+    category: development
+    featured: false
+    public: true
+  - command: /bug-fix
+    category: development
+    featured: true
+    use_when: "Fixing bugs and resolving issues"
+    public: true
+  - command: /debug
+    category: development
+    featured: false
+    public: true
+  - command: /codex-implement
+    category: development
+    featured: false
+    public: true
+  - command: /codex-architect
+    category: development
+    featured: false
+    public: true
+  - command: /code-explore
+    category: development
+    featured: false
+    public: true
+  - command: /git-investigate
+    category: development
+    featured: false
+    public: true
+  - command: /issue-analyze
+    category: development
+    featured: false
+    public: true
+  - command: /post-dev-test
+    category: development
+    featured: false
+    public: true
+  - command: /feature-dev
+    category: development
+    featured: true
+    use_when: "Implementing new features end-to-end"
+    public: true
+  - command: /feature-verify
+    category: development
+    featured: false
+    public: true
+  - command: /load-pr-review
+    category: development
+    featured: false
+    public: true
+  - command: /pr-comment
+    category: development
+    featured: false
+    public: true
+  - command: /code-investigate
+    category: development
+    featured: false
+    public: true
+  - command: /next-step
+    category: development
+    featured: false
+    public: true
+  - command: /smart-commit
+    category: development
+    featured: true
+    use_when: "Committing changes with smart grouping"
+    public: true
+  - command: /git-profile
+    category: development
+    featured: false
+    public: true
+  - command: /push-ci
+    category: development
+    featured: true
+    use_when: "Pushing code and monitoring CI"
+    public: true
+  - command: /create-pr
+    category: development
+    featured: true
+    use_when: "Creating GitHub pull requests"
+    public: true
+  - command: /merge-prep
+    category: development
+    featured: false
+    public: true
+  - command: /smart-rebase
+    category: development
+    featured: false
+    public: true
+  - command: /deep-explore
+    category: development
+    featured: false
+    public: true
+  - command: /remind
+    category: development
+    featured: false
+    public: true
+  - command: /bump-version
+    category: development
+    featured: false
+    public: true
+  - command: /watch-ci
+    category: development
+    featured: false
+    public: true
+  - command: /jira
+    category: development
+    featured: false
+    public: true
+
+  # ── Review (Codex MCP) ──────────────────────────────────
+  - command: /codex-review-fast
+    category: review
+    featured: true
+    use_when: "Quick code review (diff only)"
+    loop_support: "--continue <threadId>"
+    public: true
+  - command: /codex-review
+    category: review
+    featured: false
+    loop_support: "--continue <threadId>"
+    public: true
+  - command: /codex-review-branch
+    category: review
+    featured: false
+    public: true
+  - command: /codex-cli-review
+    category: review
+    featured: false
+    public: true
+  - command: /codex-code-review
+    category: review
+    featured: false
+    public: true
+  - command: /codex-review-doc
+    category: review
+    featured: true
+    use_when: "Reviewing documentation changes"
+    loop_support: "--continue <threadId>"
+    public: true
+  - command: /doc-review
+    category: review
+    featured: false
+    public: true
+  - command: /codex-security
+    category: review
+    featured: true
+    use_when: "OWASP Top 10 security audit"
+    loop_support: "--continue <threadId>"
+    public: true
+  - command: /security-review
+    category: review
+    featured: false
+    public: true
+  - command: /codex-test-gen
+    category: review
+    featured: false
+    public: true
+  - command: /codex-test-review
+    category: review
+    featured: false
+    loop_support: "--continue <threadId>"
+    public: true
+  - command: /test-review
+    category: review
+    featured: false
+    public: true
+  - command: /codex-explain
+    category: review
+    featured: false
+    public: true
+  - command: /seek-verdict
+    category: review
+    featured: false
+    public: true
+
+  # ── Verification ─────────────────────────────────────────
+  - command: /verify
+    category: verification
+    featured: true
+    use_when: "Running full test verification chain"
+    public: true
+  - command: /precommit
+    category: verification
+    featured: true
+    use_when: "Pre-commit quality gate (lint + build + test)"
+    public: true
+  - command: /precommit-fast
+    category: verification
+    featured: true
+    use_when: "Quick pre-commit (lint + test, no build)"
+    public: true
+  - command: /dep-audit
+    category: verification
+    featured: false
+    public: true
+  - command: /project-audit
+    category: verification
+    featured: false
+    public: true
+  - command: /best-practices
+    category: verification
+    featured: false
+    public: true
+  - command: /risk-assess
+    category: verification
+    featured: false
+    public: true
+  - command: /pre-pr-audit
+    category: verification
+    featured: false
+    public: true
+  - command: /test-deep
+    category: verification
+    featured: false
+    public: true
+  - command: /dev-security-audit
+    category: verification
+    featured: false
+    public: true
+  - command: /test-health
+    category: verification
+    featured: false
+    public: true
+  - command: /check-coverage
+    category: verification
+    featured: false
+    public: true
+
+  # ── Planning ─────────────────────────────────────────────
+  - command: /codex-brainstorm
+    category: planning
+    featured: true
+    use_when: "Adversarial brainstorming (Nash equilibrium)"
+    public: true
+  - command: /feasibility-study
+    category: planning
+    featured: false
+    public: true
+  - command: /tech-spec
+    category: planning
+    featured: true
+    use_when: "Writing technical specifications"
+    public: true
+  - command: /review-spec
+    category: planning
+    featured: false
+    public: true
+  - command: /deep-analyze
+    category: planning
+    featured: false
+    public: true
+  - command: /architecture
+    category: planning
+    featured: false
+    public: true
+  - command: /project-brief
+    category: planning
+    featured: false
+    public: true
+  - command: /deep-research
+    category: planning
+    featured: false
+    public: true
+  - command: /fp-brief
+    category: planning
+    featured: false
+    public: true
+  - command: /req-analyze
+    category: planning
+    featured: false
+    public: true
+  - command: /request-tracking
+    category: planning
+    featured: false
+    public: true
+  - command: /tech-brief
+    category: planning
+    featured: false
+    public: true
+
+  # ── Documentation & Tooling ──────────────────────────────
+  - command: /update-docs
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /create-request
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /doc-refactor
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /simplify
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /refactor
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /de-ai-flavor
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /generate-runner
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /safe-remove
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /pr-review
+    category: docs-tooling
+    featured: true
+    use_when: "PR self-review before merge"
+    public: true
+  - command: /pr-summary
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /contract-decode
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /skill-health-check
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /sharingan
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /statusline-config
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /claude-health
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /op-session
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /obsidian-cli
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /zh-tw
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /readme-i18n-sync
+    category: docs-tooling
+    featured: false
+    public: true
+  - command: /runbook
+    category: docs-tooling
+    featured: false
+    description: "Generate/update feature release runbook"
+    public: true
+  - command: /update-readme
+    category: docs-tooling
+    featured: false
+    description: "Regenerate README skill catalog + sync locales"
+    public: true
+  - command: /portfolio
+    category: docs-tooling
+    featured: false
+    public: true
