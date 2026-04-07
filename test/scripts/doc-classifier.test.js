@@ -81,6 +81,12 @@ test('classifyByPath runbook-deploy.md → runbook', () => {
   assert.equal(r.namespace, 'ancillary');
 });
 
+test('classifyByPath runbook-release.md → runbook (ancillary)', () => {
+  const r = classifyByPath('runbook-release.md', taxonomy);
+  assert.equal(r.type, 'runbook');
+  assert.equal(r.namespace, 'ancillary');
+});
+
 test('classifyByPath adr-kafka-auth.md → adr', () => {
   const r = classifyByPath('adr-kafka-auth.md', taxonomy);
   assert.equal(r.type, 'adr');

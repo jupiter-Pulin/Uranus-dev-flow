@@ -53,8 +53,35 @@ See [Technical Spec](../2-tech-spec.md)
 See [Feasibility Study](./0-feasibility-study/0-feasibility-study.md)
 ```
 
+## Ancillary Documents
+
+Ancillary documents are operational or supplementary artifacts that do not belong to a lifecycle phase. They use **semantic prefixes** instead of numeric prefixes, as defined in `scripts/config/doc-taxonomy.json` (namespace: `ancillary`).
+
+| Type | Naming Pattern | Example |
+|------|---------------|---------|
+| Runbook | `runbook-<topic>.md` | `runbook-release.md` |
+| Checklist | `checklist-<topic>.md` | `checklist-deploy.md` |
+| ADR | `adr-<number>-<title>.md` | `adr-001-auth-strategy.md` |
+| Handoff | `handoff-<topic>.md` | `handoff-onboarding.md` |
+| Briefing | `briefing-<topic>.md` | `briefing-q1-review.md` |
+| FP Brief | `*-fp-brief.md` | `2-tech-spec-fp-brief.md` |
+
+**Ancillary docs are exempt from the numeric prefix rule.** The `doc-classifier.js` recognizes them via `semantic_pattern` matching (Step 4 in the 7-step precedence), not lifecycle prefix fallback.
+
+```
+docs/features/<feature>/
+├── 0-feasibility-study.md       # Lifecycle (numbered)
+├── 2-tech-spec.md               # Lifecycle (numbered)
+├── 3-architecture.md            # Lifecycle (numbered)
+├── runbook-release.md           # Ancillary (semantic)
+├── checklist-deploy.md          # Ancillary (semantic)
+└── requests/                    # Request docs (date-prefixed)
+    └── YYYY-MM-DD-<title>.md
+```
+
 ## Prohibited
 
-- ❌ Unnumbered feature docs (`tech-spec.md`) — Must have numeric prefix
-- ❌ Date prefixes (`2026-01-30-tech-spec.md`) — Date prefixes are only for `requests/`
+- ❌ Unnumbered lifecycle docs (`tech-spec.md`) — Lifecycle docs (phases 0-4) must have numeric prefix
+- ❌ Numbered ancillary docs (`5-runbook.md`) — Ancillary docs use semantic prefixes, not phase numbers
+- ❌ Date prefixes on non-request docs (`2026-01-30-tech-spec.md`) — Date prefixes are only for `requests/`
 - ❌ Uppercase or underscores (`2_Tech_Spec.md`) — Use kebab-case consistently
