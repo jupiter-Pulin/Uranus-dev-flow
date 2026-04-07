@@ -92,6 +92,17 @@ test('classifyByPath handoff-team-b.md → handoff', () => {
   assert.equal(r.type, 'handoff');
 });
 
+test('classifyByPath 5-tech-brief.md → tech-brief', () => {
+  const r = classifyByPath('5-tech-brief.md', taxonomy);
+  assert.equal(r.type, 'tech-brief');
+  assert.equal(r.namespace, 'ancillary');
+});
+
+test('classifyByPath 2-tech-spec-tech-brief.md → tech-brief (not tech-spec)', () => {
+  const r = classifyByPath('2-tech-spec-tech-brief.md', taxonomy);
+  assert.equal(r.type, 'tech-brief');
+});
+
 // --- classifyByPath: lifecycle prefix fallback ---
 
 test('classifyByPath 3-auto-loop-integration.md → architecture variant via prefix fallback', () => {

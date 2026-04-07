@@ -102,6 +102,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/architecture` | Architecture design + 3-architecture.md | Design |
 | `/project-brief` | PM/CTO executive summary | Design |
 | `/fp-brief` | First-principles briefing | Understanding |
+| `/tech-brief` | Technical briefing for developer sharing | Understanding |
 | `/codex-architect` | Architecture advice | Design |
 | `/codex-implement` | Codex writes code | Development |
 | `/bug-fix` | Bug fix workflow | Bug fixing |

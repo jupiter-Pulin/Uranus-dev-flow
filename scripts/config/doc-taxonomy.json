@@ -26,7 +26,7 @@
       "phase": 2,
       "canonical_filename": "2-tech-spec.md",
       "variant_pattern": "^2-tech-spec",
-      "exclude_pattern": "-fp-brief\\.md$",
+      "exclude_pattern": "-fp-brief\\.md$|-tech-brief\\.md$",
       "heading_signals": ["Technical Spec", "技術規格"],
       "sync_handler": "tech-spec"
     },
@@ -53,6 +53,13 @@
       "namespace": "ancillary",
       "semantic_pattern": "-fp-brief\\.md$",
       "heading_signals": ["First-Principles Brief", "第一性原理"],
+      "sync_handler": null
+    },
+    {
+      "id": "tech-brief",
+      "namespace": "ancillary",
+      "semantic_pattern": "-tech-brief\\.md$|^5-tech-brief",
+      "heading_signals": ["Tech Brief", "技術簡報"],
       "sync_handler": null
     },
     {
