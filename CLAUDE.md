@@ -105,7 +105,6 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/simplify` | Code simplification | Refactoring |
 | `/de-ai-flavor` | Remove AI artifacts | Doc changes |
 | `/zh-tw` | Rewrite in Traditional Chinese | i18n |
-| `/readme-i18n-sync` | Sync multilingual README translations | i18n |
 | `/install-rules` | Install plugin rules to .claude/rules/ | Onboarding |
 | `/install-hooks` | Install plugin hooks to .claude/ | Onboarding |
 | `/install-scripts` | Install plugin scripts to .claude/scripts/ | Onboarding |

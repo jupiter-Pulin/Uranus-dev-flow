@@ -20,16 +20,23 @@ test('skill-catalog.yml exists and is readable', () => {
   assert.ok(content.includes('skills:'), 'should have skills section');
 });
 
-test('all skills/ directories have catalog entries', () => {
-  const skillDirs = readdirSync(SKILLS_DIR)
-    .filter(d => statSync(join(SKILLS_DIR, d)).isDirectory());
+test('all git-tracked skills/ directories have catalog entries', () => {
+  // Use git ls-tree to only check committed skill directories (ignore local-only skills)
+  const { execFileSync } = require('node:child_process');
+  let trackedDirs;
+  try {
+    const out = execFileSync('git', ['ls-tree', '--name-only', 'HEAD', 'skills/'], { encoding: 'utf8', cwd: ROOT });
+    trackedDirs = out.trim().split('\n').map(p => p.replace('skills/', '').replace(/\/$/, '')).filter(Boolean);
+  } catch {
+    // Fallback: use all local dirs (CI won't have untracked skills)
+    trackedDirs = readdirSync(SKILLS_DIR).filter(d => statSync(join(SKILLS_DIR, d)).isDirectory());
+  }
   const catalog = readFileSync(CATALOG_PATH, 'utf8');
-  // Extract exact command names from catalog for precise matching
   const catalogCommands = new Set(
     [...catalog.matchAll(/command:\s*\/(\S+)/g)].map(m => m[1])
   );
 
-  const missing = skillDirs.filter(dir => !catalogCommands.has(dir));
+  const missing = trackedDirs.filter(dir => !catalogCommands.has(dir));
   assert.deepEqual(
     missing,
     [],

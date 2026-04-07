@@ -395,10 +395,6 @@ skills:
     category: docs-tooling
     featured: false
     public: true
-  - command: /readme-i18n-sync
-    category: docs-tooling
-    featured: false
-    public: true
   - command: /runbook
     category: docs-tooling
     featured: false
