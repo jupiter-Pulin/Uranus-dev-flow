@@ -1,7 +1,7 @@
 # Phase A: Skill Parity — 建立缺少的 Skill Entry Points
 
 > **Created**: 2026-04-01
-> **Status**: Candidate Complete
+> **Status**: Completed
 > **Priority**: P1
 > **Tech Spec**: [Commands-to-Skills Migration Tech Spec](../2-tech-spec.md)
 

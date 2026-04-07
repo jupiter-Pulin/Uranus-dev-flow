@@ -1,7 +1,7 @@
 # Phase B: Commands Removal — 刪除 commands/ 目錄
 
 > **Created**: 2026-04-01
-> **Status**: Candidate Complete
+> **Status**: Completed
 > **Priority**: P2
 > **Tech Spec**: [Commands-to-Skills Migration Tech Spec](../2-tech-spec.md)
 > **Depends On**: [Phase A: Skill Parity](./2026-04-01-phase-a-skill-parity.md)

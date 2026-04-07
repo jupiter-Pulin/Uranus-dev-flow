@@ -1,7 +1,7 @@
 # README 多語系同步 — Skills-Only Architecture
 
 > **Created**: 2026-04-05
-> **Status**: Candidate Complete
+> **Status**: Completed
 > **Priority**: P2
 > **Tech Spec**: [Commands-to-Skills Migration Tech Spec](../2-tech-spec.md)
 > **Depends On**: [Phase C: Clean Distribution](./2026-04-01-phase-c-clean-distribution.md)
