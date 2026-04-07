@@ -1,7 +1,7 @@
 {
   "name": "sd0x-dev-flow",
   "description": "Development workflow plugin with 100+ tools for code review, testing, investigation, and DevOps automation.",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": {
     "name": "sd0xdev"
   },
