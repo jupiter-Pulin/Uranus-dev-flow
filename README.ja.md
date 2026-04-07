@@ -8,7 +8,9 @@
 
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
-87 skills · 15 agents — Claude の context window のわずか ~4%
+<!-- BEGIN:HERO-COUNT -->
+91 skills · 15 agents — Claude の context window のわずか ~4%
+<!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,8 +140,10 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（87 skills、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（87 スキル） |
+<!-- BEGIN:INSTALL-COVERAGE -->
+| プラグインインストール | Claude Code | フル（91 skills、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（91 スキル） |
+<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
 **必要環境**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（オプション — `/codex-*` スキルに必要；未インストール時はシングルレビューモードにフォールバック）
@@ -206,7 +210,9 @@ flowchart TD
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| スキル | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
+| スキル | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- END:WHATS-INCLUDED-COUNT -->
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | フック | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -225,131 +231,150 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 スキルはオンデマンドで読み込まれます。未使用のスキルはトークンを消費しません。
 
-## Skill リファレンス
+## スキルリファレンス
 
-| Skill | 説明 |
-|----------|------|
-| `/project-setup` | プロジェクトの自動検出・設定 |
-| `/feature-dev` | 機能開発ワークフロー |
-| `/bug-fix` | バグ/Issue 修正ワークフロー |
-| `/codex-review-fast` | クイックレビュー（diff のみ） |
-| `/codex-review-doc` | ドキュメントレビュー |
-| `/precommit` | lint:fix → build → test |
-| `/precommit-fast` | lint:fix → test（build なし） |
-| `/verify` | フル検証チェーン |
-| `/smart-commit` | スマートバッチコミット |
+<!-- BEGIN:ESSENTIAL-SKILLS -->
+| Skill | 使用場面 |
+|-------|----------|
+| `/project-setup` | プロジェクトの初回設定 |
+| `/bug-fix` | バグ修正・Issue 解決 |
+| `/feature-dev` | 機能のエンドツーエンド実装 |
+| `/smart-commit` | スマートグループ化でコミット |
 | `/push-ci` | プッシュ + CI モニタリング |
 | `/create-pr` | GitHub PR を作成 |
-| `/codex-brainstorm` | 対立型ブレスト（ナッシュ均衡まで議論） |
+| `/codex-review-fast` | クイックコードレビュー（diff のみ） |
+| `/codex-review-doc` | ドキュメント変更のレビュー |
+| `/codex-security` | OWASP Top 10 セキュリティ監査 |
+| `/verify` | フル検証チェーンの実行 |
+| `/precommit` | precommit 品質ゲート（lint + build + test） |
+| `/precommit-fast` | 高速 precommit（lint + test、build なし） |
+| `/codex-brainstorm` | 対立型ブレスト（ナッシュ均衡） |
 | `/tech-spec` | 技術仕様書の作成 |
-| `/pr-review` | PR セルフレビュー |
-| `/codex-security` | OWASP Top 10 監査 |
+| `/pr-review` | マージ前の PR セルフレビュー |
+<!-- END:ESSENTIAL-SKILLS -->
 
+<!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>全 87 Skill</summary>
+<summary>全 91 スキル</summary>
 
-### 開発
+### 開発 (31)
 
-| Skill | 説明 |
-|----------|------|
-| `/project-setup` | プロジェクトの自動検出・設定 |
-| `/repo-intake` | プロジェクト初回スキャン（1回のみ） |
-| `/install-rules` | プラグインルールを `.claude/rules/` にインストール |
-| `/install-hooks` | プラグイン hooks を `.claude/` にインストール |
-| `/install-scripts` | プラグインランナースクリプトをインストール |
-| `/codex-setup` | Codex CLI インフラの初期化（AGENTS.md + フック） |
-| `/bug-fix` | バグ/Issue 修正ワークフロー |
-| `/codex-implement` | Codex がコードを書く |
-| `/codex-architect` | アーキテクチャ相談（第三の頭脳） |
-| `/code-explore` | コードベースの高速探索 |
-| `/git-investigate` | コード変更履歴の追跡 |
-| `/issue-analyze` | Issue の深堀り分析 |
-| `/post-dev-test` | 開発後のテスト補完 |
-| `/feature-dev` | 機能開発ワークフロー（設計 → 実装 → 検証 → レビュー） |
-| `/feature-verify` | システム診断（読み取り専用の検証、デュアル視点確認） |
-| `/load-pr-review` | GitHub PR レビューコメントをセッションに読み込み |
-| `/pr-comment` | GitHub PR にフレンドリーなレビューコメントを投稿 |
-| `/code-investigate` | デュアル視点コード調査（Claude + Codex 独立探索） |
-| `/next-step` | コンテキスト認識型の次ステップアドバイザー |
-| `/smart-commit` | スマートバッチコミット（グループ化 + メッセージ + コマンド） |
-| `/git-profile` | Git ID と GPG 署名プロファイルの管理 |
-| `/push-ci` | プッシュ（承認制）+ CI モニタリング |
-| `/create-pr` | ブランチから GitHub PR を作成 |
-| `/merge-prep` | マージ前の分析と準備 |
-| `/smart-rebase` | squash-merge リポジトリ向けスマート部分 rebase |
-| `/deep-explore` | マルチウェーブ並列コード探索 |
-| `/remind` | 軽量モデル修正（ルール再読み込み） |
-| `/bump-version` | パッケージ＋プラグインバージョン同期更新 |
-| `/watch-ci` | GitHub Actions CI 実行モニタリング |
-| `/jira` | Jira 連携（閲覧/ブランチ作成/ステータス遷移） |
+| Skill | Description |
+|-------|-------------|
+| `/bug-fix` | Bug fix workflow. |
+| `/bump-version` | Bump package and plugin version in sync. |
+| `/code-explore` | Pure Claude code investigation. |
+| `/code-investigate` | Dual-perspective code investigation. |
+| `/codex-architect` | Codex architecture consulting. |
+| `/codex-implement` | Implement features via Codex MCP. |
+| `/codex-setup` | Initialize sd0x-dev-flow infrastructure for Codex CLI and other non-Claude agents. |
+| `/create-pr` | Create or update GitHub PR with gh CLI. |
+| `/debug` | Interactive debugging workflow with hypothesis-driven probe loop. |
+| `/deep-explore` | Multi-wave parallel code exploration orchestrator. |
+| `/feature-dev` | Feature development workflow. |
+| `/feature-verify` | Feature verification (READ-ONLY, P0-P5). |
+| `/git-investigate` | Git history investigation. |
+| `/git-profile` | Git identity and GPG signing profile manager. |
+| `/install-hooks` | Install plugin hooks into project .claude/ for persistent use without plugin loaded |
+| `/install-rules` | Install plugin rules into project .claude/rules/ for persistent use without plugin loaded |
+| `/install-scripts` | Install plugin runner scripts into project .claude/scripts/ for persistent use without plugin loaded |
+| `/issue-analyze` | GitHub Issue and PR review thread deep analysis with Codex blind verdict. |
+| `/jira` | Jira integration — view issues, generate branches, create tickets, transition status. |
+| `/load-pr-review` | Load GitHub PR review comments into AI session — analyze, triage, plan. |
+| `/merge-prep` | Pre-merge analysis and preparation. |
+| `/next-step` | Change-aware next step advisor. |
+| `/post-dev-test` | Post-development test completion. |
+| `/pr-comment` | Post friendly review comments to a GitHub PR — prepare locally, preview, then submit as atomic review. |
+| `/project-setup` | Project configuration initialization. |
+| `/push-ci` | Push to remote and monitor CI. |
+| `/remind` | Lightweight model correction with context-aware rule loading. |
+| `/repo-intake` | Project initialization inventory (one-time). |
+| `/smart-commit` | Smart batch commit. |
+| `/smart-rebase` | Smart partial rebase for squash-merge repositories. |
+| `/watch-ci` | Monitor GitHub Actions CI runs until completion. |
 
-### レビュー（Codex MCP）
+### レビュー (Codex MCP) (14)
 
-| Skill | 説明 | ループ対応 |
-|----------|------|------------|
-| `/codex-review-fast` | クイックレビュー（diff のみ） | `--continue <threadId>` |
-| `/codex-review` | フルレビュー（lint + build） | `--continue <threadId>` |
-| `/codex-review-branch` | ブランチ全体のレビュー | - |
-| `/codex-cli-review` | CLI レビュー（ディスク全読み取り） | - |
-| `/codex-review-doc` | ドキュメントレビュー | `--continue <threadId>` |
-| `/codex-security` | OWASP Top 10 監査 | `--continue <threadId>` |
-| `/codex-test-gen` | ユニットテスト生成 | - |
-| `/codex-test-review` | テストカバレッジレビュー | `--continue <threadId>` |
-| `/codex-explain` | 複雑なコードの解説 | - |
-| `/seek-verdict` | 独立検証（dismiss/confirm/clarify） | - |
+| Skill | Description | ループサポート |
+|-------|-------------|--------------|
+| `/codex-cli-review` | Code review via Codex CLI with full disk access. | - |
+| `/codex-code-review` | Code review using Codex MCP. | - |
+| `/codex-explain` | Explain complex code via Codex MCP. | - |
+| `/codex-review` | Full second-opinion using Codex MCP (with lint:fix + build). | `--continue <threadId>` |
+| `/codex-review-branch` | Fully automated review of an entire feature branch using Codex MCP | - |
+| `/codex-review-doc` | Review documents using Codex MCP. | `--continue <threadId>` |
+| `/codex-review-fast` | Quick second-opinion using Codex MCP (diff only, no tests). | `--continue <threadId>` |
+| `/codex-security` | OWASP Top 10 security review using Codex MCP. | `--continue <threadId>` |
+| `/codex-test-gen` | Generate unit tests for specified functions using Codex MCP | - |
+| `/codex-test-review` | Review test case sufficiency using Codex MCP, suggest additional edge cases. | `--continue <threadId>` |
+| `/doc-review` | Document review via Codex MCP. | - |
+| `/security-review` | Security review via Codex MCP. | - |
+| `/seek-verdict` | Independent second-opinion verification for any finding. | - |
+| `/test-review` | Test coverage review via Codex MCP. | - |
 
-### 検証
+### 検証 (12)
 
-| Skill | 説明 |
-|----------|------|
-| `/verify` | lint -> typecheck -> unit -> integration -> e2e |
-| `/precommit` | lint:fix -> build -> test:unit |
-| `/precommit-fast` | lint:fix -> test:unit |
-| `/dep-audit` | 依存パッケージのセキュリティ監査 |
-| `/project-audit` | プロジェクトヘルス監査（決定論的スコアリング） |
-| `/best-practices` | 業界ベストプラクティス監査（敵対的ディベート付き） |
-| `/risk-assess` | 未コミットコードのリスク評価 |
-| `/pre-pr-audit` | PR 前信頼度監査（5次元スコアリング） |
-| `/test-deep` | コンテキスト対応テストオーケストレーション |
+| Skill | Description |
+|-------|-------------|
+| `/best-practices` | Industry best practices conformance audit with mandatory adversarial debate. |
+| `/check-coverage` | Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable ... |
+| `/dep-audit` | Audit dependency security risks |
+| `/dev-security-audit` | Comprehensive developer workstation security audit — scans for exposed credentials, compromised application data, per... |
+| `/pre-pr-audit` | Pre-PR confidence audit with 5-dimension scoring. |
+| `/precommit` | Pre-commit checks — lint:fix -> build -> test |
+| `/precommit-fast` | Quick pre-commit checks — lint:fix -> test |
+| `/project-audit` | Project health audit with deterministic scoring. |
+| `/risk-assess` | Uncommitted code risk assessment with breaking change detection, blast radius analysis, and scope metrics. |
+| `/test-deep` | Context-aware test orchestration. |
+| `/test-health` | Holistic test coverage measurement. |
+| `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### プランニング
+### 計画 (12)
 
-| Skill | 説明 |
-|----------|------|
-| `/codex-brainstorm` | 対立型ブレスト（ナッシュ均衡まで議論） |
-| `/feasibility-study` | フィージビリティ分析 |
-| `/tech-spec` | 技術仕様書の作成 |
-| `/review-spec` | 技術仕様書のレビュー |
-| `/deep-analyze` | 深堀り分析 + ロードマップ |
-| `/architecture` | アーキテクチャ設計 + 3-architecture.md |
-| `/project-brief` | PM/CTO 向けエグゼクティブサマリー |
-| `/deep-research` | マルチエージェント深層リサーチオーケストレーション |
-| `/fp-brief` | 技術文書のファーストプリンシプルブリーフィング |
+| Skill | Description |
+|-------|-------------|
+| `/architecture` | Architecture design and documentation. |
+| `/codex-brainstorm` | Adversarial brainstorming via Claude+Codex debate. |
+| `/deep-analyze` | Deep-dive analysis of an initial proposal — research code implementation, produce an actionable roadmap and alternatives |
+| `/deep-research` | Universal multi-source research orchestration. |
+| `/feasibility-study` | Feasibility analysis from first principles. |
+| `/fp-brief` | First-principles briefing from technical documents. |
+| `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
+| `/request-tracking` | Request tracking knowledge base. |
+| `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
+| `/tech-brief` | Technical briefing for developer sharing. |
+| `/tech-spec` | Tech spec generation and review. |
 
-### ドキュメント・ツール
+### ドキュメント＆ツール (22)
 
-| Skill | 説明 |
-|----------|------|
-| `/update-docs` | ドキュメントとコードの同期 |
-| `/check-coverage` | テストカバレッジ分析 |
-| `/create-request` | 要件ドキュメントの作成/更新 |
-| `/doc-refactor` | ドキュメントの簡素化 |
-| `/simplify` | コードの簡素化 |
-| `/de-ai-flavor` | AI 生成の痕跡を除去 |
-| `/generate-runner` | 任意のエコシステム向けカスタム precommit runner 生成 |
-| `/safe-remove` | プラグインアセットの安全な削除 |
-| `/pr-review` | PR セルフレビュー |
-| `/pr-summary` | PR ステータスサマリー（チケット別グループ） |
-| `/contract-decode` | EVM コントラクトエラー/calldata デコーダー |
-| `/skill-health-check` | スキル品質とルーティングの検証 |
-| `/sharingan` | 外部リポジトリを分析し同等のスキルを生成 |
-| `/statusline-config` | ステータスラインのセグメントとテーマをカスタマイズ |
-| `/claude-health` | Claude Code 設定のヘルスチェック |
-| `/op-session` | 1Password CLI セッションの初期化（繰り返しの生体認証を回避） |
-| `/obsidian-cli` | Obsidian vault 連携（公式 CLI 経由） |
-| `/zh-tw` | 繁体字中国語に書き換え |
+| Skill | Description |
+|-------|-------------|
+| `/claude-health` | Claude Code config health check + plugin sync. |
+| `/contract-decode` | EVM contract error and calldata decoder. |
+| `/create-request` | Create, update, or scan request documents. |
+| `/de-ai-flavor` | Remove AI artifacts from documents. |
+| `/doc-refactor` | Refactor documents — simplify without losing information, visualize flows with sequenceDiagram. |
+| `/generate-runner` | Generate a customized precommit runner for any ecosystem. |
+| `/obsidian-cli` | Obsidian vault integration via official CLI. |
+| `/op-session` | Initialize 1Password CLI session for Claude Code. |
+| `/portfolio` | Portfolio system knowledge base. |
+| `/pr-review` | PR self-review — review changes, produce checklist, update rules |
+| `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
+| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
+| `/refactor` | Multi-target refactoring orchestrator. |
+| `/runbook` | Generate/update feature release runbook |
+| `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |
+| `/sharingan` | Replicate knowledge from any source as sd0x-dev-flow skill definition. |
+| `/simplify` | Wrap-up refactoring — simplify code, eliminate duplication, preserve behavior |
+| `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
+| `/statusline-config` | Customize Claude Code statusline. |
+| `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
+| `/update-readme` | Regenerate README skill catalog + sync locales |
+| `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>
+<!-- END:FULL-CATALOG -->
 
 ## ルール & フック
 

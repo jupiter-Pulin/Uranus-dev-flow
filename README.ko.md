@@ -8,7 +8,9 @@
 
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
-87 skills · 15 agents — Claude context window의 ~4%만 사용
+<!-- BEGIN:HERO-COUNT -->
+91 skills · 15 agents — Claude context window의 ~4%만 사용
+<!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,8 +140,10 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (87 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (87 skills) |
+<!-- BEGIN:INSTALL-COVERAGE -->
+| 플러그인 설치 | Claude Code | 전체 (91 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (91 skills) |
+<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` skill에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
@@ -206,7 +210,9 @@ flowchart TD
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
+| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -225,131 +231,150 @@ Claude의 200k context window 중 ~4%만 사용합니다. 나머지 96%는 코�
 
 Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비하지 않습니다.
 
-## Skill 레퍼런스
+## 스킬 레퍼런스
 
-| Skill | 설명 |
-|--------|------|
-| `/project-setup` | 프로젝트 자동 감지 및 설정 |
-| `/feature-dev` | 기능 개발 워크플로 |
-| `/bug-fix` | Bug/Issue 수정 워크플로 |
-| `/codex-review-fast` | 빠른 리뷰 (diff만) |
-| `/codex-review-doc` | 문서 리뷰 |
-| `/precommit` | lint:fix → build → test |
-| `/precommit-fast` | lint:fix → test (빌드 없음) |
-| `/verify` | 전체 검증 체인 |
-| `/smart-commit` | 스마트 배치 커밋 |
-| `/push-ci` | 푸시 + CI 모니터링 |
-| `/create-pr` | GitHub PR 생성 |
+<!-- BEGIN:ESSENTIAL-SKILLS -->
+| Skill | 사용 시기 |
+|-------|----------|
+| `/project-setup` | 프로젝트 최초 설정 시 |
+| `/bug-fix` | 버그 수정 및 이슈 해결 시 |
+| `/feature-dev` | 기능을 처음부터 끝까지 구현할 때 |
+| `/smart-commit` | 스마트 그룹핑으로 커밋할 때 |
+| `/push-ci` | 코드 푸시 및 CI 모니터링 시 |
+| `/create-pr` | GitHub Pull Request 생성 시 |
+| `/codex-review-fast` | 빠른 코드 리뷰 (diff만) |
+| `/codex-review-doc` | 문서 변경 리뷰 시 |
+| `/codex-security` | OWASP Top 10 보안 감사 시 |
+| `/verify` | 전체 테스트 검증 체인 실행 시 |
+| `/precommit` | Pre-commit 품질 게이트 (lint + build + test) |
+| `/precommit-fast` | 빠른 pre-commit (lint + test, 빌드 제외) |
 | `/codex-brainstorm` | 대립형 브레인스토밍 (내시 균형) |
-| `/tech-spec` | 기술 스펙 작성 |
-| `/pr-review` | PR 셀프 리뷰 |
-| `/codex-security` | OWASP Top 10 감사 |
+| `/tech-spec` | 기술 스펙 작성 시 |
+| `/pr-review` | 머지 전 PR 셀프 리뷰 시 |
+<!-- END:ESSENTIAL-SKILLS -->
 
+<!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>전체 87개 Skill</summary>
+<summary>전체 91개 스킬</summary>
 
-### 개발
+### 개발 (31)
 
-| Skill | 설명 |
-|--------|------|
-| `/project-setup` | 프로젝트 자동 감지 및 설정 |
-| `/repo-intake` | 프로젝트 초기 스캔 (최초 1회) |
-| `/install-rules` | 플러그인 규칙을 `.claude/rules/`에 설치 |
-| `/install-hooks` | 플러그인 hooks를 `.claude/`에 설치 |
-| `/install-scripts` | 플러그인 러너 스크립트 설치 |
-| `/codex-setup` | Codex CLI 인프라 초기화 (AGENTS.md + hooks) |
-| `/bug-fix` | Bug/Issue 수정 워크플로 |
-| `/codex-implement` | Codex가 코드 작성 |
-| `/codex-architect` | 아키텍처 자문 (제3의 두뇌) |
-| `/code-explore` | 코드베이스 빠른 탐색 |
-| `/git-investigate` | 코드 변경 이력 추적 |
-| `/issue-analyze` | Issue 심층 분석 |
-| `/post-dev-test` | 개발 후 테스트 보완 |
-| `/feature-dev` | 기능 개발 워크플로 (설계 → 구현 → 검증 → 리뷰) |
-| `/feature-verify` | 시스템 진단 (읽기 전용 검증, 이중 관점 확인) |
-| `/load-pr-review` | GitHub PR 리뷰 코멘트를 세션에 로드 |
-| `/pr-comment` | GitHub PR에 친절한 리뷰 코멘트 게시 |
-| `/code-investigate` | 이중 관점 코드 조사 (Claude + Codex 독립 탐색) |
-| `/next-step` | 컨텍스트 인식 다음 단계 어드바이저 |
-| `/smart-commit` | 스마트 배치 커밋 (그룹화 + 메시지 + 명령어) |
-| `/git-profile` | Git 아이덴티티 및 GPG 서명 프로파일 관리 |
-| `/push-ci` | 푸시 (승인 필요) + CI 모니터링 |
-| `/create-pr` | 브랜치에서 GitHub PR 생성 |
-| `/merge-prep` | 병합 전 분석 및 준비 |
-| `/smart-rebase` | squash-merge 리포지토리용 스마트 부분 rebase |
-| `/deep-explore` | 멀티웨이브 병렬 코드 탐색 |
-| `/remind` | 경량 모델 교정 (규칙 재로딩) |
-| `/bump-version` | 패키지 + 플러그인 버전 동기 업데이트 |
-| `/watch-ci` | GitHub Actions CI 실행 모니터링 |
-| `/jira` | Jira 연동 (조회/브랜치 생성/상태 전환) |
+| Skill | Description |
+|-------|-------------|
+| `/bug-fix` | Bug fix workflow. |
+| `/bump-version` | Bump package and plugin version in sync. |
+| `/code-explore` | Pure Claude code investigation. |
+| `/code-investigate` | Dual-perspective code investigation. |
+| `/codex-architect` | Codex architecture consulting. |
+| `/codex-implement` | Implement features via Codex MCP. |
+| `/codex-setup` | Initialize sd0x-dev-flow infrastructure for Codex CLI and other non-Claude agents. |
+| `/create-pr` | Create or update GitHub PR with gh CLI. |
+| `/debug` | Interactive debugging workflow with hypothesis-driven probe loop. |
+| `/deep-explore` | Multi-wave parallel code exploration orchestrator. |
+| `/feature-dev` | Feature development workflow. |
+| `/feature-verify` | Feature verification (READ-ONLY, P0-P5). |
+| `/git-investigate` | Git history investigation. |
+| `/git-profile` | Git identity and GPG signing profile manager. |
+| `/install-hooks` | Install plugin hooks into project .claude/ for persistent use without plugin loaded |
+| `/install-rules` | Install plugin rules into project .claude/rules/ for persistent use without plugin loaded |
+| `/install-scripts` | Install plugin runner scripts into project .claude/scripts/ for persistent use without plugin loaded |
+| `/issue-analyze` | GitHub Issue and PR review thread deep analysis with Codex blind verdict. |
+| `/jira` | Jira integration — view issues, generate branches, create tickets, transition status. |
+| `/load-pr-review` | Load GitHub PR review comments into AI session — analyze, triage, plan. |
+| `/merge-prep` | Pre-merge analysis and preparation. |
+| `/next-step` | Change-aware next step advisor. |
+| `/post-dev-test` | Post-development test completion. |
+| `/pr-comment` | Post friendly review comments to a GitHub PR — prepare locally, preview, then submit as atomic review. |
+| `/project-setup` | Project configuration initialization. |
+| `/push-ci` | Push to remote and monitor CI. |
+| `/remind` | Lightweight model correction with context-aware rule loading. |
+| `/repo-intake` | Project initialization inventory (one-time). |
+| `/smart-commit` | Smart batch commit. |
+| `/smart-rebase` | Smart partial rebase for squash-merge repositories. |
+| `/watch-ci` | Monitor GitHub Actions CI runs until completion. |
 
-### 리뷰 (Codex MCP)
+### 리뷰 (Codex MCP) (14)
 
-| Skill | 설명 | Loop 지원 |
-|--------|------|-----------|
-| `/codex-review-fast` | 빠른 리뷰 (diff만) | `--continue <threadId>` |
-| `/codex-review` | 전체 리뷰 (lint + build) | `--continue <threadId>` |
-| `/codex-review-branch` | 브랜치 전체 리뷰 | - |
-| `/codex-cli-review` | CLI 리뷰 (전체 디스크 읽기) | - |
-| `/codex-review-doc` | 문서 리뷰 | `--continue <threadId>` |
-| `/codex-security` | OWASP Top 10 감사 | `--continue <threadId>` |
-| `/codex-test-gen` | 유닛 테스트 생성 | - |
-| `/codex-test-review` | 테스트 커버리지 리뷰 | `--continue <threadId>` |
-| `/codex-explain` | 복잡한 코드 설명 | - |
-| `/seek-verdict` | 독립 검증 (dismiss/confirm/clarify) | - |
+| Skill | Description | 루프 지원 |
+|-------|-------------|----------|
+| `/codex-cli-review` | Code review via Codex CLI with full disk access. | - |
+| `/codex-code-review` | Code review using Codex MCP. | - |
+| `/codex-explain` | Explain complex code via Codex MCP. | - |
+| `/codex-review` | Full second-opinion using Codex MCP (with lint:fix + build). | `--continue <threadId>` |
+| `/codex-review-branch` | Fully automated review of an entire feature branch using Codex MCP | - |
+| `/codex-review-doc` | Review documents using Codex MCP. | `--continue <threadId>` |
+| `/codex-review-fast` | Quick second-opinion using Codex MCP (diff only, no tests). | `--continue <threadId>` |
+| `/codex-security` | OWASP Top 10 security review using Codex MCP. | `--continue <threadId>` |
+| `/codex-test-gen` | Generate unit tests for specified functions using Codex MCP | - |
+| `/codex-test-review` | Review test case sufficiency using Codex MCP, suggest additional edge cases. | `--continue <threadId>` |
+| `/doc-review` | Document review via Codex MCP. | - |
+| `/security-review` | Security review via Codex MCP. | - |
+| `/seek-verdict` | Independent second-opinion verification for any finding. | - |
+| `/test-review` | Test coverage review via Codex MCP. | - |
 
-### 검증
+### 검증 (12)
 
-| Skill | 설명 |
-|--------|------|
-| `/verify` | lint -> typecheck -> unit -> integration -> e2e |
-| `/precommit` | lint:fix -> build -> test:unit |
-| `/precommit-fast` | lint:fix -> test:unit |
-| `/dep-audit` | 디펜던시 보안 감사 |
-| `/project-audit` | 프로젝트 헬스 감사 (결정론적 스코어링) |
-| `/best-practices` | 업계 모범 사례 감사 (적대적 토론 포함) |
-| `/risk-assess` | 미커밋 코드 리스크 평가 |
-| `/pre-pr-audit` | PR 전 신뢰도 감사 (5차원 스코어링) |
-| `/test-deep` | 컨텍스트 인식 테스트 오케스트레이션 |
+| Skill | Description |
+|-------|-------------|
+| `/best-practices` | Industry best practices conformance audit with mandatory adversarial debate. |
+| `/check-coverage` | Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable ... |
+| `/dep-audit` | Audit dependency security risks |
+| `/dev-security-audit` | Comprehensive developer workstation security audit — scans for exposed credentials, compromised application data, per... |
+| `/pre-pr-audit` | Pre-PR confidence audit with 5-dimension scoring. |
+| `/precommit` | Pre-commit checks — lint:fix -> build -> test |
+| `/precommit-fast` | Quick pre-commit checks — lint:fix -> test |
+| `/project-audit` | Project health audit with deterministic scoring. |
+| `/risk-assess` | Uncommitted code risk assessment with breaking change detection, blast radius analysis, and scope metrics. |
+| `/test-deep` | Context-aware test orchestration. |
+| `/test-health` | Holistic test coverage measurement. |
+| `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 기획
+### 기획 (12)
 
-| Skill | 설명 |
-|--------|------|
-| `/codex-brainstorm` | 대립형 브레인스토밍 (내시 균형) |
-| `/feasibility-study` | 타당성 분석 |
-| `/tech-spec` | 기술 스펙 작성 |
-| `/review-spec` | 기술 스펙 리뷰 |
-| `/deep-analyze` | 심층 분석 + 로드맵 |
-| `/architecture` | 아키텍처 설계 + 3-architecture.md |
-| `/project-brief` | PM/CTO용 요약 보고서 |
-| `/deep-research` | 멀티 에이전트 심층 리서치 오케스트레이션 |
-| `/fp-brief` | 기술 문서 첫 원칙 브리핑 |
+| Skill | Description |
+|-------|-------------|
+| `/architecture` | Architecture design and documentation. |
+| `/codex-brainstorm` | Adversarial brainstorming via Claude+Codex debate. |
+| `/deep-analyze` | Deep-dive analysis of an initial proposal — research code implementation, produce an actionable roadmap and alternatives |
+| `/deep-research` | Universal multi-source research orchestration. |
+| `/feasibility-study` | Feasibility analysis from first principles. |
+| `/fp-brief` | First-principles briefing from technical documents. |
+| `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
+| `/request-tracking` | Request tracking knowledge base. |
+| `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
+| `/tech-brief` | Technical briefing for developer sharing. |
+| `/tech-spec` | Tech spec generation and review. |
 
-### 문서 & 도구
+### 문서 및 도구 (22)
 
-| Skill | 설명 |
-|--------|------|
-| `/update-docs` | 문서-코드 동기화 |
-| `/check-coverage` | 테스트 커버리지 분석 |
-| `/create-request` | 요구사항 문서 생성/업데이트 |
-| `/doc-refactor` | 문서 간소화 |
-| `/simplify` | 코드 간소화 |
-| `/de-ai-flavor` | AI 생성 흔적 제거 |
-| `/generate-runner` | 모든 에코시스템을 위한 맞춤형 precommit runner 생성 |
-| `/safe-remove` | 플러그인 에셋 안전 제거 |
-| `/pr-review` | PR 셀프 리뷰 |
-| `/pr-summary` | PR 상태 요약 (티켓별 그룹) |
-| `/contract-decode` | EVM 컨트랙트 에러/calldata 디코더 |
-| `/skill-health-check` | 스킬 품질 및 라우팅 검증 |
-| `/sharingan` | 외부 리포지토리 분석 및 동등한 스킬 생성 |
-| `/statusline-config` | 상태 표시줄 세그먼트 및 테마 커스터마이즈 |
-| `/claude-health` | Claude Code 설정 상태 점검 |
-| `/op-session` | 1Password CLI 세션 초기화 (반복 생체 인증 방지) |
-| `/obsidian-cli` | Obsidian vault 연동 (공식 CLI 경유) |
-| `/zh-tw` | 번체 중국어로 변환 |
+| Skill | Description |
+|-------|-------------|
+| `/claude-health` | Claude Code config health check + plugin sync. |
+| `/contract-decode` | EVM contract error and calldata decoder. |
+| `/create-request` | Create, update, or scan request documents. |
+| `/de-ai-flavor` | Remove AI artifacts from documents. |
+| `/doc-refactor` | Refactor documents — simplify without losing information, visualize flows with sequenceDiagram. |
+| `/generate-runner` | Generate a customized precommit runner for any ecosystem. |
+| `/obsidian-cli` | Obsidian vault integration via official CLI. |
+| `/op-session` | Initialize 1Password CLI session for Claude Code. |
+| `/portfolio` | Portfolio system knowledge base. |
+| `/pr-review` | PR self-review — review changes, produce checklist, update rules |
+| `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
+| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
+| `/refactor` | Multi-target refactoring orchestrator. |
+| `/runbook` | Generate/update feature release runbook |
+| `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |
+| `/sharingan` | Replicate knowledge from any source as sd0x-dev-flow skill definition. |
+| `/simplify` | Wrap-up refactoring — simplify code, eliminate duplication, preserve behavior |
+| `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
+| `/statusline-config` | Customize Claude Code statusline. |
+| `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
+| `/update-readme` | Regenerate README skill catalog + sync locales |
+| `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>
+<!-- END:FULL-CATALOG -->
 
 ## 규칙 & Hook
 

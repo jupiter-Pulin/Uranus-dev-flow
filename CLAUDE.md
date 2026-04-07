@@ -98,6 +98,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/update-docs` | Sync docs with code | Doc changes |
 | `/doc-refactor` | Simplify documents | Doc changes |
 | `/runbook` | Generate/update feature release runbook | Operations |
+| `/update-readme` | Regenerate README skill catalog + sync locales | Doc changes |
 | `/create-request` | Create/update request docs | Planning |
 | `/safe-remove` | Safely remove plugin assets | Tooling |
 | `/refactor` | Multi-target refactoring orchestrator | Refactoring |

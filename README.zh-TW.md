@@ -8,7 +8,9 @@
 
 **AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
-87 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+<!-- BEGIN:HERO-COUNT -->
+91 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+<!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,8 +140,10 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（87 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（87 skills） |
+<!-- BEGIN:INSTALL-COVERAGE -->
+| Plugin 安裝 | Claude Code | 完整（91 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（91 skills） |
+<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **需求**：Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（選用 — `/codex-*` skill 需要；未安裝時退回單 reviewer 模式）
@@ -206,7 +210,9 @@ flowchart TD
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
+| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -225,131 +231,150 @@ flowchart TD
 
 Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
-## Skill 參考
+## 技能參考
 
-| Skill | 說明 |
-|------|------|
-| `/project-setup` | 自動偵測並設定專案 |
-| `/feature-dev` | 功能開發流程 |
-| `/bug-fix` | Bug/Issue 修正 workflow |
-| `/codex-review-fast` | 快速 review（僅 diff） |
-| `/codex-review-doc` | 文件 review |
-| `/precommit` | lint:fix → build → test |
-| `/precommit-fast` | lint:fix → test（跳過 build） |
-| `/verify` | 完整驗證鏈 |
-| `/smart-commit` | 智慧批次 commit |
-| `/push-ci` | 推送 + CI 監控 |
-| `/create-pr` | 建立 GitHub PR |
+<!-- BEGIN:ESSENTIAL-SKILLS -->
+| Skill | 使用時機 |
+|-------|----------|
+| `/project-setup` | 首次設定專案 |
+| `/bug-fix` | 修正 bug 與解決問題 |
+| `/feature-dev` | 端到端實作新功能 |
+| `/smart-commit` | 智慧分組提交變更 |
+| `/push-ci` | 推送程式碼並監控 CI |
+| `/create-pr` | 建立 GitHub pull request |
+| `/codex-review-fast` | 快速 code review（僅 diff） |
+| `/codex-review-doc` | 審查文件變更 |
+| `/codex-security` | OWASP Top 10 安全稽核 |
+| `/verify` | 執行完整測試驗證鏈 |
+| `/precommit` | Pre-commit 品質關卡（lint + build + test） |
+| `/precommit-fast` | 快速 pre-commit（lint + test，跳過 build） |
 | `/codex-brainstorm` | 對抗式 brainstorming（Nash 均衡） |
-| `/tech-spec` | 產生 tech spec |
-| `/pr-review` | PR self-review |
-| `/codex-security` | OWASP Top 10 audit |
+| `/tech-spec` | 撰寫技術規格 |
+| `/pr-review` | 合併前 PR self-review |
+<!-- END:ESSENTIAL-SKILLS -->
 
+<!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>全部 87 個 Skill</summary>
+<summary>所有 91 個技能</summary>
 
-### 開發
+### 開發 (31)
 
-| Skill | 說明 |
-|------|------|
-| `/project-setup` | 自動偵測並設定專案 |
-| `/repo-intake` | 一次性專案盤點掃描 |
-| `/install-rules` | 安裝 plugin 規則到 `.claude/rules/` |
-| `/install-hooks` | 安裝 plugin hooks 到 `.claude/` |
-| `/install-scripts` | 安裝 plugin runner 腳本 |
-| `/codex-setup` | 初始化 Codex CLI 基建（AGENTS.md + hooks） |
-| `/bug-fix` | Bug/Issue 修正 workflow |
-| `/codex-implement` | Codex 寫 code |
-| `/codex-architect` | 架構建議（第三大腦） |
-| `/code-explore` | 快速 codebase 探索 |
-| `/git-investigate` | 追蹤 code 歷史 |
-| `/issue-analyze` | 深度 Issue 分析 |
-| `/post-dev-test` | 開發後測試補全 |
-| `/feature-dev` | 功能開發流程（設計 → 實作 → 驗證 → Review） |
-| `/feature-verify` | 系統診斷（唯讀驗證，雙視角確認） |
-| `/load-pr-review` | 載入 GitHub PR review 評論至 session |
-| `/pr-comment` | 在 GitHub PR 上發佈友善的 review 評論 |
-| `/code-investigate` | 雙視角程式碼調查（Claude + Codex 獨立探索） |
-| `/next-step` | 情境感知的下一步建議 |
-| `/smart-commit` | 智慧批次 commit（分組 + 訊息 + 指令） |
-| `/git-profile` | Git 身份與 GPG 簽名 profile 管理 |
-| `/push-ci` | 推送（需核准）+ CI 監控 |
-| `/create-pr` | 從 branch 建立 GitHub PR |
-| `/merge-prep` | 合併前分析與準備 |
-| `/smart-rebase` | 智慧局部 rebase（squash-merge 倉庫適用） |
-| `/deep-explore` | 多波段平行程式碼探索 |
-| `/remind` | 輕量模型修正（載入規則） |
-| `/bump-version` | 同步升級套件與 plugin 版本 |
-| `/watch-ci` | 監控 GitHub Actions CI 執行 |
-| `/jira` | Jira 整合（查看/建立分支/轉換狀態） |
+| Skill | Description |
+|-------|-------------|
+| `/bug-fix` | Bug fix workflow. |
+| `/bump-version` | Bump package and plugin version in sync. |
+| `/code-explore` | Pure Claude code investigation. |
+| `/code-investigate` | Dual-perspective code investigation. |
+| `/codex-architect` | Codex architecture consulting. |
+| `/codex-implement` | Implement features via Codex MCP. |
+| `/codex-setup` | Initialize sd0x-dev-flow infrastructure for Codex CLI and other non-Claude agents. |
+| `/create-pr` | Create or update GitHub PR with gh CLI. |
+| `/debug` | Interactive debugging workflow with hypothesis-driven probe loop. |
+| `/deep-explore` | Multi-wave parallel code exploration orchestrator. |
+| `/feature-dev` | Feature development workflow. |
+| `/feature-verify` | Feature verification (READ-ONLY, P0-P5). |
+| `/git-investigate` | Git history investigation. |
+| `/git-profile` | Git identity and GPG signing profile manager. |
+| `/install-hooks` | Install plugin hooks into project .claude/ for persistent use without plugin loaded |
+| `/install-rules` | Install plugin rules into project .claude/rules/ for persistent use without plugin loaded |
+| `/install-scripts` | Install plugin runner scripts into project .claude/scripts/ for persistent use without plugin loaded |
+| `/issue-analyze` | GitHub Issue and PR review thread deep analysis with Codex blind verdict. |
+| `/jira` | Jira integration — view issues, generate branches, create tickets, transition status. |
+| `/load-pr-review` | Load GitHub PR review comments into AI session — analyze, triage, plan. |
+| `/merge-prep` | Pre-merge analysis and preparation. |
+| `/next-step` | Change-aware next step advisor. |
+| `/post-dev-test` | Post-development test completion. |
+| `/pr-comment` | Post friendly review comments to a GitHub PR — prepare locally, preview, then submit as atomic review. |
+| `/project-setup` | Project configuration initialization. |
+| `/push-ci` | Push to remote and monitor CI. |
+| `/remind` | Lightweight model correction with context-aware rule loading. |
+| `/repo-intake` | Project initialization inventory (one-time). |
+| `/smart-commit` | Smart batch commit. |
+| `/smart-rebase` | Smart partial rebase for squash-merge repositories. |
+| `/watch-ci` | Monitor GitHub Actions CI runs until completion. |
 
-### Review（Codex MCP）
+### 審查 (Codex MCP) (14)
 
-| Skill | 說明 | Loop 支援 |
-|------|------|-----------|
-| `/codex-review-fast` | 快速 review（僅 diff） | `--continue <threadId>` |
-| `/codex-review` | 完整 review（lint + build） | `--continue <threadId>` |
-| `/codex-review-branch` | 完整 branch review | - |
-| `/codex-cli-review` | CLI review（完整磁碟讀取） | - |
-| `/codex-review-doc` | 文件 review | `--continue <threadId>` |
-| `/codex-security` | OWASP Top 10 audit | `--continue <threadId>` |
-| `/codex-test-gen` | 產生 unit test | - |
-| `/codex-test-review` | Review test coverage | `--continue <threadId>` |
-| `/codex-explain` | 解釋複雜 code | - |
-| `/seek-verdict` | 獨立發現驗證（dismiss/confirm/clarify） | - |
+| Skill | Description | 循環支援 |
+|-------|-------------|----------|
+| `/codex-cli-review` | Code review via Codex CLI with full disk access. | - |
+| `/codex-code-review` | Code review using Codex MCP. | - |
+| `/codex-explain` | Explain complex code via Codex MCP. | - |
+| `/codex-review` | Full second-opinion using Codex MCP (with lint:fix + build). | `--continue <threadId>` |
+| `/codex-review-branch` | Fully automated review of an entire feature branch using Codex MCP | - |
+| `/codex-review-doc` | Review documents using Codex MCP. | `--continue <threadId>` |
+| `/codex-review-fast` | Quick second-opinion using Codex MCP (diff only, no tests). | `--continue <threadId>` |
+| `/codex-security` | OWASP Top 10 security review using Codex MCP. | `--continue <threadId>` |
+| `/codex-test-gen` | Generate unit tests for specified functions using Codex MCP | - |
+| `/codex-test-review` | Review test case sufficiency using Codex MCP, suggest additional edge cases. | `--continue <threadId>` |
+| `/doc-review` | Document review via Codex MCP. | - |
+| `/security-review` | Security review via Codex MCP. | - |
+| `/seek-verdict` | Independent second-opinion verification for any finding. | - |
+| `/test-review` | Test coverage review via Codex MCP. | - |
 
-### 驗證
+### 驗證 (12)
 
-| Skill | 說明 |
-|------|------|
-| `/verify` | lint -> typecheck -> unit -> integration -> e2e |
-| `/precommit` | lint:fix -> build -> test:unit |
-| `/precommit-fast` | lint:fix -> test:unit |
-| `/dep-audit` | 依賴套件安全稽核 |
-| `/project-audit` | 專案健康審計（確定性評分） |
-| `/best-practices` | 業界最佳實踐審計（含對抗式辯論） |
-| `/risk-assess` | 未提交程式碼風險評估 |
-| `/pre-pr-audit` | PR 前信心審計（5 維度評分） |
-| `/test-deep` | 情境感知測試編排 |
+| Skill | Description |
+|-------|-------------|
+| `/best-practices` | Industry best practices conformance audit with mandatory adversarial debate. |
+| `/check-coverage` | Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable ... |
+| `/dep-audit` | Audit dependency security risks |
+| `/dev-security-audit` | Comprehensive developer workstation security audit — scans for exposed credentials, compromised application data, per... |
+| `/pre-pr-audit` | Pre-PR confidence audit with 5-dimension scoring. |
+| `/precommit` | Pre-commit checks — lint:fix -> build -> test |
+| `/precommit-fast` | Quick pre-commit checks — lint:fix -> test |
+| `/project-audit` | Project health audit with deterministic scoring. |
+| `/risk-assess` | Uncommitted code risk assessment with breaking change detection, blast radius analysis, and scope metrics. |
+| `/test-deep` | Context-aware test orchestration. |
+| `/test-health` | Holistic test coverage measurement. |
+| `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 規劃
+### 規劃 (12)
 
-| Skill | 說明 |
-|------|------|
-| `/codex-brainstorm` | 對抗式 brainstorming（Nash 均衡） |
-| `/feasibility-study` | 可行性分析 |
-| `/tech-spec` | 產生 tech spec |
-| `/review-spec` | Review tech spec |
-| `/deep-analyze` | 深度分析 + roadmap |
-| `/architecture` | 架構設計 + 3-architecture.md |
-| `/project-brief` | PM/CTO 執行摘要 |
-| `/deep-research` | 多 agent 深度研究編排 |
-| `/fp-brief` | 技術文件第一原理簡報 |
+| Skill | Description |
+|-------|-------------|
+| `/architecture` | Architecture design and documentation. |
+| `/codex-brainstorm` | Adversarial brainstorming via Claude+Codex debate. |
+| `/deep-analyze` | Deep-dive analysis of an initial proposal — research code implementation, produce an actionable roadmap and alternatives |
+| `/deep-research` | Universal multi-source research orchestration. |
+| `/feasibility-study` | Feasibility analysis from first principles. |
+| `/fp-brief` | First-principles briefing from technical documents. |
+| `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
+| `/request-tracking` | Request tracking knowledge base. |
+| `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
+| `/tech-brief` | Technical briefing for developer sharing. |
+| `/tech-spec` | Tech spec generation and review. |
 
-### 文件與工具
+### 文件與工具 (22)
 
-| Skill | 說明 |
-|------|------|
-| `/update-docs` | 同步文件與 code |
-| `/check-coverage` | Test coverage 分析 |
-| `/create-request` | 建立/更新需求文件 |
-| `/doc-refactor` | 簡化文件 |
-| `/simplify` | Code 簡化 |
-| `/de-ai-flavor` | 移除 AI 痕跡 |
-| `/generate-runner` | 為任何生態系產生自訂 precommit runner |
-| `/safe-remove` | 安全移除 plugin 資產 |
-| `/pr-review` | PR self-review |
-| `/pr-summary` | PR 狀態摘要（依 ticket 分組） |
-| `/contract-decode` | EVM 合約錯誤/calldata 解碼器 |
-| `/skill-health-check` | 驗證 Skill 品質與 routing |
-| `/sharingan` | 分析外部 repo 並產生等效 skill |
-| `/statusline-config` | 自訂 statusline 區段與主題 |
-| `/claude-health` | Claude Code 設定健康檢查 |
-| `/op-session` | 初始化 1Password CLI session（避免重複生物辨識提示） |
-| `/obsidian-cli` | Obsidian vault 整合（透過官方 CLI） |
-| `/zh-tw` | 以繁體中文改寫 |
+| Skill | Description |
+|-------|-------------|
+| `/claude-health` | Claude Code config health check + plugin sync. |
+| `/contract-decode` | EVM contract error and calldata decoder. |
+| `/create-request` | Create, update, or scan request documents. |
+| `/de-ai-flavor` | Remove AI artifacts from documents. |
+| `/doc-refactor` | Refactor documents — simplify without losing information, visualize flows with sequenceDiagram. |
+| `/generate-runner` | Generate a customized precommit runner for any ecosystem. |
+| `/obsidian-cli` | Obsidian vault integration via official CLI. |
+| `/op-session` | Initialize 1Password CLI session for Claude Code. |
+| `/portfolio` | Portfolio system knowledge base. |
+| `/pr-review` | PR self-review — review changes, produce checklist, update rules |
+| `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
+| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
+| `/refactor` | Multi-target refactoring orchestrator. |
+| `/runbook` | Generate/update feature release runbook |
+| `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |
+| `/sharingan` | Replicate knowledge from any source as sd0x-dev-flow skill definition. |
+| `/simplify` | Wrap-up refactoring — simplify code, eliminate duplication, preserve behavior |
+| `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
+| `/statusline-config` | Customize Claude Code statusline. |
+| `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
+| `/update-readme` | Regenerate README skill catalog + sync locales |
+| `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>
+<!-- END:FULL-CATALOG -->
 
 ## Rules & Hooks
 

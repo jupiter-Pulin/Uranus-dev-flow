@@ -8,7 +8,9 @@
 
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
-87 skills · 15 agents — ~4% of Claude's context window
+<!-- BEGIN:HERO-COUNT -->
+91 skills · 15 agents — ~4% of Claude's context window
+<!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
 
@@ -138,8 +140,10 @@ npx skills add sd0xdev/sd0x-dev-flow
 
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (87 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (87 skills) |
+<!-- BEGIN:INSTALL-COVERAGE -->
+| Plugin install | Claude Code | Full (91 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (91 skills) |
+<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` skills require it; without it, review falls back to single-reviewer mode)
@@ -206,7 +210,9 @@ flowchart TD
 
 | Category | Count | Examples |
 |----------|-------|---------|
-| Skills | 87 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
+| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -227,129 +233,148 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 ## Skill Reference
 
-| Skill | Description |
-|-------|-------------|
-| `/project-setup` | Auto-detect and configure project |
-| `/feature-dev` | Feature development workflow |
-| `/bug-fix` | Bug/Issue fix workflow |
-| `/codex-review-fast` | Quick review (diff only) |
-| `/codex-review-doc` | Document review |
-| `/precommit` | lint:fix → build → test |
-| `/precommit-fast` | lint:fix → test (no build) |
-| `/verify` | Full verification chain |
-| `/smart-commit` | Smart batch commit |
-| `/push-ci` | Push + CI monitor |
-| `/create-pr` | Create GitHub PR |
-| `/codex-brainstorm` | Adversarial brainstorm (Nash equilibrium) |
-| `/tech-spec` | Generate tech spec |
-| `/pr-review` | PR self-review |
-| `/codex-security` | OWASP Top 10 audit |
+<!-- BEGIN:ESSENTIAL-SKILLS -->
+| Skill | Use when |
+|-------|----------|
+| `/project-setup` | First-time project configuration |
+| `/bug-fix` | Fixing bugs and resolving issues |
+| `/feature-dev` | Implementing new features end-to-end |
+| `/smart-commit` | Committing changes with smart grouping |
+| `/push-ci` | Pushing code and monitoring CI |
+| `/create-pr` | Creating GitHub pull requests |
+| `/codex-review-fast` | Quick code review (diff only) |
+| `/codex-review-doc` | Reviewing documentation changes |
+| `/codex-security` | OWASP Top 10 security audit |
+| `/verify` | Running full test verification chain |
+| `/precommit` | Pre-commit quality gate (lint + build + test) |
+| `/precommit-fast` | Quick pre-commit (lint + test, no build) |
+| `/codex-brainstorm` | Adversarial brainstorming (Nash equilibrium) |
+| `/tech-spec` | Writing technical specifications |
+| `/pr-review` | PR self-review before merge |
+<!-- END:ESSENTIAL-SKILLS -->
 
+<!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>All 87 skills</summary>
+<summary>All 91 skills</summary>
 
-### Development
+### Development (31)
 
 | Skill | Description |
 |-------|-------------|
-| `/project-setup` | Auto-detect and configure project |
-| `/repo-intake` | One-time project intake scan |
-| `/install-rules` | Install plugin rules to `.claude/rules/` |
-| `/install-hooks` | Install plugin hooks to `.claude/` |
-| `/install-scripts` | Install plugin runner scripts |
-| `/codex-setup` | Initialize Codex CLI infrastructure (AGENTS.md + hooks) |
-| `/bug-fix` | Bug/Issue fix workflow |
-| `/codex-implement` | Codex writes code |
-| `/codex-architect` | Architecture advice (third brain) |
-| `/code-explore` | Fast codebase exploration |
-| `/git-investigate` | Track code history |
-| `/issue-analyze` | Deep issue analysis |
-| `/post-dev-test` | Post-dev test completion |
-| `/feature-dev` | Feature development workflow (design → implement → verify → review) |
-| `/feature-verify` | System diagnosis (read-only verification with dual-perspective) |
-| `/load-pr-review` | Load GitHub PR review comments into session |
-| `/pr-comment` | Post friendly review comments to a GitHub PR |
-| `/code-investigate` | Dual-perspective code investigation (Claude + Codex independent) |
-| `/next-step` | Context-aware next step advisor |
-| `/smart-commit` | Smart batch commit (group + message + commands) |
-| `/git-profile` | Git identity and GPG signing profile manager |
-| `/push-ci` | Push (with approval) + CI monitor |
-| `/create-pr` | Create GitHub PR from branch |
-| `/merge-prep` | Pre-merge analysis and preparation |
-| `/smart-rebase` | Smart partial rebase for squash-merge repos |
-| `/deep-explore` | Multi-wave parallel code exploration |
-| `/remind` | Lightweight model correction with rule loading |
-| `/bump-version` | Bump package + plugin version in sync |
-| `/watch-ci` | Monitor GitHub Actions CI runs |
-| `/jira` | Jira integration (view/branch/transition) |
+| `/bug-fix` | Bug fix workflow. |
+| `/bump-version` | Bump package and plugin version in sync. |
+| `/code-explore` | Pure Claude code investigation. |
+| `/code-investigate` | Dual-perspective code investigation. |
+| `/codex-architect` | Codex architecture consulting. |
+| `/codex-implement` | Implement features via Codex MCP. |
+| `/codex-setup` | Initialize sd0x-dev-flow infrastructure for Codex CLI and other non-Claude agents. |
+| `/create-pr` | Create or update GitHub PR with gh CLI. |
+| `/debug` | Interactive debugging workflow with hypothesis-driven probe loop. |
+| `/deep-explore` | Multi-wave parallel code exploration orchestrator. |
+| `/feature-dev` | Feature development workflow. |
+| `/feature-verify` | Feature verification (READ-ONLY, P0-P5). |
+| `/git-investigate` | Git history investigation. |
+| `/git-profile` | Git identity and GPG signing profile manager. |
+| `/install-hooks` | Install plugin hooks into project .claude/ for persistent use without plugin loaded |
+| `/install-rules` | Install plugin rules into project .claude/rules/ for persistent use without plugin loaded |
+| `/install-scripts` | Install plugin runner scripts into project .claude/scripts/ for persistent use without plugin loaded |
+| `/issue-analyze` | GitHub Issue and PR review thread deep analysis with Codex blind verdict. |
+| `/jira` | Jira integration — view issues, generate branches, create tickets, transition status. |
+| `/load-pr-review` | Load GitHub PR review comments into AI session — analyze, triage, plan. |
+| `/merge-prep` | Pre-merge analysis and preparation. |
+| `/next-step` | Change-aware next step advisor. |
+| `/post-dev-test` | Post-development test completion. |
+| `/pr-comment` | Post friendly review comments to a GitHub PR — prepare locally, preview, then submit as atomic review. |
+| `/project-setup` | Project configuration initialization. |
+| `/push-ci` | Push to remote and monitor CI. |
+| `/remind` | Lightweight model correction with context-aware rule loading. |
+| `/repo-intake` | Project initialization inventory (one-time). |
+| `/smart-commit` | Smart batch commit. |
+| `/smart-rebase` | Smart partial rebase for squash-merge repositories. |
+| `/watch-ci` | Monitor GitHub Actions CI runs until completion. |
 
-### Review (Codex MCP)
+### Review (Codex MCP) (14)
 
 | Skill | Description | Loop Support |
 |-------|-------------|--------------|
-| `/codex-review-fast` | Quick review (diff only) | `--continue <threadId>` |
-| `/codex-review` | Full review (lint + build) | `--continue <threadId>` |
-| `/codex-review-branch` | Full branch review | - |
-| `/codex-cli-review` | CLI review (full disk read) | - |
-| `/codex-review-doc` | Document review | `--continue <threadId>` |
-| `/codex-security` | OWASP Top 10 audit | `--continue <threadId>` |
-| `/codex-test-gen` | Generate unit tests | - |
-| `/codex-test-review` | Review test coverage | `--continue <threadId>` |
-| `/codex-explain` | Explain complex code | - |
-| `/seek-verdict` | Independent finding verification (dismiss/confirm/clarify) | - |
+| `/codex-cli-review` | Code review via Codex CLI with full disk access. | - |
+| `/codex-code-review` | Code review using Codex MCP. | - |
+| `/codex-explain` | Explain complex code via Codex MCP. | - |
+| `/codex-review` | Full second-opinion using Codex MCP (with lint:fix + build). | `--continue <threadId>` |
+| `/codex-review-branch` | Fully automated review of an entire feature branch using Codex MCP | - |
+| `/codex-review-doc` | Review documents using Codex MCP. | `--continue <threadId>` |
+| `/codex-review-fast` | Quick second-opinion using Codex MCP (diff only, no tests). | `--continue <threadId>` |
+| `/codex-security` | OWASP Top 10 security review using Codex MCP. | `--continue <threadId>` |
+| `/codex-test-gen` | Generate unit tests for specified functions using Codex MCP | - |
+| `/codex-test-review` | Review test case sufficiency using Codex MCP, suggest additional edge cases. | `--continue <threadId>` |
+| `/doc-review` | Document review via Codex MCP. | - |
+| `/security-review` | Security review via Codex MCP. | - |
+| `/seek-verdict` | Independent second-opinion verification for any finding. | - |
+| `/test-review` | Test coverage review via Codex MCP. | - |
 
-### Verification
-
-| Skill | Description |
-|-------|-------------|
-| `/verify` | lint -> typecheck -> unit -> integration -> e2e |
-| `/precommit` | lint:fix -> build -> test:unit |
-| `/precommit-fast` | lint:fix -> test:unit |
-| `/dep-audit` | Dependency security audit |
-| `/project-audit` | Project health audit (deterministic scoring) |
-| `/best-practices` | Industry best practices audit with adversarial debate |
-| `/risk-assess` | Uncommitted code risk assessment |
-| `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) |
-| `/test-deep` | Context-aware test orchestration |
-
-### Planning
+### Verification (12)
 
 | Skill | Description |
 |-------|-------------|
-| `/codex-brainstorm` | Adversarial brainstorm (Nash equilibrium) |
-| `/feasibility-study` | Feasibility analysis |
-| `/tech-spec` | Generate tech spec |
-| `/review-spec` | Review tech spec |
-| `/deep-analyze` | Deep analysis + roadmap |
-| `/architecture` | Architecture design + 3-architecture.md |
-| `/project-brief` | PM/CTO executive summary |
-| `/deep-research` | Multi-agent deep research orchestration |
-| `/fp-brief` | First-principles briefing from technical documents |
+| `/best-practices` | Industry best practices conformance audit with mandatory adversarial debate. |
+| `/check-coverage` | Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable ... |
+| `/dep-audit` | Audit dependency security risks |
+| `/dev-security-audit` | Comprehensive developer workstation security audit — scans for exposed credentials, compromised application data, per... |
+| `/pre-pr-audit` | Pre-PR confidence audit with 5-dimension scoring. |
+| `/precommit` | Pre-commit checks — lint:fix -> build -> test |
+| `/precommit-fast` | Quick pre-commit checks — lint:fix -> test |
+| `/project-audit` | Project health audit with deterministic scoring. |
+| `/risk-assess` | Uncommitted code risk assessment with breaking change detection, blast radius analysis, and scope metrics. |
+| `/test-deep` | Context-aware test orchestration. |
+| `/test-health` | Holistic test coverage measurement. |
+| `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### Documentation & Tooling
+### Planning (12)
 
 | Skill | Description |
 |-------|-------------|
-| `/update-docs` | Sync docs with code |
-| `/check-coverage` | Test coverage analysis |
-| `/create-request` | Create/update request docs |
-| `/doc-refactor` | Simplify documents |
-| `/simplify` | Code simplification |
-| `/de-ai-flavor` | Remove AI-generated artifacts from documents |
-| `/generate-runner` | Generate customized precommit runner for any ecosystem |
-| `/safe-remove` | Safely remove plugin assets |
-| `/pr-review` | PR self-review |
-| `/pr-summary` | PR status summary (grouped by ticket) |
-| `/contract-decode` | EVM contract error/calldata decoder |
-| `/skill-health-check` | Validate skill quality and routing |
-| `/sharingan` | Analyze external repos and generate equivalent skills |
-| `/statusline-config` | Customize statusline segments and themes |
-| `/claude-health` | Claude Code config health check |
-| `/op-session` | Initialize 1Password CLI session (avoids repeated biometric prompts) |
-| `/obsidian-cli` | Obsidian vault integration via official CLI |
-| `/zh-tw` | Rewrite in Traditional Chinese |
+| `/architecture` | Architecture design and documentation. |
+| `/codex-brainstorm` | Adversarial brainstorming via Claude+Codex debate. |
+| `/deep-analyze` | Deep-dive analysis of an initial proposal — research code implementation, produce an actionable roadmap and alternatives |
+| `/deep-research` | Universal multi-source research orchestration. |
+| `/feasibility-study` | Feasibility analysis from first principles. |
+| `/fp-brief` | First-principles briefing from technical documents. |
+| `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
+| `/request-tracking` | Request tracking knowledge base. |
+| `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
+| `/tech-brief` | Technical briefing for developer sharing. |
+| `/tech-spec` | Tech spec generation and review. |
+
+### Documentation & Tooling (22)
+
+| Skill | Description |
+|-------|-------------|
+| `/claude-health` | Claude Code config health check + plugin sync. |
+| `/contract-decode` | EVM contract error and calldata decoder. |
+| `/create-request` | Create, update, or scan request documents. |
+| `/de-ai-flavor` | Remove AI artifacts from documents. |
+| `/doc-refactor` | Refactor documents — simplify without losing information, visualize flows with sequenceDiagram. |
+| `/generate-runner` | Generate a customized precommit runner for any ecosystem. |
+| `/obsidian-cli` | Obsidian vault integration via official CLI. |
+| `/op-session` | Initialize 1Password CLI session for Claude Code. |
+| `/portfolio` | Portfolio system knowledge base. |
+| `/pr-review` | PR self-review — review changes, produce checklist, update rules |
+| `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
+| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
+| `/refactor` | Multi-target refactoring orchestrator. |
+| `/runbook` | Generate/update feature release runbook |
+| `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |
+| `/sharingan` | Replicate knowledge from any source as sd0x-dev-flow skill definition. |
+| `/simplify` | Wrap-up refactoring — simplify code, eliminate duplication, preserve behavior |
+| `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
+| `/statusline-config` | Customize Claude Code statusline. |
+| `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
+| `/update-readme` | Regenerate README skill catalog + sync locales |
+| `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>
+<!-- END:FULL-CATALOG -->
 
 ## Rules & Hooks
 
