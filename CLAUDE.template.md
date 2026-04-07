@@ -145,12 +145,14 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/generate-runner` | Generate customized precommit runner | Tooling |
 | `/update-docs` | Sync docs with code | Doc changes |
 | `/doc-refactor` | Simplify documents | Doc changes |
+| `/runbook` | Generate/update feature release runbook | Operations |
 | `/create-request` | Create/update request docs | Planning |
 | `/safe-remove` | Safely remove plugin assets | Tooling |
 | `/refactor` | Multi-target refactoring orchestrator | Refactoring |
 | `/simplify` | Code simplification | Refactoring |
 | `/de-ai-flavor` | Remove AI artifacts | Doc changes |
 | `/zh-tw` | Rewrite in Traditional Chinese | i18n |
+| `/readme-i18n-sync` | Sync multilingual README translations | i18n |
 | `/install-rules` | Install plugin rules to .claude/rules/ | Onboarding |
 | `/install-hooks` | Install plugin hooks to .claude/ | Onboarding |
 | `/install-scripts` | Install plugin scripts to .claude/scripts/ | Onboarding |
