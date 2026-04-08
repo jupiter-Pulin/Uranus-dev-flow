@@ -63,6 +63,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/feature-verify` | Feature verification (READ-ONLY) | Development |
 | `/load-pr-review` | Load PR review comments into session | Development |
 | `/pr-comment` | Post review comments to PR | Development |
+| `/ask` | Context-aware Q&A with auto context gathering | Understanding |
 | `/deep-explore` | Multi-wave parallel code exploration | Understanding |
 | `/deep-research` | Universal multi-source research orchestration | Understanding |
 | `/code-explore` | Code exploration | Understanding |

@@ -9,7 +9,7 @@
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
 <!-- BEGIN:HERO-COUNT -->
-89 skills · 15 agents — ~4% of Claude's context window
+90 skills · 15 agents — ~4% of Claude's context window
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (89 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (89 skills) |
+| Plugin install | Claude Code | Full (90 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (90 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -226,7 +226,7 @@ Real-world scenarios showing which skills to combine and in what order.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Category | Count | Examples |
 |----------|-------|---------|
-| Skills | 89 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -270,12 +270,13 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>All 89 skills</summary>
+<summary>All 90 skills</summary>
 
-### Development (31)
+### Development (32)
 
 | Skill | Description |
 |-------|-------------|
+| `/ask` | Context-aware Q&A with auto context gathering. |
 | `/bug-fix` | Bug fix workflow. |
 | `/bump-version` | Bump package and plugin version in sync. |
 | `/code-explore` | Pure Claude code investigation. |
