@@ -9,7 +9,7 @@
 **Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — ~4% of Claude's context window
+89 skills · 15 agents — ~4% of Claude's context window
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (90 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (90 skills) |
+| Plugin install | Claude Code | Full (89 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (89 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -226,7 +226,7 @@ Real-world scenarios showing which skills to combine and in what order.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Category | Count | Examples |
 |----------|-------|---------|
-| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 89 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -270,7 +270,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>All 90 skills</summary>
+<summary>All 89 skills</summary>
 
 ### Development (31)
 
@@ -361,7 +361,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### Documentation & Tooling (21)
+### Documentation & Tooling (20)
 
 | Skill | Description |
 |-------|-------------|
@@ -384,7 +384,6 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
 | `/statusline-config` | Customize Claude Code statusline. |
 | `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
-| `/update-readme` | Regenerate README skill catalog + sync locales |
 | `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>

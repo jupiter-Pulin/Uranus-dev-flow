@@ -9,7 +9,7 @@
 **AI 跳不过的质量关卡。** 具备 hook 强制双审查、自动修复循环与 fail-closed 语义的 [Claude Code](https://claude.com/claude-code) 插件 — 让你的代码出得快，也出得对。
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — 仅占 Claude context window 的 ~4%
+89 skills · 15 agents — 仅占 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方式 | 适用工具 | 覆盖范围 |
 |------|---------|---------|
-| 插件安装 | Claude Code | 完整（90 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（90 skills） |
+| 插件安装 | Claude Code | 完整（89 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 仅 Skills（89 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -226,7 +226,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 类别 | 数量 | 示例 |
 |------|------|------|
-| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 89 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | 代理 | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | 钩子 | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | 规则 | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -270,7 +270,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>所有 90 个技能</summary>
+<summary>所有 89 个技能</summary>
 
 ### 开发 (31)
 
@@ -361,7 +361,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### 文档与工具 (21)
+### 文档与工具 (20)
 
 | Skill | Description |
 |-------|-------------|
@@ -384,7 +384,6 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 | `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
 | `/statusline-config` | Customize Claude Code statusline. |
 | `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
-| `/update-readme` | Regenerate README skill catalog + sync locales |
 | `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>

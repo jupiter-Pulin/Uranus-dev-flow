@@ -21,12 +21,16 @@ test('skill-catalog.yml exists and is readable', () => {
 });
 
 test('all git-tracked skills/ directories have catalog entries', () => {
-  // Use git ls-tree to only check committed skill directories (ignore local-only skills)
+  // Use git ls-files (index) to check tracked skill directories.
+  // This respects staged deletions (git rm --cached) unlike git ls-tree HEAD.
   const { execFileSync } = require('node:child_process');
   let trackedDirs;
   try {
-    const out = execFileSync('git', ['ls-tree', '--name-only', 'HEAD', 'skills/'], { encoding: 'utf8', cwd: ROOT });
-    trackedDirs = out.trim().split('\n').map(p => p.replace('skills/', '').replace(/\/$/, '')).filter(Boolean);
+    const out = execFileSync('git', ['ls-files', '--cached', 'skills/'], { encoding: 'utf8', cwd: ROOT });
+    const dirSet = new Set(
+      out.trim().split('\n').map(p => p.split('/')[1]).filter(Boolean)
+    );
+    trackedDirs = [...dirSet];
   } catch {
     // Fallback: use all local dirs (CI won't have untracked skills)
     trackedDirs = readdirSync(SKILLS_DIR).filter(d => statSync(join(SKILLS_DIR, d)).isDirectory());

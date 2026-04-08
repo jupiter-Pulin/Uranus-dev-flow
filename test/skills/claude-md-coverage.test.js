@@ -50,6 +50,7 @@ const INTERNAL_SKILLS = new Set([
   'codex-code-review', 'doc-review', 'security-review', 'test-review',
   'portfolio', 'request-tracking', 'req-analyze', 'dev-security-audit',
   'readme-i18n-sync', // local-only skill, not committed to repo
+  'update-readme', // local-only skill, not committed to repo
 ]);
 
 test('every skill directory is listed in CLAUDE.template.md', () => {

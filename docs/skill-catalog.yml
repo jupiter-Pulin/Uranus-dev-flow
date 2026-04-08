@@ -400,11 +400,6 @@ skills:
     featured: false
     description: "Generate/update feature release runbook"
     public: true
-  - command: /update-readme
-    category: docs-tooling
-    featured: false
-    description: "Regenerate README skill catalog + sync locales"
-    public: true
   - command: /portfolio
     category: docs-tooling
     featured: false

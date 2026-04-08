@@ -9,7 +9,7 @@
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — Claude context window의 ~4%만 사용
+89 skills · 15 agents — Claude context window의 ~4%만 사용
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (90 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (90 skills) |
+| 플러그인 설치 | Claude Code | 전체 (89 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (89 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -226,7 +226,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 89 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -270,7 +270,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>전체 90개 스킬</summary>
+<summary>전체 89개 스킬</summary>
 
 ### 개발 (31)
 
@@ -361,7 +361,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### 문서 및 도구 (21)
+### 문서 및 도구 (20)
 
 | Skill | Description |
 |-------|-------------|
@@ -384,7 +384,6 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
 | `/statusline-config` | Customize Claude Code statusline. |
 | `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
-| `/update-readme` | Regenerate README skill catalog + sync locales |
 | `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>

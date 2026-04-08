@@ -9,7 +9,7 @@
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — ~4% de la ventana de context de Claude
+89 skills · 15 agents — ~4% de la ventana de context de Claude
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (90 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (90 skills) |
+| Instalar plugin | Claude Code | Completa (89 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (89 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -226,7 +226,7 @@ Escenarios reales que muestran qué habilidades combinar y en qué orden.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 89 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -270,7 +270,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>Las 90 skills</summary>
+<summary>Las 89 skills</summary>
 
 ### Desarrollo (31)
 
@@ -361,7 +361,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### Documentación y Herramientas (21)
+### Documentación y Herramientas (20)
 
 | Skill | Descripción |
 |-------|-------------|
@@ -384,7 +384,6 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/skill-health-check` | Validate skill quality against routing, progressive loading, and verification criteria. |
 | `/statusline-config` | Customize Claude Code statusline. |
 | `/update-docs` | Research current code state then update corresponding docs, ensuring docs stay in sync with code. |
-| `/update-readme` | Regenerate README skill catalog + sync locales |
 | `/zh-tw` | Rewrite the previous reply in Traditional Chinese |
 
 </details>
