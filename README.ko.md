@@ -9,7 +9,7 @@
 **AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
 
 <!-- BEGIN:HERO-COUNT -->
-91 skills · 15 agents — Claude context window의 ~4%만 사용
+90 skills · 15 agents — Claude context window의 ~4%만 사용
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
 <!-- BEGIN:INSTALL-COVERAGE -->
-| 플러그인 설치 | Claude Code | 전체 (91 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (91 skills) |
+| 플러그인 설치 | Claude Code | 전체 (90 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (90 skills) |
 <!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 
@@ -206,12 +206,27 @@ flowchart TD
 
 </details>
 
+## 쿡북
+
+어떤 스킬을 어떤 순서로 조합하면 좋은지 보여주는 실전 시나리오입니다.
+
+| 시나리오 | 흐름 | 문서 |
+|----------|------|------|
+| 레포지토리 온보딩 첫날 | `/project-setup` → `/repo-intake` → `/next-step` | [→](docs/cookbook/first-day.md) |
+| 새 기능 구현 | `/feature-dev` → `/verify` → `/codex-test-review` → `/codex-review-fast` → `/precommit` | [→](docs/cookbook/new-feature.md) |
+| PR 리뷰 코멘트 반영 | `/load-pr-review` → 수정 → `/codex-review-fast` → `/push-ci` | [→](docs/cookbook/pr-review-comments.md) |
+| 머지 전 보안 점검 | `/codex-security` → `/dep-audit` → `/risk-assess` → `/pre-pr-audit` | [→](docs/cookbook/security-pre-merge.md) |
+| **주요 콤보:** 방향성 검증 | `/deep-research` → `/best-practices` → `/feasibility-study` → `/codex-brainstorm` | [→](docs/cookbook/validate-direction.md) |
+| **주요 콤보:** 적대적 설계 | `/codex-brainstorm` (내쉬 균형 토론) → `/codex-architect` | [→](docs/cookbook/adversarial-design.md) |
+
+[전체 10개 시나리오 →](docs/cookbook/)
+
 ## 포함 내용
 
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
-| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 <!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
@@ -255,7 +270,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>전체 91개 스킬</summary>
+<summary>전체 90개 스킬</summary>
 
 ### 개발 (31)
 
@@ -346,7 +361,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### 문서 및 도구 (22)
+### 문서 및 도구 (21)
 
 | Skill | Description |
 |-------|-------------|
@@ -361,7 +376,6 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/portfolio` | Portfolio system knowledge base. |
 | `/pr-review` | PR self-review — review changes, produce checklist, update rules |
 | `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
-| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
 | `/refactor` | Multi-target refactoring orchestrator. |
 | `/runbook` | Generate/update feature release runbook |
 | `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |

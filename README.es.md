@@ -9,7 +9,7 @@
 **Gates de calidad que la IA no puede saltarse.** Un plugin de [Claude Code](https://claude.com/claude-code) con dual review forzado por hooks, bucles de auto-fix y semántica fail-closed — para que tu código se entregue rápido *y* correcto.
 
 <!-- BEGIN:HERO-COUNT -->
-91 skills · 15 agents — ~4% de la ventana de context de Claude
+90 skills · 15 agents — ~4% de la ventana de context de Claude
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
 <!-- BEGIN:INSTALL-COVERAGE -->
-| Instalar plugin | Claude Code | Completa (91 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (91 skills) |
+| Instalar plugin | Claude Code | Completa (90 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (90 skills) |
 <!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
@@ -206,12 +206,27 @@ flowchart TD
 
 </details>
 
+## Guía Práctica (Cookbook)
+
+Escenarios reales que muestran qué habilidades combinar y en qué orden.
+
+| Escenario | Flujo | Documentación |
+|-----------|-------|------|
+| Primer día en un repositorio | `/project-setup` → `/repo-intake` → `/next-step` | [→](docs/cookbook/first-day.md) |
+| Implementar una nueva funcionalidad | `/feature-dev` → `/verify` → `/codex-test-review` → `/codex-review-fast` → `/precommit` | [→](docs/cookbook/new-feature.md) |
+| Resolver comentarios de review de PR | `/load-pr-review` → corregir → `/codex-review-fast` → `/push-ci` | [→](docs/cookbook/pr-review-comments.md) |
+| Revisión de seguridad pre-merge | `/codex-security` → `/dep-audit` → `/risk-assess` → `/pre-pr-audit` | [→](docs/cookbook/security-pre-merge.md) |
+| **Destacado:** Validar dirección | `/deep-research` → `/best-practices` → `/feasibility-study` → `/codex-brainstorm` | [→](docs/cookbook/validate-direction.md) |
+| **Destacado:** Diseño adversarial | `/codex-brainstorm` (debate de equilibrio de Nash) → `/codex-architect` | [→](docs/cookbook/adversarial-design.md) |
+
+[Los 10 escenarios →](docs/cookbook/)
+
 ## Contenido
 
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
-| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 <!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
@@ -255,7 +270,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>Las 91 skills</summary>
+<summary>Las 90 skills</summary>
 
 ### Desarrollo (31)
 
@@ -346,7 +361,7 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### Documentación y Herramientas (22)
+### Documentación y Herramientas (21)
 
 | Skill | Descripción |
 |-------|-------------|
@@ -361,7 +376,6 @@ Los skills se cargan bajo demanda. Los skills inactivos no consumen tokens.
 | `/portfolio` | Portfolio system knowledge base. |
 | `/pr-review` | PR self-review — review changes, produce checklist, update rules |
 | `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
-| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
 | `/refactor` | Multi-target refactoring orchestrator. |
 | `/runbook` | Generate/update feature release runbook |
 | `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |

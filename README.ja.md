@@ -9,7 +9,7 @@
 **AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
 
 <!-- BEGIN:HERO-COUNT -->
-91 skills · 15 agents — Claude の context window のわずか ~4%
+90 skills · 15 agents — Claude の context window のわずか ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
 <!-- BEGIN:INSTALL-COVERAGE -->
-| プラグインインストール | Claude Code | フル（91 skills、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（91 スキル） |
+| プラグインインストール | Claude Code | フル（90 skills、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（90 スキル） |
 <!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 
@@ -206,12 +206,27 @@ flowchart TD
 
 </details>
 
+## クックブック
+
+どのスキルをどの順番で組み合わせるかを示す、実践的なシナリオ集です。
+
+| シナリオ | フロー | ドキュメント |
+|----------|--------|------------|
+| リポジトリ初日 | `/project-setup` → `/repo-intake` → `/next-step` | [→](docs/cookbook/first-day.md) |
+| 新機能の実装 | `/feature-dev` → `/verify` → `/codex-test-review` → `/codex-review-fast` → `/precommit` | [→](docs/cookbook/new-feature.md) |
+| PR レビューコメントの対応 | `/load-pr-review` → 修正 → `/codex-review-fast` → `/push-ci` | [→](docs/cookbook/pr-review-comments.md) |
+| マージ前のセキュリティチェック | `/codex-security` → `/dep-audit` → `/risk-assess` → `/pre-pr-audit` | [→](docs/cookbook/security-pre-merge.md) |
+| **注目コンボ：** 方向性の検証 | `/deep-research` → `/best-practices` → `/feasibility-study` → `/codex-brainstorm` | [→](docs/cookbook/validate-direction.md) |
+| **注目コンボ：** 敵対的設計 | `/codex-brainstorm`（ナッシュ均衡ディベート）→ `/codex-architect` | [→](docs/cookbook/adversarial-design.md) |
+
+[全 10 シナリオを見る →](docs/cookbook/)
+
 ## 同梱内容
 
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
-| スキル | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| スキル | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 <!-- END:WHATS-INCLUDED-COUNT -->
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | フック | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
@@ -255,7 +270,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>全 91 スキル</summary>
+<summary>全 90 スキル</summary>
 
 ### 開発 (31)
 
@@ -346,7 +361,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### ドキュメント＆ツール (22)
+### ドキュメント＆ツール (21)
 
 | Skill | Description |
 |-------|-------------|
@@ -361,7 +376,6 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/portfolio` | Portfolio system knowledge base. |
 | `/pr-review` | PR self-review — review changes, produce checklist, update rules |
 | `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
-| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
 | `/refactor` | Multi-target refactoring orchestrator. |
 | `/runbook` | Generate/update feature release runbook |
 | `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |

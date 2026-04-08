@@ -9,7 +9,7 @@
 **AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
 
 <!-- BEGIN:HERO-COUNT -->
-91 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+90 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -141,8 +141,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
 <!-- BEGIN:INSTALL-COVERAGE -->
-| Plugin 安裝 | Claude Code | 完整（91 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（91 skills） |
+| Plugin 安裝 | Claude Code | 完整（90 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（90 skills） |
 <!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 
@@ -206,12 +206,27 @@ flowchart TD
 
 </details>
 
+## 實戰指南（Cookbook）
+
+真實情境示範——哪些技能要搭配使用、按什麼順序執行。
+
+| 情境 | 流程 | 說明 |
+|------|------|------|
+| 第一天進入新 repo | `/project-setup` → `/repo-intake` → `/next-step` | [→](docs/cookbook/first-day.md) |
+| 實作新功能 | `/feature-dev` → `/verify` → `/codex-test-review` → `/codex-review-fast` → `/precommit` | [→](docs/cookbook/new-feature.md) |
+| 處理 PR 審查意見 | `/load-pr-review` → 修正 → `/codex-review-fast` → `/push-ci` | [→](docs/cookbook/pr-review-comments.md) |
+| 合併前安全審查 | `/codex-security` → `/dep-audit` → `/risk-assess` → `/pre-pr-audit` | [→](docs/cookbook/security-pre-merge.md) |
+| **精選組合：** 驗證方向 | `/deep-research` → `/best-practices` → `/feasibility-study` → `/codex-brainstorm` | [→](docs/cookbook/validate-direction.md) |
+| **精選組合：** 對抗式設計 | `/codex-brainstorm`（Nash 均衡辯論）→ `/codex-architect` | [→](docs/cookbook/adversarial-design.md) |
+
+[全部 10 個情境 →](docs/cookbook/)
+
 ## 包含內容
 
 | 類別 | 數量 | 範例 |
 |------|------|------|
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
-| Skills | 91 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 <!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
@@ -255,7 +270,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>所有 91 個技能</summary>
+<summary>所有 90 個技能</summary>
 
 ### 開發 (31)
 
@@ -346,7 +361,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
 
-### 文件與工具 (22)
+### 文件與工具 (21)
 
 | Skill | Description |
 |-------|-------------|
@@ -361,7 +376,6 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/portfolio` | Portfolio system knowledge base. |
 | `/pr-review` | PR self-review — review changes, produce checklist, update rules |
 | `/pr-summary` | List open PRs, filter automation PRs, group by ticket ID, format as Markdown. |
-| `/readme-i18n-sync` | Sync multilingual README translations after README.md changes. |
 | `/refactor` | Multi-target refactoring orchestrator. |
 | `/runbook` | Generate/update feature release runbook |
 | `/safe-remove` | Safely remove plugin assets (skill/agent/rule/script/hook) with dependency detection and reference cleanup. |
