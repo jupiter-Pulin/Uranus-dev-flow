@@ -130,12 +130,19 @@ Generator replaces content between marker pairs:
 <!-- END:HERO-COUNT -->
 
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
-| Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Category | Count | Examples |
+|----------|-------|---------|
+| Skills | 90 | ... |
+| Agents | 15 | ... |
+| ... (full table including header, separator, all rows) |
 <!-- END:WHATS-INCLUDED-COUNT -->
 
 <!-- BEGIN:INSTALL-COVERAGE -->
-| Plugin install | Claude Code | Full (90 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (90 skills) |
+| Method | Tools | Coverage |
+|--------|-------|----------|
+| Plugin install | Claude Code | Full (90 skills, ...) |
+| `npx skills add` | ... | Skills only (90 skills) |
+| `/codex-setup init` | ... | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
 <!-- BEGIN:ESSENTIAL-SKILLS -->
@@ -183,8 +190,8 @@ Generator replaces content between marker pairs:
 4. Sort: within each category, alphabetical by command
 5. Build blocks:
    a. HERO-COUNT: "{count} skills · 15 agents — ~4% of Claude's context window"
-   b. WHATS-INCLUDED-COUNT: Skills row with count
-   c. INSTALL-COVERAGE: Install table rows with count (covers README.md:141-142)
+   b. WHATS-INCLUDED-COUNT: Full "What's Included" table (header + separator + Skills row with dynamic count + static Agents/Hooks/Rules/Scripts rows). Markers wrap the entire table to avoid HTML comment breaking table rendering.
+   c. INSTALL-COVERAGE: Full install table (header + separator + all 3 rows with dynamic count). Markers wrap the entire table.
    d. ESSENTIAL-SKILLS: featured=true skills as 2-column table (Skill | Use when)
    e. FULL-CATALOG: grouped 2-column tables per category with counts
 6. Read README.md

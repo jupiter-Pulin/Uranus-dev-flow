@@ -170,6 +170,49 @@ test('README essential skills table uses Use when column', () => {
   );
 });
 
+// ── Marker structure regression tests ──────────────────
+// Markers must wrap FULL tables (header+separator+rows) to avoid
+// HTML comments breaking GitHub table rendering.
+
+test('INSTALL-COVERAGE marker wraps full table (header + separator + rows)', () => {
+  const readme = readFileSync(README_PATH, 'utf8');
+  const block = readme.match(
+    /<!-- BEGIN:INSTALL-COVERAGE -->\n([\s\S]*?)\n<!-- END:INSTALL-COVERAGE -->/
+  );
+  assert.ok(block, 'INSTALL-COVERAGE block should exist');
+  const content = block[1];
+  assert.ok(content.includes('| Method |'), 'should contain table header');
+  assert.ok(content.includes('|-----'), 'should contain separator row');
+  assert.ok(content.includes('Plugin install'), 'should contain Plugin install row');
+  assert.ok(content.includes('codex-setup init'), 'should contain codex-setup row');
+});
+
+test('WHATS-INCLUDED-COUNT marker wraps full table (header + separator + rows)', () => {
+  const readme = readFileSync(README_PATH, 'utf8');
+  const block = readme.match(
+    /<!-- BEGIN:WHATS-INCLUDED-COUNT -->\n([\s\S]*?)\n<!-- END:WHATS-INCLUDED-COUNT -->/
+  );
+  assert.ok(block, 'WHATS-INCLUDED-COUNT block should exist');
+  const content = block[1];
+  assert.ok(content.includes('| Category |'), 'should contain table header');
+  assert.ok(content.includes('|-----'), 'should contain separator row');
+  assert.ok(content.includes('| Skills |'), 'should contain Skills row');
+  assert.ok(content.includes('| Agents |'), 'should contain Agents row');
+  assert.ok(content.includes('| Scripts |'), 'should contain Scripts row');
+});
+
+test('no table header between marker and its parent heading', () => {
+  const readme = readFileSync(README_PATH, 'utf8');
+  // Old broken pattern: heading → table header → separator → marker → rows
+  // The regex checks no table separator row immediately precedes BEGIN marker
+  const brokenPattern = /\|[-|]+\|\n<!-- BEGIN:(INSTALL-COVERAGE|WHATS-INCLUDED-COUNT) -->/;
+  assert.equal(
+    brokenPattern.test(readme),
+    false,
+    'table separator should not appear immediately before BEGIN marker (table must be inside marker)'
+  );
+});
+
 test('README hero count matches summary count', () => {
   const readme = readFileSync(README_PATH, 'utf8');
   const heroMatch = readme.match(

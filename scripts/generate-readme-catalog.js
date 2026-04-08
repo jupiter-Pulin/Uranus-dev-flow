@@ -155,13 +155,27 @@ function buildHeroCount(count) {
 }
 
 function buildWhatsIncludedCount(count) {
-  return `| Skills | ${count} | \`/project-setup\`, \`/codex-review-fast\`, \`/verify\`, \`/smart-commit\`, \`/deep-research\` |`;
+  // Full table (header+separator+all rows) to avoid HTML comment breaking table
+  return [
+    '| Category | Count | Examples |',
+    '|----------|-------|---------|',
+    `| Skills | ${count} | \`/project-setup\`, \`/codex-review-fast\`, \`/verify\`, \`/smart-commit\`, \`/deep-research\` |`,
+    '| Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |',
+    '| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |',
+    '| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |',
+    // Static counts — update when adding/removing scripts
+    '| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver, readme-catalog |',
+  ].join('\n');
 }
 
 function buildInstallCoverage(count) {
+  // Full table (header+separator+all rows) to avoid HTML comment breaking table
   return [
+    '| Method | Tools | Coverage |',
+    '|--------|-------|----------|',
     `| Plugin install | Claude Code | Full (${count} skills, hooks, rules, auto-loop) |`,
     `| \`npx skills add\` | Codex CLI, Cursor, Windsurf, Aider | Skills only (${count} skills) |`,
+    '| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |',
   ].join('\n');
 }
 

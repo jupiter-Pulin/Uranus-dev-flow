@@ -138,13 +138,13 @@ npx skills add sd0xdev/sd0x-dev-flow
 /codex-setup init
 ```
 
+<!-- BEGIN:INSTALL-COVERAGE -->
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-<!-- BEGIN:INSTALL-COVERAGE -->
 | Instalar plugin | Claude Code | Completa (90 skills, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (90 skills) |
-<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
+<!-- END:INSTALL-COVERAGE -->
 
 **Requisitos**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (opcional — los skills `/codex-*` lo requieren; sin él, se usa modo single-reviewer)
 
@@ -223,15 +223,15 @@ Escenarios reales que muestran qué habilidades combinar y en qué orden.
 
 ## Contenido
 
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver, readme-catalog |
+<!-- END:WHATS-INCLUDED-COUNT -->
 
 ### Mínimo consumo de context
 

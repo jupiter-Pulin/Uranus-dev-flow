@@ -138,13 +138,13 @@ npx skills add sd0xdev/sd0x-dev-flow
 /codex-setup init
 ```
 
+<!-- BEGIN:INSTALL-COVERAGE -->
 | Method | Tools | Coverage |
 |--------|-------|----------|
-<!-- BEGIN:INSTALL-COVERAGE -->
 | Plugin install | Claude Code | Full (90 skills, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (90 skills) |
-<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
+<!-- END:INSTALL-COVERAGE -->
 
 **Requirements**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex) (optional — `/codex-*` skills require it; without it, review falls back to single-reviewer mode)
 
@@ -223,15 +223,15 @@ Real-world scenarios showing which skills to combine and in what order.
 
 ## What's Included
 
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Category | Count | Examples |
 |----------|-------|---------|
-<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver, readme-catalog |
+<!-- END:WHATS-INCLUDED-COUNT -->
 
 ### Minimal Context Footprint
 

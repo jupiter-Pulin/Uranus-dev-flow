@@ -138,13 +138,13 @@ npx skills add sd0xdev/sd0x-dev-flow
 /codex-setup init
 ```
 
+<!-- BEGIN:INSTALL-COVERAGE -->
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-<!-- BEGIN:INSTALL-COVERAGE -->
 | 플러그인 설치 | Claude Code | 전체 (90 skills, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (90 skills) |
-<!-- END:INSTALL-COVERAGE -->
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
+<!-- END:INSTALL-COVERAGE -->
 
 **요구 사항**: Claude Code 2.1+ | [Codex MCP](https://github.com/openai/codex)（선택 — `/codex-*` skill에 필요; 미설치 시 싱글 리뷰어 모드로 폴백）
 
@@ -223,15 +223,15 @@ flowchart TD
 
 ## 포함 내용
 
+<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-<!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Skills | 90 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
-<!-- END:WHATS-INCLUDED-COUNT -->
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
-| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils, emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver |
+| Scripts | 13 | precommit runner, verify runner, dep audit, namespace hint, skill runner, commit-msg guard, pre-push gate, utils (shared lib), emit-review-gate, build-codex-artifacts, resolve-feature (CLI + shell), feature-resolver, readme-catalog |
+<!-- END:WHATS-INCLUDED-COUNT -->
 
 ### 최소한의 Context 사용량
 
