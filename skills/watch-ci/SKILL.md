@@ -13,6 +13,12 @@ Monitor GitHub Actions CI runs for the current HEAD (or a specified SHA) until c
 
 - Keywords: watch CI, check CI, CI status, monitor build, build status, is CI passing, watch actions, CI result
 
+## When NOT to Use
+
+- Pushing code to remote (use `/push-ci`)
+- Creating pull requests (use `/create-pr`)
+- Running local tests (use `/verify` or `/precommit`)
+
 ## Workflow
 
 ```
@@ -36,13 +42,15 @@ If `--run-id <id>` is specified, skip run discovery and monitor that specific ru
 Find runs matching the target SHA on the target branch:
 
 ```bash
-gh run list --branch "$BRANCH" --limit 10 \
+gh run list --branch "$BRANCH" --limit 30 \
   --json databaseId,headSha,status,name,url
 ```
 
+> **Note**: Use `--limit 30` (not 10) to avoid missing target SHA runs on busy branches. Filter results client-side by `HEAD_SHA`.
+
 Filter results to those matching `HEAD_SHA`.
 
-**Retry logic**: If no matching runs found, retry up to 3 times with 10s interval. CI workflows may take a few seconds to trigger after push.
+**Retry logic**: If no matching runs found, retry up to 3 times by re-running the `gh run list` command. The natural processing delay between retries provides sufficient wait time — **do not use `sleep N` (N ≥ 2) as the first command**, the harness will block it. All retry commands must start with `gh` or `git` to match `allowed-tools`. CI workflows may take a few seconds to trigger after push.
 
 If still no runs found after retries:
 
@@ -116,6 +124,8 @@ Overall verdict = worst individual result (any fail → overall fail).
 ❌ Skipping the quick-check step (Step 3a) — always check status before deciding to watch
 ❌ Reporting "CI monitoring started" without actually launching `gh run watch`
 ❌ Using `gh run list` results as the final verdict — list shows status at query time, not completion
+❌ Using `sleep N` (N ≥ 2) as the first Bash command — harness blocks it; retry by re-running `gh run list` directly
+❌ Using commands outside `allowed-tools` (only `gh`, `git`, and `Read` are permitted)
 ```
 
 ## Arguments
