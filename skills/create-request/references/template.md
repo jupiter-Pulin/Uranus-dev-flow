@@ -5,10 +5,12 @@
 ```markdown
 # {Title}
 
+> **Doc class**: Request ticket (date-prefixed non-lifecycle — per `@rules/docs-numbering.md`). Per-task work breakdown unit for progress tracking. **Not** a feature-level requirements doc — for that see `../1-requirements.md` if present (created via `/req-analyze`).
 > **Created**: {YYYY-MM-DD}
 > **Status**: Pending
 > **Priority**: {P0|P1|P2}
-> **Tech Spec**: [Link](../2-tech-spec.md) <- See spec for details
+> **Tech Spec**: [Link](../2-tech-spec.md) <- Technical detail (primary source)
+> **Requirements**: [Link](../1-requirements.md) <- Feature-level problem-space rationale (include this line ONLY IF `../1-requirements.md` exists — omit otherwise to avoid dead links)
 
 ## Background
 
@@ -49,7 +51,7 @@
 | Testing    | -      |      |
 | Acceptance | -      |      |
 
-**Status**: Not Started / In Progress / Done / Blocked
+**Status**: Pending / In Progress / Candidate Complete / Completed (canonical lifecycle — see SKILL.md §Phase 4 Auto-Update Items for transition rules)
 
 ## References
 
@@ -82,11 +84,14 @@ docs/features/{feature}/requests/YYYY-MM-DD-title.md
 | P1       | High        | This week   |
 | P2       | Medium      | This sprint |
 
-| Status         | Description      |
-| -------------- | ---------------- |
-| Pending        | Not started      |
-| In Development | Work in progress |
-| Completed      | Done             |
+| Status              | Description                                          |
+| ------------------- | ---------------------------------------------------- |
+| Pending             | Not started                                          |
+| In Progress         | Work in progress (variants normalized: `In Development`, `In Dev` → `In Progress`) |
+| Candidate Complete  | All AC checked but not closure-grade verified        |
+| Completed           | All AC verified via `--verify-ac` with High confidence |
+
+See [SKILL.md §Phase 4 Auto-Update Items](../SKILL.md) for transition rules. `Blocked` is an informal manual state for out-of-band escalation and is not part of the auto-lifecycle.
 
 ## Writing Guidelines
 
@@ -97,6 +102,7 @@ docs/features/{feature}/requests/YYYY-MM-DD-title.md
 | Track progress      | Progress section marks each phase status             |
 | Clear scope         | Scope section defines "what to do" and "what not to do" |
 | Verifiable          | Acceptance Criteria use checkboxes for verification  |
+| Doc class awareness | Request is a date-prefixed non-lifecycle tracking ticket (per `@rules/docs-numbering.md`). Do NOT inline 5-Why, stakeholder analysis, or FR/NFR decomposition here — those belong in `1-requirements.md` via `/req-analyze` |
 
 ## Granularity Guide
 

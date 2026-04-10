@@ -95,6 +95,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | Command | Description | When |
 |---------|-------------|------|
 | `/codex-brainstorm` | Adversarial brainstorm | Exploration |
+| `/req-analyze` | Requirements analysis + 1-requirements.md | Planning |
 | `/feasibility-study` | Feasibility analysis | Requirements |
 | `/tech-spec` | Generate tech spec | Design |
 | `/review-spec` | Review tech spec | Design |

@@ -368,7 +368,7 @@ Skills 按需加载。闲置 Skill 不占用任何 Token。
 |-------|-------------|
 | `/claude-health` | Claude Code config health check + plugin sync. |
 | `/contract-decode` | EVM contract error and calldata decoder. |
-| `/create-request` | Create, update, or scan request documents. |
+| `/create-request` | Create, update, or scan per-task request tickets for progress tracking. |
 | `/de-ai-flavor` | Remove AI artifacts from documents. |
 | `/doc-refactor` | Refactor documents — simplify without losing information, visualize flows with sequenceDiagram. |
 | `/generate-runner` | Generate a customized precommit runner for any ecosystem. |

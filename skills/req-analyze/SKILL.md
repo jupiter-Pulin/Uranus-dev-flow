@@ -1,6 +1,6 @@
 ---
 name: req-analyze
-description: "Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. Produces 1-requirements.md. Use when: analyzing needs before feasibility study, decomposing requirements, stakeholder analysis, 需求分析. Not for: solution comparison (use feasibility-study), tech design (use tech-spec), issue root cause (use issue-analyze)."
+description: "Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. Produces 1-requirements.md (Phase 1 lifecycle doc, NOT the per-task request ticket — for those use /create-request). Use when: analyzing needs before tech spec, decomposing requirements, stakeholder analysis, 需求分析. Not for: solution comparison (use feasibility-study), tech design (use tech-spec), per-task tracking tickets (use create-request), issue root cause (use issue-analyze)."
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Bash(bash:*), Write, Agent, Skill, AskUserQuestion, WebSearch, WebFetch, mcp__codex__codex, mcp__codex__codex-reply
 ---
 
@@ -14,6 +14,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Bash(bash:*), Write,
 
 - Solution comparison / feasibility evaluation (use `/feasibility-study`)
 - Technical specification writing (use `/tech-spec`)
+- **Per-task tracking tickets** (use `/create-request` — requests are date-prefixed non-lifecycle docs for progress tracking, not feature-level requirements docs; see Relationship section below)
 - Issue root cause analysis (use `/issue-analyze`)
 - Architecture design (use `/architecture`)
 - Implementation (use `/feature-dev`)
@@ -24,6 +25,38 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Bash(bash:*), Write,
 - Defines problems, analyzes stakeholders, decomposes requirements, prioritizes needs
 - Must NOT rank solutions, estimate implementation effort, or produce feasibility recommendations
 - Solution-space concerns discovered during analysis → log as Open Questions with suggestion to run `/feasibility-study`
+
+## Relationship with `/create-request`
+
+`1-requirements.md` is a **lifecycle document**, not a task ticket. They live in different document classes per `@rules/docs-numbering.md` and serve different audiences.
+
+| Dimension | `/req-analyze` → `1-requirements.md` | `/create-request` → `requests/YYYY-MM-DD-*.md` |
+|-----------|--------------------------------------|------------------------------------------------|
+| Doc class | **Lifecycle** (Phase 1, numeric prefix) | **Request ticket** (date-prefixed, non-lifecycle — per `@rules/docs-numbering.md`) |
+| Count per feature | **One** (upsert / incremental refine) | **Many** (one per task) |
+| Position in workflow | **Before** `/tech-spec` (design phase) | **After** `/tech-spec` (execution phase) |
+| Content focus | Problem space — 5-Why, FR/NFR, MoSCoW, stakeholders | Execution — Status, Progress, AC checklist, Related Files |
+| Granularity | **Feature-wide** | **Single task** (AC ≤ 8) |
+| Update pattern | Document upsert | Status tracking (`scan` / `update` / `update-all` / `--verify-ac`) |
+| Audience | Designers, decision-makers | Executors, progress trackers |
+
+### Workflow ordering
+
+```
+/req-analyze → /tech-spec → /create-request → /feature-dev
+   (Phase 1)    (Phase 2)    (ticket per task)    (implement)
+```
+
+`1-requirements.md` feeds `/tech-spec`; `/tech-spec` then gets broken down into multiple request tickets by `/create-request` for parallel execution and progress tracking.
+
+### Anti-patterns to avoid
+
+| Anti-pattern | Correct approach |
+|--------------|------------------|
+| Writing 5-Why / stakeholder analysis inside a `requests/*.md` ticket | Put it in `1-requirements.md`; the ticket just references it |
+| Adding `## Progress` / `## Status` table to `1-requirements.md` | Progress tracking belongs in request tickets; requirements doc is advisory-only |
+| Creating a `1-requirements.md` per task | One per feature; create multiple request tickets instead |
+| Treating `1-requirements.md` as mandatory prerequisite | It is **advisory** (see next section); downstream skills work without it |
 
 ## Usage
 
@@ -265,9 +298,9 @@ See `references/output-template.md` for the full template.
 ### Cross-References
 
 Auto-insert links (relative paths vary by document location):
-- Request doc (`requests/*.md`): add `> **Requirements**: [Link](../1-requirements.md)`
+- Request tickets (`requests/*.md`): add `> **Requirements**: [Link](../1-requirements.md)` to each ticket
 - Tech spec (`2-tech-spec.md`): add `> **Requirements**: [Link](./1-requirements.md)`
-- `1-requirements.md` itself: add `> **Request**` and `> **Tech Spec**` links when those docs exist
+- `1-requirements.md` itself: reference the `requests/` directory as a whole (plural — one feature may spawn many tickets) plus a `> **Tech Spec**` link when it exists
 
 ### Auto-Trigger
 
@@ -290,7 +323,7 @@ After Write completes, auto-trigger `/codex-review-doc` per `@rules/auto-loop.md
 - [ ] Research completed at appropriate tier
 - [ ] Requirements structured (FR + NFR + constraints + acceptance signals)
 - [ ] Boundary enforced (no solution-space content)
-- [ ] Cross-references to request doc and tech-spec included
+- [ ] Cross-references included: tech-spec link (if exists) and `requests/` directory link for per-task tickets (plural)
 - [ ] `/codex-review-doc` passed (auto-triggered)
 - [ ] No `git add/commit/push` executed
 
