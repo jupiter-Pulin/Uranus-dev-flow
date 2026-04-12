@@ -4,15 +4,36 @@
 
 **言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | 日本語 | [한국어](README.ko.md) | [Español](README.es.md)
 
-> AI は高速にコードを出力できます。しかしガードレールなしでは、その速度は恐怖です。
+> Claude Code のための harness レイヤー。
 
-**AI がスキップできない品質ゲート。** Hook 強制のデュアルレビュー、自動修正ループ、fail-closed セマンティクスを備えた [Claude Code](https://claude.com/claude-code) プラグイン — コードを速く、そして正しく出荷します。
+**AI がスキップできない品質ゲート。** [Claude Code](https://claude.com/claude-code) のための AI Agent Harness Engineering の reference implementation — Hook 強制のデュアルレビュー、context compaction を乗り越える state machine ゲート、そして本当に必要な箇所での fail-closed な安全性。
 
 <!-- BEGIN:HERO-COUNT -->
 90 skills · 15 agents — Claude の context window のわずか ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## この harness は何をするのか
+
+> [Harness engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) とは、モデル自体を学習させるのではなく、LLM の周辺にあるすべて（tool loop、context management、hooks、state machine、safety layer）を工学的に構築する分野です。Mitchell Hashimoto が 2026 年 2 月にこの用語を提唱し、[Anthropic engineering](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) と [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) が論考を発表、[arXiv 2603.05344](https://arxiv.org/html/2603.05344v1) が形式化しています。
+
+sd0x-dev-flow は reference implementation です。以下の各行は、harness の典型的なサブ問題を実際に読める具体的なコードに対応づけています:
+
+| # | Harness のサブ問題 | sd0x-dev-flow の実装 | コード証拠 |
+|---|---------------------|------------------------------|---------------|
+| 1 | **Tool loop control** | `/codex-review-fast` → `/precommit` の auto-loop、sentinel 駆動で状態遷移 | [`rules/auto-loop.md`](rules/auto-loop.md) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) |
+| 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` のゲートマーカーを永続状態へパース | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh) (producer) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) (parser) |
+| 3 | **Context recovery across compaction** | SessionStart(compact) 後に `[AUTO_LOOP_RESUME]` を stdout へ注入 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
+| 4 | **Lifecycle interceptors** | 5 種類の hook event を 8 本のスクリプトへディスパッチ: PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/) (8 scripts) + [`.claude/settings.json`](.claude/settings.json) |
+| 5 | **Capability-based tool gating** | Skill frontmatter の `allowed-tools` — 例: `/ask` には Edit/Write が無い | 90 個の公開 skill のうち 81 個が `allowed-tools` を宣言 |
+| 6 | **Defense-in-depth safety** | 5 層構成: pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
+| 7 | **Generator-evaluator split** | デュアルレビュー: Codex (primary) + Claude (secondary) を各レビューサイクルで並列ディスパッチ | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md) (Dual Review Mode) |
+| 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + 収束プラトー検出 | [`rules/auto-loop.md`](rules/auto-loop.md) (exit conditions + strategic reset) |
+| 9 | **Human-in-the-loop safety gates** | 破壊的操作に対する `/dev/tty` 確認 + `AskUserQuestion` | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`skills/push-ci/SKILL.md`](skills/push-ci/SKILL.md) |
+| 10 | **Self-improvement loop** | 是正 → lesson として記録 → 3 回以上の再発で rule に昇格 | [`rules/self-improvement.md`](rules/self-improvement.md) |
+
+多くの harness プロジェクトはこれらのうち 2〜4 個しかカバーしません。sd0x-dev-flow は 10 個すべてをカバーしており、単なるツールではなく学習対象として読めるコードになっています。
 
 ## なぜ sd0x-dev-flow？
 

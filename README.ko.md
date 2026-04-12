@@ -4,15 +4,36 @@
 
 **언어**: [English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | 한국어 | [Español](README.es.md)
 
-> AI는 빠르게 코드를 작성할 수 있습니다. 하지만 가드레일 없이는, 그 속도가 두렵습니다.
+> Claude Code를 위한 harness 레이어.
 
-**AI가 건너뛸 수 없는 품질 게이트.** Hook 강제 듀얼 리뷰, 자동 수정 루프, fail-closed 시맨틱을 갖춘 [Claude Code](https://claude.com/claude-code) 플러그인 — 코드를 빠르게, 그리고 올바르게 출시합니다.
+**AI가 건너뛸 수 없는 품질 게이트.** [Claude Code](https://claude.com/claude-code)를 위한 AI Agent Harness Engineering의 reference implementation — hook 강제 듀얼 리뷰, context 압축 이후에도 유지되는 state machine 게이트, 그리고 정말 중요한 지점의 fail-closed 안전장치.
 
 <!-- BEGIN:HERO-COUNT -->
 90 skills · 15 agents — Claude context window의 ~4%만 사용
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## 이 harness가 하는 일
+
+> [Harness engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)은 LLM 모델 자체를 학습시키는 것이 아니라, LLM 주변의 모든 것 — tool loop, context 관리, hook, 상태 머신, 안전 레이어 — 을 엔지니어링하는 분야입니다. Mitchell Hashimoto가 2026년 2월에 이 용어를 만들었고, [Anthropic engineering](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)과 [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)가 이를 주제로 글을 발표했으며, [arXiv 2603.05344](https://arxiv.org/html/2603.05344v1)가 이를 형식화합니다.
+
+sd0x-dev-flow는 그 reference implementation입니다. 아래 각 행은 harness의 표준 하위 문제를 실제로 연구할 수 있는 코드에 매핑합니다:
+
+| # | Harness 하위 문제 | sd0x-dev-flow 구현 | 코드 근거 |
+|---|-------------------|---------------------|-----------|
+| 1 | **Tool loop 제어** | sentinel 기반 전이를 사용하는 `/codex-review-fast` → `/precommit` auto-loop | [`rules/auto-loop.md`](rules/auto-loop.md) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) |
+| 2 | **Sentinel 기반 state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` 게이트 마커를 지속 가능한 상태로 파싱 | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh) (producer) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) (parser) |
+| 3 | **Context 압축 후 복구** | SessionStart(compact) 이후 `[AUTO_LOOP_RESUME]` stdout 재주입 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
+| 4 | **Lifecycle interceptor** | 5가지 hook event type을 8개 스크립트로 디스패치: PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/) (8개 스크립트) + [`.claude/settings.json`](.claude/settings.json) |
+| 5 | **Capability 기반 tool gating** | Skill frontmatter의 `allowed-tools` — 예: `/ask`는 Edit/Write 없음 | 공개된 90개 skill 중 81개가 `allowed-tools`를 선언 |
+| 6 | **Defense-in-depth 안전장치** | 5개 레이어: pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed 마커 | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
+| 7 | **Generator-evaluator 분리** | 듀얼 리뷰: 모든 리뷰 사이클에서 Codex(주)와 Claude(보조)를 병렬로 디스패치 | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md) (Dual Review Mode) |
+| 8 | **점진적 진행 추적** | `iteration_history.current_round` + `max_rounds` + 수렴 plateau 감지 | [`rules/auto-loop.md`](rules/auto-loop.md) (exit conditions + strategic reset) |
+| 9 | **Human-in-the-loop 안전 게이트** | 파괴적 작업에 대한 `/dev/tty` 확인 + `AskUserQuestion` | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`skills/push-ci/SKILL.md`](skills/push-ci/SKILL.md) |
+| 10 | **자기 개선 루프** | 지적 → lesson 기록 → 3회 이상 재발 시 rule로 승격 | [`rules/self-improvement.md`](rules/self-improvement.md) |
+
+대부분의 harness 프로젝트는 이 중 2~4개만 다룹니다. sd0x-dev-flow는 10개 모두를 다루므로, 단순한 도구가 아니라 연구 대상으로서의 코드로 활용할 수 있습니다.
 
 ## 왜 sd0x-dev-flow인가?
 

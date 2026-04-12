@@ -1,4 +1,4 @@
-# sd0x-dev-flow
+# sd0x-dev-flow — Harness Engineering for Claude Code
 
 ## Required Checks (Stop Hook enforced)
 

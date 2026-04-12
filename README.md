@@ -4,15 +4,36 @@
 
 **Language**: English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
-> AI can ship fast. But without guardrails, velocity is terrifying.
+> The harness layer for Claude Code.
 
-**Quality gates that AI can't skip.** A [Claude Code](https://claude.com/claude-code) plugin with hook-enforced dual review, auto-fix loops, and fail-closed semantics — so your code ships fast *and* ships right.
+**Quality gates that AI can't skip.** A reference implementation of AI Agent Harness Engineering for [Claude Code](https://claude.com/claude-code) — hook-enforced dual review, state-machine gates that survive context compaction, and fail-closed safety where it counts.
 
 <!-- BEGIN:HERO-COUNT -->
 90 skills · 15 agents — ~4% of Claude's context window
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## What This Harness Does
+
+> [Harness engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) is the discipline of engineering everything around the LLM — tool loops, context management, hooks, state machines, safety layers — as opposed to training the model itself. Mitchell Hashimoto coined the term in Feb 2026; [Anthropic engineering](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) and [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) have published on it; [arXiv 2603.05344](https://arxiv.org/html/2603.05344v1) formalizes it.
+
+sd0x-dev-flow is a reference implementation. Each row below maps a canonical harness sub-problem to concrete code you can study:
+
+| # | Harness sub-problem | sd0x-dev-flow implementation | Code evidence |
+|---|---------------------|------------------------------|---------------|
+| 1 | **Tool loop control** | `/codex-review-fast` → `/precommit` auto-loop with sentinel-driven transitions | [`rules/auto-loop.md`](rules/auto-loop.md) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) |
+| 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` gate markers parsed into durable state | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh) (producer) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) (parser) |
+| 3 | **Context recovery across compaction** | `[AUTO_LOOP_RESUME]` stdout injection after SessionStart(compact) | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
+| 4 | **Lifecycle interceptors** | 5 hook event types dispatched to 8 scripts: PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/) (8 scripts) + [`.claude/settings.json`](.claude/settings.json) |
+| 5 | **Capability-based tool gating** | Skill frontmatter `allowed-tools` — e.g., `/ask` has no Edit/Write | 81 of 90 public skills declare `allowed-tools` |
+| 6 | **Defense-in-depth safety** | 5 layers: pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
+| 7 | **Generator-evaluator split** | Dual review: Codex (primary) + Claude (secondary) dispatched in parallel on every review cycle | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md) (Dual Review Mode) |
+| 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + convergence plateau detection | [`rules/auto-loop.md`](rules/auto-loop.md) (exit conditions + strategic reset) |
+| 9 | **Human-in-the-loop safety gates** | `/dev/tty` confirmation + `AskUserQuestion` for destructive ops | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`skills/push-ci/SKILL.md`](skills/push-ci/SKILL.md) |
+| 10 | **Self-improvement loop** | Correction → record lesson → promote to rule after 3+ recurrences | [`rules/self-improvement.md`](rules/self-improvement.md) |
+
+Most harness projects cover 2–4 of these. sd0x-dev-flow covers all 10 — which makes the code useful as a study target, not just a tool.
 
 ## Why sd0x-dev-flow?
 

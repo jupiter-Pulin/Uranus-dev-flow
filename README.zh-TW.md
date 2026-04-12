@@ -4,15 +4,36 @@
 
 **語言**: [English](README.md) | 繁體中文 | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md)
 
-> AI 可以跑很快，但沒有護欄，速度令人不安。
+> 給 Claude Code 的 harness 層。
 
-**AI 跳不過的品質關卡。** 具備 hook 強制雙 review、自動修正迴圈與 fail-closed 語意的 [Claude Code](https://claude.com/claude-code) plugin — 讓你的程式碼出得快，也出得對。
+**AI 跳不過的品質關卡。** [Claude Code](https://claude.com/claude-code) 的 AI Agent Harness Engineering reference implementation — hook 強制雙 review、能在 context compaction 後續存的 state-machine gates，以及在關鍵處 fail-closed 的安全防線。
 
 <!-- BEGIN:HERO-COUNT -->
 90 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
+
+## 這個 harness 做了什麼
+
+> [Harness engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) 是一門工程學科,處理 LLM 周圍的所有東西 — tool loops、context management、hooks、state machines、safety layers — 而不是訓練模型本身。Mitchell Hashimoto 在 2026 年 2 月提出這個名詞;[Anthropic engineering](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) 與 [Martin Fowler](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html) 都發表過相關文章;[arXiv 2603.05344](https://arxiv.org/html/2603.05344v1) 則將其形式化。
+
+sd0x-dev-flow 是一個 reference implementation。下表每一列都將一個經典的 harness 子問題對應到你可以實際研究的程式碼:
+
+| # | Harness 子問題 | sd0x-dev-flow 實作 | 程式碼佐證 |
+|---|---------------|-------------------|-----------|
+| 1 | **Tool loop control** | `/codex-review-fast` → `/precommit` auto-loop,以 sentinel 驅動狀態轉換 | [`rules/auto-loop.md`](rules/auto-loop.md) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) |
+| 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` 等 gate 標記解析為持久化狀態 | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh)(producer)+ [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh)(parser) |
+| 3 | **Context recovery across compaction** | SessionStart(compact) 後透過 `[AUTO_LOOP_RESUME]` stdout 注入復原狀態 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
+| 4 | **Lifecycle interceptors** | 5 種 hook 事件分派到 8 支腳本:PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/)(8 支腳本)+ [`.claude/settings.json`](.claude/settings.json) |
+| 5 | **Capability-based tool gating** | Skill frontmatter 的 `allowed-tools` — 例如 `/ask` 不具備 Edit/Write | 90 個公開 skill 中有 81 個宣告 `allowed-tools` |
+| 6 | **Defense-in-depth safety** | 5 層防線:pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
+| 7 | **Generator-evaluator split** | 雙 review:每個 review 循環都以並行方式分派 Codex(主要)+ Claude(次要) | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md)(Dual Review Mode) |
+| 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + 收斂平台期偵測 | [`rules/auto-loop.md`](rules/auto-loop.md)(exit conditions 與 strategic reset) |
+| 9 | **Human-in-the-loop safety gates** | 對破壞性操作使用 `/dev/tty` 確認 + `AskUserQuestion` | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`skills/push-ci/SKILL.md`](skills/push-ci/SKILL.md) |
+| 10 | **Self-improvement loop** | 被糾正 → 記錄 lesson → 重複 3 次以上後提升為 rule | [`rules/self-improvement.md`](rules/self-improvement.md) |
+
+大多數 harness 專案只涵蓋其中的 2–4 項,sd0x-dev-flow 把 10 項全部做齊 — 這也是為什麼它的程式碼不只是工具,更值得當成學習對象。
 
 ## 為什麼選擇 sd0x-dev-flow？
 
