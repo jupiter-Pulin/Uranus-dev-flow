@@ -2,7 +2,6 @@
 name: ask
 description: "Context-aware Q&A with auto context gathering. Use when: user has a quick question about codebase, git history, rules, docs, or skills during development. Not for: code changes (use feature-dev), code review (use codex-review-fast), deep research (use deep-research), full code trace (use code-explore). Output: structured answer with source attribution."
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Agent
-context: fork
 ---
 
 # Ask — Context-Aware Q&A

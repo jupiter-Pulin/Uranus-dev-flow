@@ -169,3 +169,27 @@ test('CLAUDE.template.md contains /ask entry', () => {
   const template = readFileSync(resolve(ROOT, 'CLAUDE.template.md'), 'utf8');
   assert.match(template, /\/ask/, 'CLAUDE.template.md should reference /ask');
 });
+
+// --- Regression guard: `context: fork` breaks conversation continuity ---
+//
+// /ask's Phase 1.1 ("Conversation Context Integration") reads prior conversation
+// turns to disambiguate the user's question. `context: fork` would launch the
+// skill in an isolated subagent that cannot see parent chat history, silently
+// breaking that feature. This guard forbids any top-level `context` key in the
+// frontmatter so /ask always runs in the parent session.
+
+test('ask frontmatter must not declare any `context` key (fork breaks conversation continuity)', () => {
+  const content = readFileSync(SKILL, 'utf8').replace(/\r\n/g, '\n');
+  const fm = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+  assert.ok(fm, 'ask/SKILL.md missing frontmatter');
+  // Match any top-level `context` key variant: plain, quoted, with/without
+  // space before `:`. Anchored to column 0 so nested content inside block
+  // scalars (e.g. a `description: |` that happens to mention "context:") is
+  // ignored — skill frontmatter only uses flat top-level keys in this repo.
+  const hasContextKey = /^["']?context["']?\s*:/m.test(fm[1]);
+  assert.strictEqual(
+    hasContextKey,
+    false,
+    'skills/ask/SKILL.md must not declare any `context` key — /ask must run in the parent session so Phase 1.1 "review prior conversation turns" is achievable (forked subagents cannot see parent chat history)'
+  );
+});
