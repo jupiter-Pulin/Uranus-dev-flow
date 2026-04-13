@@ -2,7 +2,6 @@
 name: watch-ci
 description: "Monitor GitHub Actions CI runs until completion. Use when: watching CI after push, checking build status, monitoring PR checks, waiting for CI completion, user says 'watch CI', 'check CI', 'CI status', 'monitor build', or /watch-ci. Not for: pushing code (use push-ci), creating PRs (use create-pr). Output: per-run verdict (pass/fail/timeout)."
 allowed-tools: Bash(gh:*), Bash(git:*), Read, Monitor
-context: fork
 ---
 
 # Watch CI
@@ -89,7 +88,7 @@ gh run watch <run-id> --exit-status
 |------|------|----------|
 | Monitor (default) | No mode flag | Stream `gh run watch` via Monitor tool. Each stdout line arrives as a notification. Claude processes verdict on completion. Non-blocking. |
 | Foreground (`--blocking`) | `--blocking` flag passed | Execute `gh run watch` inline (blocking). Claude waits for completion, then reports verdict. Use when Monitor is unavailable or for simple single-run cases. |
-| Background (`--background`) | `--background` flag passed | Launch with `Bash(run_in_background: true)`. Legacy fallback only — background notifications in forked context are unreliable. Provide manual check command. |
+| Background (`--background`) | `--background` flag passed | Launch with `Bash(run_in_background: true)`. Legacy fallback only — `run_in_background` delivers a single completion event, not streaming progress, so Monitor is preferred for rich updates. Provide a manual check command. |
 
 **Monitor mode (default) — behavior**:
 1. Launch `gh run watch <run-id> --exit-status` via Monitor tool with `description: "CI run <run-id> (<name>)"` and `timeout_ms: TIMEOUT * 60 * 1000`
@@ -107,7 +106,7 @@ gh run watch <run-id> --exit-status
 1. Quick-check (Step 3a) first — if already completed, report immediately and skip background
 2. If still running, launch `gh run watch` with `Bash(run_in_background: true)`
 3. Inform the user honestly: "CI monitoring launched in background for run `<id>`. Background notifications may not auto-report reliably. To check manually: `gh run view <id>` or re-run `/watch-ci`"
-4. **Do NOT promise "I'll report when it completes"** — background notification delivery is not guaranteed in forked context
+4. **Do NOT promise streaming progress updates** — `Bash(run_in_background: true)` only delivers a single completion event, not per-status-line streaming; for rich updates, use Monitor mode
 
 **Multiple runs**: If multiple workflow runs match (e.g. CI + Auto Release), launch parallel Monitor instances — one per run. Each Monitor reports its own per-run verdict via notifications. Overall verdict = worst individual result (any fail → overall fail). In `--blocking` mode, watch sequentially. In `--background` mode, launch each as a separate background task.
 
@@ -127,7 +126,7 @@ Overall verdict = worst individual result (any fail → overall fail).
 
 ```
 ❌ Running `gh run view` once and treating that as "monitoring" — one-shot status check is NOT watching
-❌ Promising "I'll report when it completes" in background mode — background notifications in forked context are unreliable
+❌ Promising per-status-line streaming updates in background mode — `Bash(run_in_background: true)` only delivers a single completion event; use Monitor for rich streaming
 ❌ Skipping the quick-check step (Step 3a) — always check status before deciding to watch
 ❌ Reporting "CI monitoring started" without actually launching `gh run watch`
 ❌ Using `gh run list` results as the final verdict — list shows status at query time, not completion

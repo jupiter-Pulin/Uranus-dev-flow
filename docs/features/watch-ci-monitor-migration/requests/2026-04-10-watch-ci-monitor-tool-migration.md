@@ -60,3 +60,11 @@ Claude Code v2.1.98 introduced the Monitor tool for streaming stdout from backgr
 - GitHub Issue anthropics/claude-code#46170: Monitor 400-char event truncation
 - GitHub Issue anthropics/claude-code#46144: Sleep-first blocking complaints + opt-out request
 - Prior fix: commit `2e2a160` — fix: Prevent sleep-first Bash command in watch-ci retry logic
+
+## Regression Note
+
+| Field | Detail |
+| ----- | ------ |
+| Cause | `context: fork` frontmatter field (inherited from pre-migration SKILL.md, **not** touched by this ticket) conflicts with Monitor tool's session-scoped streaming |
+| Symptom | `/watch-ci` reports "CI monitor launched in streaming mode" but never delivers a completion verdict — the forked skill context returns immediately and the Monitor pipeline stops emitting events to the parent conversation |
+| Follow-up | [`2026-04-13-fix-watch-ci-fork-monitor-incompatibility.md`](./2026-04-13-fix-watch-ci-fork-monitor-incompatibility.md) — Approach A: remove `context: fork` |
