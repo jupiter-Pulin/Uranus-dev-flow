@@ -1,12 +1,12 @@
 {
-  "name": "sd0xdev-marketplace",
-  "owner": { "name": "sd0xdev" },
+  "name": "uranus-dev-flow",
+  "owner": { "name": "jupiter-Pulin" },
   "plugins": [
     {
       "name": "sd0x-dev-flow",
       "source": {
         "source": "github",
-        "repo": "sd0xdev/sd0x-dev-flow"
+        "repo": "jupiter-Pulin/Uranus-dev-flow"
       },
       "description": "Harness engineering for Claude Code — hook-enforced dual review, state-machine gates, and fail-closed safety where it counts. 90 skills, 15 agents, 8 lifecycle hooks."
     }
