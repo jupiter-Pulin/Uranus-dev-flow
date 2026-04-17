@@ -32,6 +32,7 @@ Determine which CI runs to monitor. Use arguments if provided, otherwise auto-de
 BRANCH=${ARG_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 HEAD_SHA=${ARG_SHA:-$(git rev-parse HEAD)}
 TIMEOUT=${ARG_TIMEOUT:-10}
+INTERVAL=${ARG_INTERVAL:-30}
 ```
 
 If `--run-id <id>` is specified, skip run discovery and monitor that specific run directly.
@@ -79,8 +80,10 @@ gh run view <run-id> --json status,conclusion,name,url
 For each in-progress run, monitor with `gh run watch`:
 
 ```bash
-gh run watch <run-id> --exit-status
+gh run watch <run-id> --exit-status -i "$INTERVAL"
 ```
+
+**Poll interval**: `$INTERVAL` defaults to 30 seconds (configurable via `--interval`). `gh`'s own default is 3 seconds; at that rate, Monitor streaming surfaces ~20 notifications per minute, which has been reported as noisy. 30 seconds reduces poll noise by ~90% at the cost of ≤ 27 s additional completion-detection lag, which is negligible for typical multi-minute CI runs. Pass `--interval 3` to restore the old cadence when near-real-time feedback matters.
 
 **Execution mode**: Monitor streaming is the default — non-blocking, reliable notifications for each status line.
 
@@ -91,20 +94,20 @@ gh run watch <run-id> --exit-status
 | Background (`--background`) | `--background` flag passed | Launch with `Bash(run_in_background: true)`. Legacy fallback only — `run_in_background` delivers a single completion event, not streaming progress, so Monitor is preferred for rich updates. Provide a manual check command. |
 
 **Monitor mode (default) — behavior**:
-1. Launch `gh run watch <run-id> --exit-status` via Monitor tool with `description: "CI run <run-id> (<name>)"` and `timeout_ms: TIMEOUT * 60 * 1000`
-2. Each stdout line (status update) arrives as a streaming notification
+1. Launch `gh run watch <run-id> --exit-status -i "$INTERVAL"` via Monitor tool with `description: "CI run <run-id> (<name>)"` and `timeout_ms: TIMEOUT * 60 * 1000`
+2. Each stdout line (status update) arrives as a streaming notification — `$INTERVAL` controls how often those lines fire
 3. On exit (run completes or fails), parse final output for pass/fail status
 4. Report verdict
 
 **Foreground mode (`--blocking`) — behavior**:
-1. Execute `gh run watch <run-id> --exit-status` inline via Bash
-2. Wait for completion (blocking)
+1. Execute `gh run watch <run-id> --exit-status -i "$INTERVAL"` inline via Bash
+2. Wait for completion (blocking) — `$INTERVAL` only affects how often `gh` polls the API, not wall-clock completion
 3. Parse output for pass/fail status
 4. Report verdict
 
 **Background mode (`--background`) — legacy fallback only**:
 1. Quick-check (Step 3a) first — if already completed, report immediately and skip background
-2. If still running, launch `gh run watch` with `Bash(run_in_background: true)`
+2. If still running, launch `gh run watch <run-id> --exit-status -i "$INTERVAL"` with `Bash(run_in_background: true)`; `$INTERVAL` still applies (same `gh` call), but because background mode only surfaces a single completion event, poll cadence has no user-visible effect here
 3. Inform the user honestly: "CI monitoring launched in background for run `<id>`. Background notifications may not auto-report reliably. To check manually: `gh run view <id>` or re-run `/watch-ci`"
 4. **Do NOT promise streaming progress updates** — `Bash(run_in_background: true)` only delivers a single completion event, not per-status-line streaming; for rich updates, use Monitor mode
 
@@ -142,6 +145,7 @@ Overall verdict = worst individual result (any fail → overall fail).
 | `--sha <sha>` | SHA to monitor | `git rev-parse HEAD` |
 | `--branch <branch>` | Branch to filter runs | `git rev-parse --abbrev-ref HEAD` |
 | `--timeout <min>` | Watch timeout in minutes | 10 |
+| `--interval <sec>` | Poll interval for `gh run watch -i` — controls how often `gh` queries the API and emits a status line (Monitor mode surfaces each line as one notification) | 30 |
 | `--run-id <id>` | Monitor a specific run ID directly | auto-detect |
 | `--blocking` | Use foreground blocking mode instead of Monitor streaming | Monitor |
 | `--background` | Legacy fallback: launch in background (unreliable auto-reporting) | Monitor |

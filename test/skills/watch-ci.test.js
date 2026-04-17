@@ -102,6 +102,39 @@ test('watch-ci body removes contradictory forked-context warnings', () => {
   }
 });
 
+test('watch-ci body documents --interval argument with default 30 seconds', () => {
+  const { body } = splitSkill(readSkill());
+  // The Arguments table row must declare the --interval flag. We match loosely
+  // on the row pattern so future cosmetic reshuffles (column order, wording)
+  // don't cause false failures — the load-bearing invariants are the flag name
+  // and the default value of 30.
+  const rowRe = /^\|\s*`--interval\s+<sec>`\s*\|[^\n]*\|\s*30\s*\|/m;
+  assert.match(
+    body,
+    rowRe,
+    'watch-ci Arguments table must document `--interval <sec>` with Default = 30 (noise-reduction regression guard)'
+  );
+});
+
+test('watch-ci body threads $INTERVAL into the gh run watch command', () => {
+  const { body } = splitSkill(readSkill());
+  // Primary canonical command block (Step 3b).
+  const primaryRe = /gh run watch[^\n]*--exit-status[^\n]*-i\s+"\$INTERVAL"/;
+  assert.match(
+    body,
+    primaryRe,
+    'Step 3b must invoke `gh run watch ... --exit-status -i "$INTERVAL"` so the poll cadence is driven by the --interval argument (not hard-coded)'
+  );
+  // Guard against hard-coded 30 sneaking into the canonical command — the
+  // interval must come from the $INTERVAL variable so --interval can override.
+  const hardCodedRe = /gh run watch[^\n]*-i\s+30\b/;
+  assert.doesNotMatch(
+    body,
+    hardCodedRe,
+    'watch-ci must not hard-code `-i 30` on gh run watch; use `-i "$INTERVAL"` so --interval actually overrides the default'
+  );
+});
+
 test('watch-ci body still declares Monitor as the default streaming mode', () => {
   const { body } = splitSkill(readSkill());
   // Canonical positive patterns — each explicitly asserts Monitor=default with
