@@ -1,6 +1,6 @@
 {
   "name": "sd0x-dev-flow",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "Harness engineering for Claude Code — hook-enforced dual review, state-machine gates, and fail-closed safety where it counts. 90 skills, 15 agents, 8 lifecycle hooks.",
   "license": "MIT",
   "scripts": {
