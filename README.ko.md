@@ -9,7 +9,7 @@
 **AI가 건너뛸 수 없는 품질 게이트.** [Claude Code](https://claude.com/claude-code)를 위한 AI Agent Harness Engineering의 reference implementation — hook 강제 듀얼 리뷰, context 압축 이후에도 유지되는 state machine 게이트, 그리고 정말 중요한 지점의 fail-closed 안전장치.
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — Claude context window의 ~4%만 사용
+93 skills · 15 agents — Claude context window의 ~4%만 사용
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -26,7 +26,7 @@ sd0x-dev-flow는 그 reference implementation입니다. 아래 각 행은 harnes
 | 2 | **Sentinel 기반 state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` 게이트 마커를 지속 가능한 상태로 파싱 | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh) (producer) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) (parser) |
 | 3 | **Context 압축 후 복구** | SessionStart(compact) 이후 `[AUTO_LOOP_RESUME]` stdout 재주입 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
 | 4 | **Lifecycle interceptor** | 5가지 hook event type을 8개 스크립트로 디스패치: PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/) (8개 스크립트) + [`.claude/settings.json`](.claude/settings.json) |
-| 5 | **Capability 기반 tool gating** | Skill frontmatter의 `allowed-tools` — 예: `/ask`는 Edit/Write 없음 | 공개된 90개 skill 중 81개가 `allowed-tools`를 선언 |
+| 5 | **Capability 기반 tool gating** | Skill frontmatter의 `allowed-tools` — 예: `/ask`는 Edit/Write 없음 | 공개된 93개 skill 중 84개가 `allowed-tools`를 선언 |
 | 6 | **Defense-in-depth 안전장치** | 5개 레이어: pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed 마커 | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
 | 7 | **Generator-evaluator 분리** | 듀얼 리뷰: 모든 리뷰 사이클에서 Codex(주)와 Claude(보조)를 병렬로 디스패치 | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md) (Dual Review Mode) |
 | 8 | **점진적 진행 추적** | `iteration_history.current_round` + `max_rounds` + 수렴 plateau 감지 | [`rules/auto-loop.md`](rules/auto-loop.md) (exit conditions + strategic reset) |
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (90 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (90 skills) |
+| 플러그인 설치 | Claude Code | 전체 (93 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (93 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -291,7 +291,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>전체 90개 스킬</summary>
+<summary>전체 93개 스킬</summary>
 
 ### 개발 (32)
 
@@ -366,7 +366,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 기획 (12)
+### 기획 (15)
 
 | Skill | Description |
 |-------|-------------|
@@ -376,7 +376,10 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/deep-research` | Universal multi-source research orchestration. |
 | `/feasibility-study` | Feasibility analysis from first principles. |
 | `/fp-brief` | First-principles briefing from technical documents. |
+| `/post-dev-recap` | Guided post-dev recap wrapper — scope detection + doc generation + Q&A. |
 | `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/recap-ask` | Recap-bounded Q&A follow-up over an existing briefing-recap. |
+| `/recap-doc` | Post-development recap document generator with blind-spot detection. |
 | `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
 | `/request-tracking` | Request tracking knowledge base. |
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |

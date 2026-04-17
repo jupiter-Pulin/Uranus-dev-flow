@@ -324,6 +324,18 @@ skills:
     category: planning
     featured: false
     public: true
+  - command: /recap-doc
+    category: planning
+    featured: false
+    public: true
+  - command: /recap-ask
+    category: planning
+    featured: false
+    public: true
+  - command: /post-dev-recap
+    category: planning
+    featured: false
+    public: true
 
   # ── Documentation & Tooling ──────────────────────────────
   - command: /update-docs

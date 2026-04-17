@@ -9,7 +9,7 @@
 **AI がスキップできない品質ゲート。** [Claude Code](https://claude.com/claude-code) のための AI Agent Harness Engineering の reference implementation — Hook 強制のデュアルレビュー、context compaction を乗り越える state machine ゲート、そして本当に必要な箇所での fail-closed な安全性。
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — Claude の context window のわずか ~4%
+93 skills · 15 agents — Claude の context window のわずか ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -26,7 +26,7 @@ sd0x-dev-flow は reference implementation です。以下の各行は、harness
 | 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` のゲートマーカーを永続状態へパース | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh) (producer) + [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh) (parser) |
 | 3 | **Context recovery across compaction** | SessionStart(compact) 後に `[AUTO_LOOP_RESUME]` を stdout へ注入 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
 | 4 | **Lifecycle interceptors** | 5 種類の hook event を 8 本のスクリプトへディスパッチ: PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/) (8 scripts) + [`.claude/settings.json`](.claude/settings.json) |
-| 5 | **Capability-based tool gating** | Skill frontmatter の `allowed-tools` — 例: `/ask` には Edit/Write が無い | 90 個の公開 skill のうち 81 個が `allowed-tools` を宣言 |
+| 5 | **Capability-based tool gating** | Skill frontmatter の `allowed-tools` — 例: `/ask` には Edit/Write が無い | 93 個の公開 skill のうち 84 個が `allowed-tools` を宣言 |
 | 6 | **Defense-in-depth safety** | 5 層構成: pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
 | 7 | **Generator-evaluator split** | デュアルレビュー: Codex (primary) + Claude (secondary) を各レビューサイクルで並列ディスパッチ | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md) (Dual Review Mode) |
 | 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + 収束プラトー検出 | [`rules/auto-loop.md`](rules/auto-loop.md) (exit conditions + strategic reset) |
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（90 skills、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（90 スキル） |
+| プラグインインストール | Claude Code | フル（93 skills、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（93 スキル） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -291,7 +291,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>全 90 スキル</summary>
+<summary>全 93 スキル</summary>
 
 ### 開発 (32)
 
@@ -366,7 +366,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 計画 (12)
+### 計画 (15)
 
 | Skill | Description |
 |-------|-------------|
@@ -376,7 +376,10 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 | `/deep-research` | Universal multi-source research orchestration. |
 | `/feasibility-study` | Feasibility analysis from first principles. |
 | `/fp-brief` | First-principles briefing from technical documents. |
+| `/post-dev-recap` | Guided post-dev recap wrapper — scope detection + doc generation + Q&A. |
 | `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/recap-ask` | Recap-bounded Q&A follow-up over an existing briefing-recap. |
+| `/recap-doc` | Post-development recap document generator with blind-spot detection. |
 | `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
 | `/request-tracking` | Request tracking knowledge base. |
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |

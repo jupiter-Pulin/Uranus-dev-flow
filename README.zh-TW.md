@@ -9,7 +9,7 @@
 **AI 跳不過的品質關卡。** [Claude Code](https://claude.com/claude-code) 的 AI Agent Harness Engineering reference implementation — hook 強制雙 review、能在 context compaction 後續存的 state-machine gates，以及在關鍵處 fail-closed 的安全防線。
 
 <!-- BEGIN:HERO-COUNT -->
-90 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+93 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -26,7 +26,7 @@ sd0x-dev-flow 是一個 reference implementation。下表每一列都將一個�
 | 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` 等 gate 標記解析為持久化狀態 | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh)(producer)+ [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh)(parser) |
 | 3 | **Context recovery across compaction** | SessionStart(compact) 後透過 `[AUTO_LOOP_RESUME]` stdout 注入復原狀態 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
 | 4 | **Lifecycle interceptors** | 5 種 hook 事件分派到 8 支腳本:PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/)(8 支腳本)+ [`.claude/settings.json`](.claude/settings.json) |
-| 5 | **Capability-based tool gating** | Skill frontmatter 的 `allowed-tools` — 例如 `/ask` 不具備 Edit/Write | 90 個公開 skill 中有 81 個宣告 `allowed-tools` |
+| 5 | **Capability-based tool gating** | Skill frontmatter 的 `allowed-tools` — 例如 `/ask` 不具備 Edit/Write | 93 個公開 skill 中有 84 個宣告 `allowed-tools` |
 | 6 | **Defense-in-depth safety** | 5 層防線:pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
 | 7 | **Generator-evaluator split** | 雙 review:每個 review 循環都以並行方式分派 Codex(主要)+ Claude(次要) | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md)(Dual Review Mode) |
 | 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + 收斂平台期偵測 | [`rules/auto-loop.md`](rules/auto-loop.md)(exit conditions 與 strategic reset) |
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（90 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（90 skills） |
+| Plugin 安裝 | Claude Code | 完整（93 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（93 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -291,7 +291,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>所有 90 個技能</summary>
+<summary>所有 93 個技能</summary>
 
 ### 開發 (32)
 
@@ -366,7 +366,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 規劃 (12)
+### 規劃 (15)
 
 | Skill | Description |
 |-------|-------------|
@@ -376,7 +376,10 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/deep-research` | Universal multi-source research orchestration. |
 | `/feasibility-study` | Feasibility analysis from first principles. |
 | `/fp-brief` | First-principles briefing from technical documents. |
+| `/post-dev-recap` | Guided post-dev recap wrapper — scope detection + doc generation + Q&A. |
 | `/project-brief` | Convert a technical spec into a PM/CTO-readable executive summary. |
+| `/recap-ask` | Recap-bounded Q&A follow-up over an existing briefing-recap. |
+| `/recap-doc` | Post-development recap document generator with blind-spot detection. |
 | `/req-analyze` | Requirements analysis — problem decomposition, stakeholder scan, requirement structuring. |
 | `/request-tracking` | Request tracking knowledge base. |
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |

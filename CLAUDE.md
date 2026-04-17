@@ -56,6 +56,9 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/project-brief` | PM/CTO executive summary | Design |
 | `/fp-brief` | First-principles briefing | Understanding |
 | `/tech-brief` | Technical briefing for developer sharing | Understanding |
+| `/recap-doc` | Post-development recap document generator | Understanding |
+| `/recap-ask` | Recap-bounded Q&A follow-up | Understanding |
+| `/post-dev-recap` | Guided post-dev recap (scope + doc + Q&A) | Understanding |
 | `/codex-architect` | Architecture advice | Design |
 | `/codex-implement` | Codex writes code | Development |
 | `/bug-fix` | Bug fix workflow | Bug fixing |
