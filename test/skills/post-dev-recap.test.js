@@ -15,9 +15,14 @@ const SKILL_MIRROR = resolve(REPO, '.claude', 'skills', 'post-dev-recap', 'SKILL
 
 // --- Foundation ---
 
-test('skill directory exists at both canonical and mirror paths', () => {
+test('skill directory exists at canonical path (mirror checked only if locally bootstrapped)', () => {
+  // Canonical `skills/` is tracked; `.claude/skills/` is gitignored and only
+  // exists after local bootstrap (symlink via /project-setup). Follow the
+  // same guarded-mirror pattern as recap-doc.test.js and recap-ask.test.js.
   assert.ok(existsSync(SKILL), 'skills/post-dev-recap/SKILL.md must exist');
-  assert.ok(existsSync(SKILL_MIRROR), '.claude/skills/post-dev-recap/SKILL.md must exist');
+  if (existsSync(SKILL_MIRROR)) {
+    assert.ok(true, '.claude/skills/post-dev-recap/SKILL.md mirror present (local bootstrap)');
+  }
 });
 
 test('SKILL.md has the required orchestrator sections', () => {
@@ -344,14 +349,16 @@ test('SKILL.md Examples cover happy path, focus, --interactive, and scope-fail',
 
 test('/post-dev-recap row will be registered identically in CLAUDE*.md catalogs (T5-gated)', () => {
   // Catalog registration is T5's scope; T4 only writes the skill. This test locks
-  // the contract: once /post-dev-recap is registered, all three mirrors must
-  // carry the same row. Until T5 lands, it's allowed to be missing from all
-  // three (skill exists, not yet catalogued).
+  // the contract: once /post-dev-recap is registered, the tracked catalogs must
+  // carry the same row. Until T5 lands, it's allowed to be missing from both
+  // (skill exists, not yet catalogued). `.claude/CLAUDE.md` is gitignored and
+  // only exists after local bootstrap — include it only when present (same
+  // guarded pattern as recap-doc.test.js and recap-ask.test.js).
   const catalogFiles = [
     resolve(REPO, 'CLAUDE.md'),
     resolve(REPO, 'CLAUDE.template.md'),
     resolve(REPO, '.claude', 'CLAUDE.md'),
-  ];
+  ].filter(existsSync);
   const rows = catalogFiles.map((f) => {
     const content = readFileSync(f, 'utf8');
     const m = content.match(/^\| `\/post-dev-recap`.*$/m);
@@ -361,11 +368,12 @@ test('/post-dev-recap row will be registered identically in CLAUDE*.md catalogs 
   const absent = rows.length - present;
   assert.ok(
     present === 0 || present === rows.length,
-    `All three catalogs must agree: either zero rows (pre-T5) or all ${rows.length} rows (post-T5). Got present=${present}, absent=${absent}, rows=${JSON.stringify(rows)}`,
+    `All ${rows.length} present catalogs must agree: either zero rows (pre-T5) or all rows (post-T5). Got present=${present}, absent=${absent}, rows=${JSON.stringify(rows)}`,
   );
-  if (present === rows.length) {
+  if (present === rows.length && rows.length >= 2) {
     // If any are registered, all must match exactly
-    assert.strictEqual(rows[0], rows[1], 'CLAUDE.md and CLAUDE.template.md rows must match');
-    assert.strictEqual(rows[0], rows[2], 'CLAUDE.md and .claude/CLAUDE.md rows must match');
+    for (let i = 1; i < rows.length; i++) {
+      assert.strictEqual(rows[0], rows[i], `${catalogFiles[0]} and ${catalogFiles[i]} rows must match`);
+    }
   }
 });
