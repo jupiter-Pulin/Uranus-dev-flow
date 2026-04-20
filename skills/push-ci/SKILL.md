@@ -12,16 +12,18 @@ Push to remote with user approval, then monitor CI run until completion.
 ## Authorization
 
 ```
-⚠️ This skill is the ONLY authorized path for Claude to execute `git push`.
+⚠️ This skill is one of two authorized paths for Claude to execute `git push`.
+⚠️ The other is /epic-merge (force-push --force-with-lease for stacked PR chains, per-iteration AskUserQuestion gate).
 ⚠️ All other skills and rules MUST output push commands only (not execute).
 ⚠️ Push REQUIRES explicit user approval via AskUserQuestion — no exceptions.
 ```
 
-| Rule | This Skill | All Other Skills |
-|------|-----------|-----------------|
-| `git push` | Execute (after user approval) | Forbidden (output only) |
-| `git push --force` | Forbidden | Forbidden |
-| Push to protected branches (main/master/develop/release/*) | Warn + pre-approval via AskUserQuestion (terminal hook is final gate) | Forbidden |
+| Rule | This Skill | `/epic-merge` | All Other Skills |
+|------|-----------|---------------|------------------|
+| `git push` | Execute (after user approval) | Forbidden (uses `--force-with-lease` only) | Forbidden (output only) |
+| `git push --force` | Forbidden | Forbidden | Forbidden |
+| `git push --force-with-lease` | Forbidden | Execute (after per-iteration AskUserQuestion) | Forbidden |
+| Push to protected branches (main/master/develop/release/*) | Warn + pre-approval via AskUserQuestion (terminal hook is final gate) | N/A (only pushes to PR head branches) | Forbidden |
 
 ## Defense in Depth: Push Safety
 

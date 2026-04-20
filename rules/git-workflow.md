@@ -6,6 +6,7 @@ Commit: `<type>: <subject>` (feat/fix/docs/refactor/test/chore)
 Claude forbidden: git add | commit | push | stash | reset --hard | rebase
 Exception: `/push-ci` skill may execute `git push` after explicit user approval via AskUserQuestion
 Exception: `/smart-commit --execute` may execute `git add` + `git commit` after explicit user approval via AskUserQuestion
+Exception: `/epic-merge` skill may execute `git rebase --onto`, `git push --force-with-lease`, and `gh pr merge --squash` after explicit per-iteration user approval via AskUserQuestion (stacked PR chain workflow)
 Claude allowed: git status | diff | log | branch | rev-parse
 
 Prohibited: Push to protected branches without confirmation | Force push to shared branches | Commit containing secrets
