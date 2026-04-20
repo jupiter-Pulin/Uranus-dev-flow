@@ -171,6 +171,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/watch-ci` | Monitor GitHub Actions CI runs | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
+| `/epic-merge` | Sequential squash-merge of stacked PR chains into epic branch | Git |
 | `/pr-summary` | PR status summary (grouped by ticket) | Git |
 | `/contract-decode` | EVM contract error/calldata decoder | Blockchain |
 | `/jira` | Jira integration (view/branch/transition) | Jira workflow |

@@ -133,6 +133,10 @@ skills:
     category: development
     featured: false
     public: true
+  - command: /epic-merge
+    category: development
+    featured: false
+    public: true
   - command: /deep-explore
     category: development
     featured: false
