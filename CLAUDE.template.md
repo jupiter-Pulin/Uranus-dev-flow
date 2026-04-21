@@ -146,6 +146,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) | Quality |
 | `/project-audit` | Project health audit with scoring | Quality |
 | `/best-practices` | Industry best practices conformance audit | Quality |
+| `/necessity-audit` | Detect over-engineering in lifecycle specs (6-dim + Codex debate) | Quality |
 | `/dep-audit` | Dependency vulnerability audit | Periodic / PR |
 | `/generate-runner` | Generate customized precommit runner | Tooling |
 | `/update-docs` | Sync docs with code | Doc changes |

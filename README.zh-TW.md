@@ -9,7 +9,7 @@
 **AI 跳不過的品質關卡。** [Claude Code](https://claude.com/claude-code) 的 AI Agent Harness Engineering reference implementation — hook 強制雙 review、能在 context compaction 後續存的 state-machine gates，以及在關鍵處 fail-closed 的安全防線。
 
 <!-- BEGIN:HERO-COUNT -->
-94 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+95 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -26,7 +26,7 @@ sd0x-dev-flow 是一個 reference implementation。下表每一列都將一個�
 | 2 | **Sentinel-driven state machine** | `✅ Ready` / `⛔ Blocked` / `✅ All Pass` 等 gate 標記解析為持久化狀態 | [`scripts/emit-review-gate.sh`](scripts/emit-review-gate.sh)(producer)+ [`hooks/post-tool-review-state.sh`](hooks/post-tool-review-state.sh)(parser) |
 | 3 | **Context recovery across compaction** | SessionStart(compact) 後透過 `[AUTO_LOOP_RESUME]` stdout 注入復原狀態 | [`hooks/post-compact-auto-loop.sh`](hooks/post-compact-auto-loop.sh) |
 | 4 | **Lifecycle interceptors** | 5 種 hook 事件分派到 8 支腳本:PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit | [`hooks/`](hooks/)(8 支腳本)+ [`.claude/settings.json`](.claude/settings.json) |
-| 5 | **Capability-based tool gating** | Skill frontmatter 的 `allowed-tools` — 例如 `/ask` 不具備 Edit/Write | 94 個公開 skill 中有 85 個宣告 `allowed-tools` |
+| 5 | **Capability-based tool gating** | Skill frontmatter 的 `allowed-tools` — 例如 `/ask` 不具備 Edit/Write | 95 個公開 skill 中有 86 個宣告 `allowed-tools` |
 | 6 | **Defense-in-depth safety** | 5 層防線:pre-edit-guard → commit-msg-guard → pre-push-gate → stop-guard → sidecar fail-closed marker | [`scripts/pre-push-gate.sh`](scripts/pre-push-gate.sh) + [`scripts/commit-msg-guard.sh`](scripts/commit-msg-guard.sh) + [`hooks/stop-guard.sh`](hooks/stop-guard.sh) |
 | 7 | **Generator-evaluator split** | 雙 review:每個 review 循環都以並行方式分派 Codex(主要)+ Claude(次要) | [`rules/codex-invocation.md`](rules/codex-invocation.md) + [`rules/auto-loop.md`](rules/auto-loop.md)(Dual Review Mode) |
 | 8 | **Incremental progress tracking** | `iteration_history.current_round` + `max_rounds` + 收斂平台期偵測 | [`rules/auto-loop.md`](rules/auto-loop.md)(exit conditions 與 strategic reset) |
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（94 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（94 skills） |
+| Plugin 安裝 | Claude Code | 完整（95 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（95 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Skills | 94 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 95 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>所有 94 個技能</summary>
+<summary>所有 95 個技能</summary>
 
 ### 開發 (33)
 
@@ -350,7 +350,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/seek-verdict` | Independent second-opinion verification for any finding. | - |
 | `/test-review` | Test coverage review via Codex MCP. | - |
 
-### 驗證 (12)
+### 驗證 (13)
 
 | Skill | Description |
 |-------|-------------|
@@ -358,6 +358,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/check-coverage` | Comprehensive assessment of Unit / Integration / E2E three-layer test coverage, identify gaps and provide actionable ... |
 | `/dep-audit` | Audit dependency security risks |
 | `/dev-security-audit` | Comprehensive developer workstation security audit — scans for exposed credentials, compromised application data, per... |
+| `/necessity-audit` | Necessity audit for over-designed spec elements. |
 | `/pre-pr-audit` | Pre-PR confidence audit with 5-dimension scoring. |
 | `/precommit` | Pre-commit checks — lint:fix -> build -> test |
 | `/precommit-fast` | Quick pre-commit checks — lint:fix -> test |

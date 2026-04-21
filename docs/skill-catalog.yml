@@ -276,6 +276,11 @@ skills:
     category: verification
     featured: false
     public: true
+  - command: /necessity-audit
+    category: verification
+    featured: false
+    use_when: "Detect over-engineering in lifecycle specs (6-dim YAGNI audit + Codex debate)"
+    public: true
 
   # ── Planning ─────────────────────────────────────────────
   - command: /codex-brainstorm
