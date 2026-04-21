@@ -1,8 +1,9 @@
 # Changed Files Tracking (D-3)
 
 > **Created**: 2026-03-31
-> **Status**: Candidate Complete
+> **Status**: Completed
 > **Priority**: P1
+> **Verified**: 2026-04-21 — tech-spec retitled "schema v3 新增欄位" → "State schema v2 additive field (backward compatible via jq `// []` fallback)"; AC #4 rewritten to match v2-additive reality; new `test/hooks/changed-files.test.js` with 7 tests covering track/unique/reset/fallback/graceful-failure.
 > **Tech Spec**: [Tech Spec](../2-tech-spec.md) <- Phase D, Section D-3
 > **Depends On**: [Session Lifecycle Reset](./2026-03-31-session-lifecycle-reset-r12.md)
 
@@ -15,13 +16,13 @@ State file 只記錄 `has_code_change` boolean，不追蹤哪些 files 變了。
 - 在 `post-edit-format.sh` 維護 `changed_files_since_review` 陣列
 - 每次 Edit/Write 觸發時 append（unique）
 - code_review pass 時 reset 為 `[]`
-- State schema 升級為 v3（additive field）
+- State schema v2 additive field（透過 jq `// []` fallback 保持向後相容，無需 migration）
 
 ## Scope
 
 | Scope | Description |
 |-------|-------------|
-| In | changed_files array tracking, schema v3 migration, reset on review pass |
+| In | changed_files array tracking, v2 additive field with jq `// []` fallback, reset on review pass |
 | Out | Delta-only review prompt injection（future work）、stop-guard 使用 changed_files |
 
 ## Related Files
@@ -37,7 +38,7 @@ State file 只記錄 `has_code_change` boolean，不追蹤哪些 files 變了。
 - [x] Edit 觸發後 `changed_files_since_review` 包含該 file path
 - [x] 重複 edit 同一 file 不產生 duplicate（unique array）
 - [x] code_review pass 後 array reset 為 `[]`
-- [x] Schema v3 backward compatible（v2 state file 自動升級）
+- [x] Backward compatible — additive field on schema v2 with jq `// []` fallback ensures existing v2 state files (without `changed_files_since_review`) continue to work without migration
 - [x] Pass /codex-review-fast
 - [x] Pass /precommit-fast
 
