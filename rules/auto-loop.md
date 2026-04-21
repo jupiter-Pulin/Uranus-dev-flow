@@ -75,7 +75,20 @@ When unresolved Nit items are exempted, output structured log:
 
 Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 
-## Exit Conditions (Only)
+## Exit Conditions
+
+**Convergence decision table** (authoritative — mirrors tech-spec §3.3 T1). Each iteration evaluates the conditions top-to-bottom; first match wins. State lives in `.claude_review_state.json` `iteration_history`.
+
+| # | Condition | Action | Rationale |
+|---|-----------|--------|-----------|
+| 1 | `current_round >= max_rounds` | ⚠️ Need Human | Hard cap. Default 10, configurable via `## Max Rounds` in `auto-loop-project.md`. Tracked via `iteration_history.current_round`. |
+| 2 | `findings_by_round[n].total == 0` | Proceed to `/precommit` | All findings resolved this round; early-exit optimization. |
+| 3 | `total >= prev_total` AND fingerprint overlap >= 50% for 3+ consecutive rounds | ⚠️ Need Human | Plateau — same issues recurring despite fixes. Tracked via `iteration_history.findings_by_round[].fingerprints`. |
+| 4 | `total >= prev_total` AND fingerprint overlap < 50% for 3+ consecutive rounds | Continue | New issues appearing, not plateau. |
+| 5 | `total < prev_total` | Continue | Converging toward zero. |
+| 6 | `total == null` (parse failure) | Continue | Non-computable; rely on hard cap (row 1). |
+
+**Advisory exits** (orthogonal to convergence — do not depend on `iteration_history`):
 
 - ✅ All Pass
   - Code changes: review + precommit all passed
@@ -83,8 +96,6 @@ Gate ✅ Ready + no P2/Nit → directly `/precommit` (unchanged behavior).
 - ⛔ Need Human — Architecture changes, feature removal, user requests stop
 - ⚠️ Need Human — Feature docs not found (3-level fallback exhausted)
 - ⚠️ Need Human — P0/P1 dismiss candidate awaiting human confirmation (via `/seek-verdict`)
-- 🔄 `max_rounds` exceeded (default 10, configurable in `auto-loop-project.md`) — Report blocker, request intervention. State tracked in `.claude_review_state.json` `iteration_history.current_round`
-- 🔄 Convergence plateau — `findings_by_round[n].total >= findings_by_round[n-1].total` AND fingerprint overlap >= 50% for 3+ consecutive rounds → `⚠️ Need Human` (same issues recurring despite fixes). State tracked in `iteration_history.findings_by_round[].fingerprints`
 
 ## Strategic Reset (opt-in, near-cap)
 
