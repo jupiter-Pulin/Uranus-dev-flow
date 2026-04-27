@@ -133,6 +133,10 @@ skills:
     category: development
     featured: false
     public: true
+  - command: /epic-merge
+    category: development
+    featured: false
+    public: true
   - command: /deep-explore
     category: development
     featured: false
@@ -272,6 +276,11 @@ skills:
     category: verification
     featured: false
     public: true
+  - command: /necessity-audit
+    category: verification
+    featured: false
+    use_when: "Detect over-engineering in lifecycle specs (6-dim YAGNI audit + Codex debate)"
+    public: true
 
   # ── Planning ─────────────────────────────────────────────
   - command: /codex-brainstorm
@@ -321,6 +330,18 @@ skills:
     featured: false
     public: true
   - command: /tech-brief
+    category: planning
+    featured: false
+    public: true
+  - command: /recap-doc
+    category: planning
+    featured: false
+    public: true
+  - command: /recap-ask
+    category: planning
+    featured: false
+    public: true
+  - command: /post-dev-recap
     category: planning
     featured: false
     public: true

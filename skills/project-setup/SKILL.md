@@ -52,7 +52,7 @@ Phase 5: Install Rules + Backfill CLAUDE.md (unless --no-rules or --lite)
 Phase 6: Install Hooks (unless --no-hooks or --lite)
     │
     ├─ Locate plugin hooks dir (3-level fallback)
-    ├─ mkdir -p .claude/hooks/ → copy 4 hooks + chmod +x
+    ├─ mkdir -p .claude/hooks/ → copy 5 hooks + chmod +x
     ├─ Merge hook definitions into .claude/settings.json
     └─ Output hooks install report
     │
@@ -408,14 +408,22 @@ Same 3-level fallback as Phase 5.1, but search for `scripts/precommit-runner.js`
 | Variable | Default | Condition | Description |
 |----------|---------|-----------|-------------|
 | `STOP_GUARD_MODE` | `strict` | Always (override: `--guard-mode warn`) | Stop-guard enforcement mode |
-| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `456000` | 1M context model detected | Auto-compact window size (tokens) — delays compaction to preserve more context |
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `320000` | 1M context model detected | Auto-compact window size (tokens) — delays compaction to preserve more context |
+
+#### Legacy Recommendations (auto-upgrade prompt)
+
+When an existing setting matches a previously recommended value (not the current one), flag it as `Upgrade` in the interactive table so the user can explicitly confirm the change. Never rewrite silently.
+
+| Variable | Legacy value(s) | Current recommended | Retired on |
+|----------|-----------------|---------------------|------------|
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `456000` | `320000` | 2026-04-17 |
 
 ### 6.7.2 Large Context Model Detection
 
 Determine whether `CLAUDE_CODE_AUTO_COMPACT_WINDOW` should be recommended:
 
 1. **Self-awareness check**: Claude can inspect its own system environment description for "1M context" indicators (e.g. model description includes "1M context" or "(with 1M context)")
-2. **Detected** → include `CLAUDE_CODE_AUTO_COMPACT_WINDOW: "456000"` in recommendations with note: "1M context model detected"
+2. **Detected** → include `CLAUDE_CODE_AUTO_COMPACT_WINDOW: "320000"` in recommendations with note: "1M context model detected"
 3. **Not detected or uncertain** → ask user: "Are you using a 1M context model? (e.g. Claude Opus 4.6 1M)" — include in recommendations only on confirmation
 4. **User declines** → omit `CLAUDE_CODE_AUTO_COMPACT_WINDOW` from recommendations
 
@@ -427,13 +435,23 @@ Determine whether `CLAUDE_CODE_AUTO_COMPACT_WINDOW` should be recommended:
    ```markdown
    ## Environment Variables
 
+   Only one row per variable appears at a time; the examples below are **alternatives** for the same variable, selected by its current state.
+
+   Example A — first-time install (variable not yet set):
+
    | Variable | Current (effective) | Source | Recommended | Action |
    |----------|---------------------|--------|-------------|--------|
    | STOP_GUARD_MODE | warn | settings.json | strict | Update |
-   | CLAUDE_CODE_AUTO_COMPACT_WINDOW | (not set) | — | 456000 | Add (1M model) |
+   | CLAUDE_CODE_AUTO_COMPACT_WINDOW | (not set) | — | 320000 | Add (1M model) |
+
+   Example B — upgrade path (variable already set to a legacy value):
+
+   | Variable | Current (effective) | Source | Recommended | Action |
+   |----------|---------------------|--------|-------------|--------|
+   | CLAUDE_CODE_AUTO_COMPACT_WINDOW | 456000 | settings.json | 320000 | **Upgrade** (legacy value, retired 2026-04-17) |
    ```
 
-3. Present to user for confirmation — user may accept all, modify values, or skip specific vars
+3. Present to user for confirmation — user may accept all, modify values, or skip specific vars. For rows marked `Upgrade`, display the retirement date and reason so the user can make an informed decision.
 4. Apply confirmed changes to `.claude/settings.json` (default) or `.claude/settings.local.json` (with `--local`)
 
 ### 6.7.4 Merge Strategy
@@ -441,8 +459,9 @@ Determine whether `CLAUDE_CODE_AUTO_COMPACT_WINDOW` should be recommended:
 - Read existing settings file (create `{}` if not exists)
 - Merge env vars into `env` object:
   - If key does not exist → **Add**
-  - If key exists and value matches recommended → **Skip**
-  - If key exists and value differs → **Update** (only after user confirmation)
+  - If key exists and value matches current recommended → **Skip**
+  - If key exists and value matches a **Legacy value** listed in 6.7.1 → **Upgrade** (surface retirement date + reason; apply only after user confirmation, never silently overwrite)
+  - If key exists and value is user-custom (neither current nor legacy) → **Update** (only after user confirmation; default to preserving)
 - Preserve all existing `env` keys not in the catalog (do not drop unknown keys)
 - Preserve all non-`env` keys in settings (hooks, etc.)
 - Write updated settings back
@@ -466,7 +485,7 @@ Determine whether `CLAUDE_CODE_AUTO_COMPACT_WINDOW` should be recommended:
 | Variable | Value | Effective Source | Status |
 |----------|-------|-----------------|--------|
 | STOP_GUARD_MODE | strict | settings.json | ✅ Updated |
-| CLAUDE_CODE_AUTO_COMPACT_WINDOW | 456000 | settings.json | ✅ Added (1M model) |
+| CLAUDE_CODE_AUTO_COMPACT_WINDOW | 320000 | settings.json | ✅ Added (1M model) — or ✅ Upgraded (456000 → 320000, legacy retired 2026-04-17) when upgrading |
 
 **Model**: Opus 4.6 (1M context) → auto-compact window recommended
 **Precedence note**: Runtime resolves env > settings.local.json > settings.json > default
@@ -498,9 +517,9 @@ Summarize all phases and perform closed-loop check:
 | Detection | ✅ Framework: X, PM: Y, DB: Z |
 | CLAUDE.md | ✅ Configured (0 remaining placeholders) |
 | Rules | ✅ 11/11 managed rules + 1 override template |
-| Hooks | ✅ 4/4 installed + settings merged |
+| Hooks | ✅ 5/5 installed + settings merged |
 | Scripts | ✅ 3/3 runner scripts installed |
-| Env Config | ✅ STOP_GUARD_MODE=strict, AUTO_COMPACT_WINDOW=456000 (1M) |
+| Env Config | ✅ STOP_GUARD_MODE=strict, AUTO_COMPACT_WINDOW=320000 (1M) |
 
 ### Closed-Loop Status
 ✅ Auto-loop engine fully configured (strict mode)
@@ -522,7 +541,7 @@ Summarize all phases and perform closed-loop check:
 - [ ] User confirmed detection results before writing
 - [ ] No remaining auto-detected `{UPPER_CASE}` placeholders in `.claude/CLAUDE.md` after setup (manual placeholders like `{TICKET_PATTERN}` are acceptable)
 - [ ] `.claude/rules/` contains 12 `.md` files (11 managed + 1 override template) (unless `--no-rules` or `--lite`)
-- [ ] `.claude/hooks/` contains 4 `.sh` files with execute permission (unless `--no-hooks` or `--lite`)
+- [ ] `.claude/hooks/` contains 5 `.sh` files with execute permission (unless `--no-hooks` or `--lite`)
 - [ ] `.claude/settings.json` contains hook definitions (unless `--no-hooks` or `--lite`)
 - [ ] `.claude/scripts/` contains `precommit-runner.js`, `verify-runner.js`, and `lib/utils.js` (unless `--lite` or `--detect-only`)
 - [ ] `.claude/CLAUDE.md` contains `@rules/auto-loop.md` reference (unless `--lite`)

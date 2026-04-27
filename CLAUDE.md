@@ -56,6 +56,9 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/project-brief` | PM/CTO executive summary | Design |
 | `/fp-brief` | First-principles briefing | Understanding |
 | `/tech-brief` | Technical briefing for developer sharing | Understanding |
+| `/recap-doc` | Post-development recap document generator | Understanding |
+| `/recap-ask` | Recap-bounded Q&A follow-up | Understanding |
+| `/post-dev-recap` | Guided post-dev recap (scope + doc + Q&A) | Understanding |
 | `/codex-architect` | Architecture advice | Design |
 | `/codex-implement` | Codex writes code | Development |
 | `/bug-fix` | Bug fix workflow | Bug fixing |
@@ -95,6 +98,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/pre-pr-audit` | Pre-PR confidence audit (5-dimension scoring) | Quality |
 | `/project-audit` | Project health audit with scoring | Quality |
 | `/best-practices` | Industry best practices conformance audit | Quality |
+| `/necessity-audit` | Detect over-engineering in lifecycle specs (6-dim + Codex debate) | Quality |
 | `/dep-audit` | Dependency vulnerability audit | Periodic / PR |
 | `/generate-runner` | Generate customized precommit runner | Tooling |
 | `/update-docs` | Sync docs with code | Doc changes |
@@ -120,6 +124,7 @@ Coverage: happy path + error handling + edge cases (null, empty, extremes)
 | `/watch-ci` | Monitor GitHub Actions CI runs | Git |
 | `/create-pr` | Create GitHub PR from branch | Git |
 | `/smart-rebase` | Smart partial rebase (squash-merge repos) | Git |
+| `/epic-merge` | Sequential squash-merge of stacked PR chains into epic branch | Git |
 | `/pr-summary` | PR status summary (grouped by ticket) | Git |
 | `/contract-decode` | EVM contract error/calldata decoder | Blockchain |
 | `/jira` | Jira integration (view/branch/transition) | Jira workflow |
