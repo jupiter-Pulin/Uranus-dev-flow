@@ -1,0 +1,16 @@
+{
+  "scenario": "DEX swap quote",
+  "fieldCount": 10,
+  "input": {
+    "fromTokenSymbol": "USDC",
+    "toTokenSymbol": "ETH",
+    "fromAmount": "1000",
+    "toAmount": "0.4283",
+    "estimatedPriceImpactBps": 17,
+    "slippageToleranceBps": 50,
+    "routerName": "UniswapV3",
+    "estimatedGasUsd": "2.84",
+    "minReceived": "0.4262",
+    "quoteValidityWindowSeconds": 30
+  }
+}

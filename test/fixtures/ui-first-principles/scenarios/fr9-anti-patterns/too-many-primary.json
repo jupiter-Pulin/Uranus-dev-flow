@@ -1,0 +1,14 @@
+{
+  "id": "too_many_primary",
+  "scenario": "trader dashboard summary",
+  "fields": [
+    "balanceUsd", "totalPnlUsd", "unrealizedPnlUsd", "realizedPnlUsd",
+    "openPositions", "todayVolumeUsd", "marginUsage", "fundingRate",
+    "leverageRatio", "lastTradePriceUsd"
+  ],
+  "report": "# UI First-Principles Analysis: trader dashboard summary\n\n> Scenario: trader dashboard summary\n> Domain: none\n> Generated: 2026-04-25T10:00:00Z\n> Input format: json_sample\n\n## 1. JTBD Analysis\n\n### Functional Job\nThe user wants to scan their trading position state to decide whether to act before market close.\n\n### Emotional Job\nThe user needs to feel oriented under time pressure — markets move and overload defeats fast scanning.\n\n### Social Job\nnone in this scenario\n\n## 2. Field Decision Table\n\n| Field | Priority | Principle Anchor | Rationale |\n|-------|----------|------------------|-----------|\n| balanceUsd | primary | JTBD | Total available capital — central to position sizing. |\n| totalPnlUsd | primary | JTBD | Headline performance number for orientation. |\n| unrealizedPnlUsd | primary | JTBD | Live exposure indicator. |\n| realizedPnlUsd | primary | JTBD | Locked-in performance for the period. |\n| openPositions | primary | JTBD | Drives next trading decision. |\n| todayVolumeUsd | primary | JTBD | Shows day's activity intensity. |\n| marginUsage | primary | JTBD | Risk indicator — central to leverage decisions. |\n| fundingRate | primary | JTBD | Cost-of-carry signal for perp positions. |\n| leverageRatio | primary | JTBD | Risk indicator at the portfolio level. |\n| lastTradePriceUsd | primary | JTBD | Mark for current execution context. |\n\n## 3. Anti-Pattern Findings\n\n| Pattern | Affected Fields | Severity | Rationale |\n|---------|-----------------|----------|-----------|\n| `too_many_primary` | balanceUsd, totalPnlUsd, unrealizedPnlUsd, realizedPnlUsd, openPositions, todayVolumeUsd, marginUsage, fundingRate, leverageRatio, lastTradePriceUsd | warning | All 10 fields are marked primary, well past Miller's 7 ± 2; chunk into Capital / Performance / Risk groups. |\n\n## 4. Gap Report\n\n**UI needs but API missing**: none\n\n**API provides but UI ignores**: none\n\n## 5. Information Hierarchy\n\n### Primary Zone\n- balanceUsd: capital baseline\n- totalPnlUsd: headline performance\n- unrealizedPnlUsd: live exposure\n- realizedPnlUsd: locked-in performance\n- openPositions: drives next action\n- todayVolumeUsd: activity intensity\n- marginUsage: risk\n- fundingRate: cost of carry\n- leverageRatio: portfolio risk\n- lastTradePriceUsd: execution mark\n\n### Secondary Zone\n- (none)\n\n### On-Demand Zone\n- (none)\n\n### Hidden (not surfaced)\n- (none)\n",
+  "oracle": {
+    "expectedAntiPatternIds": ["too_many_primary"],
+    "rationale": "10 fields all marked primary exceeds Miller 7 ± 2 threshold."
+  }
+}

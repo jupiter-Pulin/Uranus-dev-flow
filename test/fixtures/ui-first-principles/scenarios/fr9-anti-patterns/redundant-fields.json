@@ -1,0 +1,10 @@
+{
+  "id": "redundant_fields",
+  "scenario": "wallet transfer summary",
+  "fields": ["fromRaw", "fromAlias", "toRaw", "toAlias", "amountWei", "amountEth"],
+  "report": "# UI First-Principles Analysis: wallet transfer summary\n\n> Scenario: wallet transfer summary\n> Domain: none\n> Generated: 2026-04-25T10:00:00Z\n> Input format: json_sample\n\n## 1. JTBD Analysis\n\n### Functional Job\nThe user wants to confirm the parties and the value transferred at a glance.\n\n### Emotional Job\nThe user needs to feel certain about the counterparty — alias is the trust signal.\n\n### Social Job\nnone in this scenario\n\n## 2. Field Decision Table\n\n| Field | Priority | Principle Anchor | Rationale |\n|-------|----------|------------------|-----------|\n| fromRaw | primary | JTBD | Source address shown alongside alias. |\n| fromAlias | primary | JTBD | Friendly source form for the trust signal. |\n| toRaw | primary | JTBD | Destination address shown alongside alias. |\n| toAlias | primary | JTBD | Friendly destination form for the trust signal. |\n| amountWei | primary | JTBD | Raw amount in wei surfaced for completeness. |\n| amountEth | primary | JTBD | Human-readable amount in ETH. |\n\n## 3. Anti-Pattern Findings\n\n| Pattern | Affected Fields | Severity | Rationale |\n|---------|-----------------|----------|-----------|\n| `redundant_fields` | fromRaw, fromAlias, toRaw, toAlias, amountWei, amountEth | warning | Each pair carries the same semantic information in two forms. Promote alias / formatted forms to primary; demote raw / wei to on_demand for audit. |\n\n## 4. Gap Report\n\n**UI needs but API missing**: none\n\n**API provides but UI ignores**: none\n\n## 5. Information Hierarchy\n\n### Primary Zone\n- fromAlias: trust signal source\n- toAlias: trust signal destination\n- amountEth: human-readable value\n\n### Secondary Zone\n- (none)\n\n### On-Demand Zone\n- fromRaw: audit trail\n- toRaw: audit trail\n- amountWei: raw precision\n\n### Hidden (not surfaced)\n- (none)\n",
+  "oracle": {
+    "expectedAntiPatternIds": ["redundant_fields"],
+    "rationale": "Alias / raw and wei / eth pairs duplicate semantic information."
+  }
+}

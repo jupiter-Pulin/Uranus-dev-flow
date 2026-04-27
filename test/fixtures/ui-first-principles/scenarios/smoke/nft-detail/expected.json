@@ -1,0 +1,19 @@
+{
+  "scenario": "NFT detail page",
+  "domain": "crypto",
+  "expected": {
+    "fields": [
+      "tokenId", "collectionName", "collectionAddress", "ownerAddress",
+      "ownerAlias", "imageUrl", "rarityRank", "rarityScore",
+      "lastSalePriceEth", "lastSaleTimestamp", "floorPriceEth",
+      "creatorRoyaltyBps", "blockchain", "metadataUri", "attributesCount"
+    ],
+    "fieldCount": 15,
+    "totalMasksMin": 0,
+    "cryptoAllowlistHitsMin": 3,
+    "fingerprintCountMin": 0,
+    "noBaseAbort": true,
+    "topLevelOnly": true,
+    "comment": "tokenId / collectionAddress / ownerAddress trigger crypto allowlist when --domain crypto. ownerAlias is a public ENS handle and not a PII class."
+  }
+}

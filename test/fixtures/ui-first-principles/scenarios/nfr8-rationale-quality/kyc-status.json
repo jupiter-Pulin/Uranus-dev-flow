@@ -1,0 +1,16 @@
+{
+  "scenario": "KYC application status",
+  "fieldCount": 10,
+  "input": {
+    "applicationStatus": "pending_review",
+    "submittedAt": "2026-04-22T14:09:33Z",
+    "estimatedCompletionAt": "2026-04-26T00:00:00Z",
+    "tierRequested": "level_2",
+    "currentTier": "level_1",
+    "missingDocuments": ["proof_of_residence"],
+    "supportContactEmail": "support@example.com",
+    "applicationReference": "KYC-2026-0048217",
+    "withdrawalLimitDailyUsd": "1000",
+    "level2WithdrawalLimitDailyUsd": "50000"
+  }
+}

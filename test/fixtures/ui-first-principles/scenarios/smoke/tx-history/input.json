@@ -1,0 +1,17 @@
+{
+  "txHash": "0x7c5b1f3e9a2d4c6b8e1a3f5d7c9e2b4a6d8c1e3f5a7b9c1d3e5f7a9b1c3d5e7f",
+  "from": "0xAbCdEf0123456789abcdef0123456789abcdef01",
+  "to": "0xFeDcBa9876543210FedCba9876543210FedCba98",
+  "amount": "0.5",
+  "currency": "ETH",
+  "gasUsed": "21000",
+  "gasPriceGwei": "32",
+  "blockNumber": 18452310,
+  "timestamp": "2026-04-25T08:42:11Z",
+  "status": "confirmed",
+  "confirmations": 14,
+  "counterpartyAlias": "alice.eth",
+  "method": "transfer",
+  "memo": "April rent split",
+  "feeUsd": "1.42"
+}

@@ -1,0 +1,19 @@
+{
+  "scenario": "transaction history detail",
+  "domain": "crypto",
+  "expected": {
+    "fields": [
+      "txHash", "from", "to", "amount", "currency",
+      "gasUsed", "gasPriceGwei", "blockNumber", "timestamp",
+      "status", "confirmations", "counterpartyAlias", "method",
+      "memo", "feeUsd"
+    ],
+    "fieldCount": 15,
+    "totalMasksMin": 0,
+    "cryptoAllowlistHitsMin": 3,
+    "fingerprintCountMin": 0,
+    "noBaseAbort": true,
+    "topLevelOnly": true,
+    "comment": "All fields are top-level scalars; --domain crypto must allow txHash/from/to without masking. memo holds free-form text but is not a recognised PII class so should not be masked."
+  }
+}
