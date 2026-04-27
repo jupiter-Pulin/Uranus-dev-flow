@@ -9,7 +9,7 @@
 **AI 跳不過的品質關卡。** [Claude Code](https://claude.com/claude-code) 的 AI Agent Harness Engineering reference implementation — hook 強制雙 review、能在 context compaction 後續存的 state-machine gates，以及在關鍵處 fail-closed 的安全防線。
 
 <!-- BEGIN:HERO-COUNT -->
-95 skills · 15 agents — 僅佔 Claude context window 的 ~4%
+96 skills · 15 agents — 僅佔 Claude context window 的 ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方式 | 適用工具 | 涵蓋範圍 |
 |------|---------|---------|
-| Plugin 安裝 | Claude Code | 完整（95 skills、hooks、rules、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（95 skills） |
+| Plugin 安裝 | Claude Code | 完整（96 skills、hooks、rules、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | 僅 Skills（96 skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 類別 | 數量 | 範例 |
 |------|------|------|
-| Skills | 95 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 96 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>所有 95 個技能</summary>
+<summary>所有 96 個技能</summary>
 
 ### 開發 (33)
 
@@ -368,7 +368,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 規劃 (15)
+### 規劃 (16)
 
 | Skill | Description |
 |-------|-------------|
@@ -387,6 +387,7 @@ Skills 按需載入。閒置 Skill 不佔用任何 Token。
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
+| `/ui-first-principles` | First-principles UI/IA reasoning: turns a `<scenario>` + API field set into JTBD analysis, principle-anchored field-p... |
 
 ### 文件與工具 (20)
 
