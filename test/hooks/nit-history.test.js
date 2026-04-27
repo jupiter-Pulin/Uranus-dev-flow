@@ -201,7 +201,8 @@ test('_upsert_nit_deferred rejects suspicious paths', { skip: skipMsg }, () => {
 
 test('_upsert_dismiss_verdict inserts entry', { skip: skipMsg }, () => {
   const workDir = makeTempDir('sd0x-nit-dismiss-');
-  const sentinel = '[DISMISS_VERDICT] key=src/util.ts|error handling | severity=P2 | verdict=DISMISS_VERIFIED | confidence=0.85 | timestamp=2026-03-24T12:00:00Z';
+  const fresh = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const sentinel = `[DISMISS_VERDICT] key=src/util.ts|error handling | severity=P2 | verdict=DISMISS_VERIFIED | confidence=0.85 | timestamp=${fresh}`;
   const result = runNitFunction(workDir, `_upsert_dismiss_verdict '${sentinel}'`);
   assert.equal(result.status, 0, `stderr: ${result.stderr}`);
   const data = readNitHistory(workDir);
@@ -214,8 +215,9 @@ test('_upsert_dismiss_verdict inserts entry', { skip: skipMsg }, () => {
 
 test('_upsert_dismiss_verdict produces distinct hashes for same file different issues', { skip: skipMsg }, () => {
   const workDir = makeTempDir('sd0x-nit-dismiss-hash-');
-  const s1 = '[DISMISS_VERDICT] key=src/util.ts|error handling | severity=P2 | verdict=DISMISS_VERIFIED | confidence=0.85 | timestamp=2026-03-24T12:00:00Z';
-  const s2 = '[DISMISS_VERDICT] key=src/util.ts|naming convention | severity=Nit | verdict=DISMISS_VERIFIED | confidence=0.70 | timestamp=2026-03-24T12:00:00Z';
+  const fresh = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const s1 = `[DISMISS_VERDICT] key=src/util.ts|error handling | severity=P2 | verdict=DISMISS_VERIFIED | confidence=0.85 | timestamp=${fresh}`;
+  const s2 = `[DISMISS_VERDICT] key=src/util.ts|naming convention | severity=Nit | verdict=DISMISS_VERIFIED | confidence=0.70 | timestamp=${fresh}`;
   runNitFunction(workDir, `_upsert_dismiss_verdict '${s1}'`);
   runNitFunction(workDir, `_upsert_dismiss_verdict '${s2}'`);
   const data = readNitHistory(workDir);
@@ -252,10 +254,11 @@ test('hook processes Skill tool_name with DISMISS_VERDICT sentinel', { skip: ski
     schema_version: 2,
     iteration_history: { current_round: 0, max_rounds: 10, findings_by_round: [] },
   }));
+  const fresh = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   const input = {
     tool_name: 'Skill',
     tool_input: { skill: 'sd0x-dev-flow:seek-verdict' },
-    tool_output: '[DISMISS_VERDICT] key=src/x.ts|naming | severity=Nit | verdict=DISMISS_VERIFIED | confidence=0.80 | timestamp=2026-03-24T10:00:00Z',
+    tool_output: `[DISMISS_VERDICT] key=src/x.ts|naming | severity=Nit | verdict=DISMISS_VERIFIED | confidence=0.80 | timestamp=${fresh}`,
   };
   const result = spawnSync('bash', [hookPath], {
     cwd: workDir,
