@@ -9,7 +9,7 @@
 **Quality gates that AI can't skip.** A reference implementation of AI Agent Harness Engineering for [Claude Code](https://claude.com/claude-code) — hook-enforced dual review, state-machine gates that survive context compaction, and fail-closed safety where it counts.
 
 <!-- BEGIN:HERO-COUNT -->
-95 skills · 15 agents — ~4% of Claude's context window
+96 skills · 15 agents — ~4% of Claude's context window
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (95 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (95 skills) |
+| Plugin install | Claude Code | Full (96 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (96 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ Real-world scenarios showing which skills to combine and in what order.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Category | Count | Examples |
 |----------|-------|---------|
-| Skills | 95 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 96 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>All 95 skills</summary>
+<summary>All 96 skills</summary>
 
 ### Development (33)
 
@@ -368,7 +368,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### Planning (15)
+### Planning (16)
 
 | Skill | Description |
 |-------|-------------|
@@ -387,6 +387,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
+| `/ui-first-principles` | First-principles UI/IA reasoning: turns a `<scenario>` + API field set into JTBD analysis, principle-anchored field-p... |
 
 ### Documentation & Tooling (20)
 

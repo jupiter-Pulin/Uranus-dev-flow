@@ -345,6 +345,11 @@ skills:
     category: planning
     featured: false
     public: true
+  - command: /ui-first-principles
+    category: planning
+    featured: false
+    use_when: "Scenario → JTBD → field-priority IA reasoning"
+    public: true
 
   # ── Documentation & Tooling ──────────────────────────────
   - command: /update-docs
