@@ -1,0 +1,16 @@
+{
+  "scenario": "token transfer confirmation",
+  "fieldCount": 10,
+  "input": {
+    "tokenSymbol": "USDC",
+    "amount": "250.00",
+    "fromAddress": "0xAbCdEf0123456789abcdef0123456789abcdef01",
+    "toAddress": "0xFeDcBa9876543210FedCba9876543210FedCba98",
+    "toAlias": "alice.eth",
+    "estimatedGasUsd": "1.42",
+    "estimatedConfirmationSeconds": 18,
+    "networkName": "ethereum",
+    "memo": "April rent split",
+    "totalCostUsd": "251.42"
+  }
+}

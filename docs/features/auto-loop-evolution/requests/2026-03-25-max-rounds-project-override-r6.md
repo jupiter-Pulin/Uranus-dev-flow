@@ -1,8 +1,9 @@
 # Max Rounds Project Override Parser
 
 > **Created**: 2026-03-25
-> **Status**: Candidate Complete
+> **Status**: Completed
 > **Priority**: P2
+> **Verified**: 2026-04-21 — init_state_file now reads project override via awk-based `_read_project_max_rounds` (section-scoped, HTML-comment aware). Regression tests: 6 in `test/hooks/post-edit-format.test.js` + 4 in `test/hooks/post-tool-review-state.test.js` covering override=15, no-override, commented placeholder, multi-line HTML comment isolation, out-of-range rejection. 242 hook tests green.
 > **Tech Spec**: [Auto-Loop Evolution](../2-tech-spec.md) Section 3.2 (Rule Migration)
 > **Depends On**: [Iteration Counter (R2)](./2026-03-24-iteration-counter-convergence-r2.md)
 
@@ -47,6 +48,6 @@ R2 added `iteration_history.max_rounds` to the state schema (default 10) and `au
 | Phase | Status | Note |
 |-------|--------|------|
 | Analysis | Done | Identified during R2 Codex review |
-| Development | - | |
-| Testing | - | Add to existing hook test suites |
-| Acceptance | - | |
+| Development | Done | Changed heredoc from `<<'EOF'` to `<<EOF` with runtime `_mr` expansion in both hooks' `init_state_file` |
+| Testing | Done | 10 R6 regression tests (6 in post-edit-format + 4 in post-tool-review-state) + stub jq `--argjson` support patch |
+| Acceptance | Done | Fresh state with override=15 → `iteration_history.max_rounds=15` verified |

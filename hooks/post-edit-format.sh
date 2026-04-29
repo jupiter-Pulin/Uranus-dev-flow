@@ -138,7 +138,10 @@ fi
 # Initialize state file if it doesn't exist
 init_state_file() {
   if [[ ! -f "$STATE_FILE" ]]; then
-    cat > "$STATE_FILE" << 'EOF'
+    # R6: read project max_rounds override for initial value (fallback 10)
+    local _mr
+    _mr=$(_read_project_max_rounds 10)
+    cat > "$STATE_FILE" << EOF
 {
   "session_id": "",
   "updated_at": "",
@@ -150,19 +153,47 @@ init_state_file() {
   "precommit": {"executed": false, "passed": false, "last_run": ""},
   "aggregate_gate": {"executed": false, "gate": null, "source": null, "reason": null, "last_run": ""},
   "schema_version": 2,
-  "iteration_history": {"current_round": 0, "max_rounds": 10, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}
+  "iteration_history": {"current_round": 0, "max_rounds": ${_mr}, "findings_by_round": [], "total_rounds_session": 0, "strategic_reset_fired": false}
 }
 EOF
   fi
 }
 
 # Read max_rounds override from project config (R6)
+# Scans from "## Max Rounds" heading until next "## " heading, picking first bare integer line.
+# Tracks multi-line HTML comment state so integers inside <!-- ... --> blocks are not picked up.
 _read_project_max_rounds() {
   local default_val="${1:-10}"
   local rf val
   for rf in "rules/auto-loop-project.md" ".claude/rules/auto-loop-project.md"; do
     [[ ! -f "$rf" ]] && continue
-    val=$(grep -v '<!--' "$rf" 2>/dev/null | grep -A1 '## Max Rounds' | tail -1 | tr -d ' ')
+    val=$(awk '
+      function strip_comments(line,    out, op, cp) {
+        out = ""
+        while (length(line) > 0) {
+          if (in_comment) {
+            cp = index(line, "-->")
+            if (cp == 0) { return out }
+            in_comment = 0
+            line = substr(line, cp + 3)
+          } else {
+            op = index(line, "<!--")
+            if (op == 0) { out = out line; break }
+            out = out substr(line, 1, op - 1)
+            line = substr(line, op + 4)
+            in_comment = 1
+          }
+        }
+        return out
+      }
+      /^## Max Rounds[[:space:]]*$/ { in_section = 1; next }
+      /^## / && in_section { exit }
+      in_section {
+        processed = strip_comments($0)
+        gsub(/[[:space:]]/, "", processed)
+        if (processed ~ /^[0-9]+$/) { print processed; exit }
+      }
+    ' "$rf" 2>/dev/null) || val=""
     if [[ "$val" =~ ^[0-9]+$ && "$val" -ge 3 && "$val" -le 50 ]]; then
       echo "$val"; return
     fi
@@ -220,6 +251,8 @@ update_change_flag() {
   local flag="$1"
 
   init_state_file
+  # R6: apply project max_rounds override on fresh state file (no-op when schema_version >= 2)
+  _migrate_state_v2 "$STATE_FILE" || true
 
   local now
   now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -310,7 +343,7 @@ if echo "$file_path" | grep -Eq '\.(ts|tsx|js|jsx|mjs|cjs|py|pyw|go|rs|java|kt|k
     _track_session_touched_file "$file_path" || true
     # Set review phase to pending (D-4) — graceful on jq failure
     (
-      local _phase_tmp; _phase_tmp=$(mktemp)
+      _phase_tmp=$(mktemp)
       if jq '.review_phase = "pending_review"' "$STATE_FILE" > "$_phase_tmp" 2>/dev/null && [[ -s "$_phase_tmp" ]]; then
         mv "$_phase_tmp" "$STATE_FILE"
       else

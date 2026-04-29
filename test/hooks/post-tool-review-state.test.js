@@ -1097,3 +1097,111 @@ test('total_rounds_session increments on code review iteration', () => {
     'current_round should also increment to 1'
   );
 });
+
+// =============================================================================
+// R6: max_rounds project override applied on init (post-tool-review-state mirror)
+// =============================================================================
+
+test('R6: init reads override with real template shape (comment block between heading and value)', () => {
+  const workDir = makeTempDir('sd0x-ptrs-r6-realshape-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'rules'), { recursive: true });
+  writeFileSync(
+    join(workDir, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project Overrides\n\n## Max Rounds\n\n<!-- Override description.\n     Range: 3-50. -->\n\n20\n\n## Git Memory\n'
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_output: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(
+    state.iteration_history.max_rounds, 20,
+    'parser must scan past HTML comment block to find bare integer override'
+  );
+});
+
+test('R6: init ignores commented placeholder and falls back to default', () => {
+  const workDir = makeTempDir('sd0x-ptrs-r6-commented-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'rules'), { recursive: true });
+  writeFileSync(
+    join(workDir, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project Overrides\n\n## Max Rounds\n\n<!-- Override description. -->\n\n<!-- 10 -->\n\n## Git Memory\n'
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_output: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(
+    state.iteration_history.max_rounds, 10,
+    'commented-out placeholder must NOT be treated as an override'
+  );
+});
+
+test('R6: init ignores integer inside multi-line HTML comment', () => {
+  const workDir = makeTempDir('sd0x-ptrs-r6-multiline-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'rules'), { recursive: true });
+  writeFileSync(
+    join(workDir, 'rules', 'auto-loop-project.md'),
+    '# Auto-Loop Project Overrides\n\n## Max Rounds\n<!--\n30\n-->\n\n## Git Memory\n'
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_output: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(
+    state.iteration_history.max_rounds, 10,
+    'integer inside multi-line HTML comment must be treated as commented-out'
+  );
+});
+
+test('R6: init rejects out-of-range override (100) and uses default', () => {
+  const workDir = makeTempDir('sd0x-ptrs-r6-reject-');
+  const binDir = setupStubBin();
+  mkdirSync(join(workDir, 'rules'), { recursive: true });
+  writeFileSync(
+    join(workDir, 'rules', 'auto-loop-project.md'),
+    '# Overrides\n\n## Max Rounds\n100\n'
+  );
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_output: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(
+    state.iteration_history.max_rounds, 10,
+    'out-of-range override must fall back to default'
+  );
+});

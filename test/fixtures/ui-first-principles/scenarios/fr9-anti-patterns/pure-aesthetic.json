@@ -1,0 +1,10 @@
+{
+  "id": "pure_aesthetic_over_utility",
+  "scenario": "user profile card",
+  "fields": ["displayName", "avatarUrl", "memberSince", "decorativeBadgeIcon", "level"],
+  "report": "# UI First-Principles Analysis: user profile card\n\n> Scenario: user profile card\n> Domain: none\n> Generated: 2026-04-25T10:00:00Z\n> Input format: json_sample\n\n## 1. JTBD Analysis\n\n### Functional Job\nThe user wants to recognise their account and confirm it is the right profile.\n\n### Emotional Job\nThe user needs to feel the account is theirs — identity reassurance.\n\n### Social Job\nThe user wants others (when shared) to perceive their tenure and standing.\n\n## 2. Field Decision Table\n\n| Field | Priority | Principle Anchor | Rationale |\n|-------|----------|------------------|-----------|\n| displayName | primary | JTBD | Identity anchor for the social job. |\n| avatarUrl | primary | JTBD | Visual identity anchor. |\n| memberSince | secondary | JTBD | Tenure signal supports social job. |\n| decorativeBadgeIcon | primary | JTBD | Surfaced to balance the card layout. |\n| level | secondary | JTBD | Standing signal for social job. |\n\n## 3. Anti-Pattern Findings\n\n| Pattern | Affected Fields | Severity | Rationale |\n|---------|-----------------|----------|-----------|\n| `pure_aesthetic_over_utility` | decorativeBadgeIcon | warning | Field exists only to balance the card visually; rationale boils down to layout. Move layout balance to frontend-design and remove from IA. |\n\n## 4. Gap Report\n\n**UI needs but API missing**: none\n\n**API provides but UI ignores**: none\n\n## 5. Information Hierarchy\n\n### Primary Zone\n- displayName: identity anchor\n- avatarUrl: visual identity\n- decorativeBadgeIcon: misplaced — purely aesthetic\n\n### Secondary Zone\n- memberSince: tenure signal\n- level: standing signal\n\n### On-Demand Zone\n- (none)\n\n### Hidden (not surfaced)\n- (none)\n",
+  "oracle": {
+    "expectedAntiPatternIds": ["pure_aesthetic_over_utility"],
+    "rationale": "decorativeBadgeIcon is surfaced for layout balance, not decision support."
+  }
+}

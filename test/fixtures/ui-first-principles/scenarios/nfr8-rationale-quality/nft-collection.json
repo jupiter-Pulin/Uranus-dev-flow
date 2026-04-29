@@ -1,0 +1,16 @@
+{
+  "scenario": "NFT collection listing",
+  "fieldCount": 10,
+  "input": {
+    "collectionName": "Crystal Cats",
+    "collectionImageUrl": "https://nfts.example.cdn/cats/cover.png",
+    "totalSupply": 8888,
+    "ownerCount": 2317,
+    "floorPriceEth": "0.94",
+    "totalVolumeEth": "12450.5",
+    "createdAt": "2025-11-04T00:00:00Z",
+    "verifiedBadge": true,
+    "creatorAlias": "crystalcats.eth",
+    "blockchain": "ethereum"
+  }
+}

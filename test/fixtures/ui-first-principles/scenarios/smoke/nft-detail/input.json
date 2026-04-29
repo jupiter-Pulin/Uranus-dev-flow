@@ -1,0 +1,17 @@
+{
+  "tokenId": "1729",
+  "collectionName": "Crystal Cats",
+  "collectionAddress": "0xCa75C7d4F2bdC1c98C8D08eAa1234567890aBcDe",
+  "ownerAddress": "0x12345678901234567890aBcDeF1234567890AbCd",
+  "ownerAlias": "felinefan.eth",
+  "imageUrl": "https://nfts.example.cdn/cats/1729.png",
+  "rarityRank": 412,
+  "rarityScore": 87.4,
+  "lastSalePriceEth": "1.85",
+  "lastSaleTimestamp": "2026-04-12T14:09:33Z",
+  "floorPriceEth": "0.94",
+  "creatorRoyaltyBps": 500,
+  "blockchain": "ethereum",
+  "metadataUri": "ipfs://Qm5KqHcrystalcatsMetadata1729",
+  "attributesCount": 8
+}

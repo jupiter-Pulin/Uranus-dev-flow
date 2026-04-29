@@ -1,0 +1,16 @@
+{
+  "scenario": "wallet balance dashboard",
+  "fieldCount": 10,
+  "input": {
+    "totalBalanceUsd": "12450.30",
+    "totalBalanceEth": "5.25",
+    "availableBalanceEth": "5.10",
+    "lockedBalanceEth": "0.15",
+    "lastUpdatedAt": "2026-04-25T08:42:11Z",
+    "primaryWalletAddress": "0xAbCdEf0123456789abcdef0123456789abcdef01",
+    "walletAlias": "main.eth",
+    "networkName": "ethereum",
+    "tokenCount": 14,
+    "nftCount": 7
+  }
+}

@@ -564,7 +564,7 @@ _reset_changed_files() {
 }
 ```
 
-**State schema v3 新增欄位**:
+**State schema v2 additive field** (backward compatible via jq `// []` fallback — existing v2 state files without `changed_files_since_review` continue to work without migration):
 
 ```json
 {

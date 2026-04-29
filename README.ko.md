@@ -9,7 +9,7 @@
 **AI가 건너뛸 수 없는 품질 게이트.** [Claude Code](https://claude.com/claude-code)를 위한 AI Agent Harness Engineering의 reference implementation — hook 강제 듀얼 리뷰, context 압축 이후에도 유지되는 state machine 게이트, 그리고 정말 중요한 지점의 fail-closed 안전장치.
 
 <!-- BEGIN:HERO-COUNT -->
-95 skills · 15 agents — Claude context window의 ~4%만 사용
+96 skills · 15 agents — Claude context window의 ~4%만 사용
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 방법 | 지원 도구 | 커버리지 |
 |------|----------|---------|
-| 플러그인 설치 | Claude Code | 전체 (95 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (95 skills) |
+| 플러그인 설치 | Claude Code | 전체 (96 skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills만 (96 skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md 커널 + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | 카테고리 | 수량 | 예시 |
 |----------|------|------|
-| Skills | 95 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 96 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>전체 95개 스킬</summary>
+<summary>전체 96개 스킬</summary>
 
 ### 개발 (33)
 
@@ -368,7 +368,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/test-health` | Holistic test coverage measurement. |
 | `/verify` | Verification loop — lint -> typecheck -> unit -> integration -> e2e |
 
-### 기획 (15)
+### 기획 (16)
 
 | Skill | Description |
 |-------|-------------|
@@ -387,6 +387,7 @@ Skills는 온디맨드로 로드됩니다. 미사용 Skills는 토큰을 소비�
 | `/review-spec` | Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives. |
 | `/tech-brief` | Technical briefing for developer sharing. |
 | `/tech-spec` | Tech spec generation and review. |
+| `/ui-first-principles` | First-principles UI/IA reasoning: turns a `<scenario>` + API field set into JTBD analysis, principle-anchored field-p... |
 
 ### 문서 및 도구 (20)
 
