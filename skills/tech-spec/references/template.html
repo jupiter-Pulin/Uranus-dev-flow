@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{Feature Name}} — Technical Spec</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --fg: #e8e8e8;
+      --muted: #888;
+      --border: #242424;
+      --border-strong: #3a3a3a;
+      --accent: #6ea8fe;
+      --code-bg: #161616;
+      --stripe: #141414;
+      --panel: #121212;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "PingFang TC", "Noto Sans TC", sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--fg);
+      background: var(--bg);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      max-width: 1180px;
+      margin: 0 auto;
+      gap: 56px;
+      padding: 0 32px;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 48px 0;
+      font-size: 13px;
+    }
+    aside .brand {
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    aside ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+    aside li { counter-increment: toc; }
+    aside a {
+      display: block;
+      padding: 5px 0;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    aside a:hover { color: var(--fg); }
+    aside a::before { content: counter(toc) ". "; color: var(--border); }
+    main { padding: 48px 0 120px; min-width: 0; }
+    header.doc {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 28px;
+      margin-bottom: 48px;
+    }
+    header.doc h1 {
+      font-size: 28px;
+      margin: 0 0 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    header.doc .meta {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    header.doc .meta b { color: var(--fg); font-weight: 500; margin-right: 4px; }
+    section { margin-bottom: 56px; scroll-margin-top: 24px; }
+    section h2 {
+      font-size: 19px;
+      font-weight: 600;
+      margin: 0 0 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    section h3 { font-size: 15px; font-weight: 600; margin: 28px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+    p, li { color: var(--fg); }
+    ul, ol { padding-left: 22px; }
+    code {
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    pre code { background: none; padding: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    tbody tr:hover { background: var(--stripe); }
+    .kv th { width: 120px; color: var(--muted); border-bottom: 1px solid var(--border); text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; }
+    .mermaid {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 24px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--panel);
+    }
+    .badge.ok   { color: #4ade80; border-color: #14532d; background: #0d1f14; }
+    .badge.warn { color: #fbbf24; border-color: #5a3a0a; background: #1f1608; }
+    .badge.risk { color: #f87171; border-color: #5a1414; background: #1f0a0a; }
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(110, 168, 254, 0.08);
+      padding: 10px 14px;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 14px;
+    }
+    @media (max-width: 880px) {
+      .layout { grid-template-columns: 1fr; gap: 0; padding: 0 20px; }
+      aside { position: static; max-height: none; padding: 24px 0 8px; border-bottom: 1px solid var(--border); }
+      main { padding-top: 24px; }
+    }
+    @media print {
+      :root {
+        --bg: #fff; --fg: #000; --muted: #555;
+        --border: #ddd; --border-strong: #000;
+        --code-bg: #f4f4f2; --stripe: #f7f7f5; --panel: #fff;
+      }
+      aside { display: none; }
+      .layout { grid-template-columns: 1fr; padding: 0; max-width: none; }
+      body { font-size: 12px; }
+      section { page-break-inside: avoid; }
+      .mermaid { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">Tech Spec</div>
+    <ol>
+      <li><a href="#summary">Requirement Summary</a></li>
+      <li><a href="#code-analysis">Existing Code</a></li>
+      <li><a href="#solution">Technical Solution</a></li>
+      <li><a href="#risks">Risks & Dependencies</a></li>
+      <li><a href="#breakdown">Work Breakdown</a></li>
+      <li><a href="#testing">Testing Strategy</a></li>
+      <li><a href="#open-questions">Open Questions</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <header class="doc">
+      <h1>User Asset Snapshot</h1>
+      <div class="meta">
+        <span><b>Feature</b> user-asset-snapshot</span>
+        <span><b>Owner</b> @pulin</span>
+        <span><b>Updated</b> 2026-05-10</span>
+        <span class="badge ok">Draft</span>
+      </div>
+    </header>
+
+    <section id="summary">
+      <h2>1. Requirement Summary</h2>
+      <table class="kv">
+        <tbody>
+          <tr><th>Problem</th><td>Users cannot view a point-in-time snapshot of multi-chain assets, making month-end reconciliation manual.</td></tr>
+          <tr><th>Goals</th><td>Daily snapshot per user across all chains; queryable by date; exportable to CSV.</td></tr>
+          <tr><th>Scope</th><td>EVM chains only (v1). Off-chain and L2 deferred to v2.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="code-analysis">
+      <h2>2. Existing Code Analysis</h2>
+      <table>
+        <thead><tr><th>Module</th><th>Role</th><th>Reuse</th></tr></thead>
+        <tbody>
+          <tr><td><code>src/portfolio/portfolio.service.ts</code></td><td>Realtime balance aggregator</td><td>Reuse <code>aggregateByUser()</code></td></tr>
+          <tr><td><code>src/provider/alchemy/</code></td><td>EVM token balance</td><td>Reuse as-is</td></tr>
+          <tr><td><code>src/entity/snapshot.ts</code></td><td>—</td><td>New entity required</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="solution">
+      <h2>3. Technical Solution</h2>
+
+      <h3>3.1 Architecture</h3>
+      <div class="mermaid">
+flowchart LR
+    Cron[Daily Cron 00:00 UTC] --> Job[SnapshotJob]
+    Job --> Svc[PortfolioService.aggregate]
+    Svc --> Prov[(Alchemy Provider)]
+    Job --> DB[(snapshot collection)]
+    API[GET /snapshots] --> DB
+      </div>
+
+      <h3>3.2 Data Model</h3>
+<pre><code>Snapshot {
+  userId: string
+  date: ISODate          // YYYY-MM-DD, UTC
+  chains: ChainBalance[]
+  totalUsd: number
+  createdAt: Date
+}
+
+// index: { userId: 1, date: -1 } unique</code></pre>
+
+      <h3>3.3 API Design</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/v1/snapshots?from=&to=</code></td><td>Range query, paginated</td></tr>
+          <tr><td><code>GET</code></td><td><code>/v1/snapshots/export.csv</code></td><td>CSV stream</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3.4 Core Logic</h3>
+      <ol>
+        <li>Cron triggers <code>SnapshotJob.run()</code> at 00:00 UTC.</li>
+        <li>Iterate active users in batches of 100.</li>
+        <li>Aggregate via <code>PortfolioService</code>; persist with idempotent upsert keyed on <code>(userId, date)</code>.</li>
+        <li>Emit metric <code>snapshot.user.success</code> / <code>snapshot.user.fail</code>.</li>
+      </ol>
+    </section>
+
+    <section id="risks">
+      <h2>4. Risks & Dependencies</h2>
+      <table>
+        <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Alchemy rate-limit during batch run</td><td><span class="badge warn">Medium</span></td><td>Token-bucket limiter; backoff retry; spread batches over 30 min</td></tr>
+          <tr><td>Price-source drift across providers</td><td><span class="badge warn">Medium</span></td><td>Pin to one CoinGecko snapshot per run; record <code>priceSourceTs</code></td></tr>
+          <tr><td>Long-tail user with 1k+ tokens (OOM)</td><td><span class="badge risk">High</span></td><td>Stream aggregation; cap top-200 by value, archive rest</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="breakdown">
+      <h2>5. Work Breakdown</h2>
+      <table>
+        <thead><tr><th>#</th><th>Task</th><th>Estimate</th><th>Depends On</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Snapshot entity + repository</td><td>0.5d</td><td>—</td></tr>
+          <tr><td>2</td><td>SnapshotJob with batch + idempotent upsert</td><td>1d</td><td>#1</td></tr>
+          <tr><td>3</td><td>GET /snapshots range API</td><td>0.5d</td><td>#1</td></tr>
+          <tr><td>4</td><td>CSV export endpoint</td><td>0.5d</td><td>#3</td></tr>
+          <tr><td>5</td><td>Metrics + alert on job failure</td><td>0.5d</td><td>#2</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="testing">
+      <h2>6. Testing Strategy</h2>
+      <table>
+        <thead><tr><th>Layer</th><th>Coverage</th></tr></thead>
+        <tbody>
+          <tr><td>Unit</td><td>Aggregation edge cases (zero balance, missing price, dust filter)</td></tr>
+          <tr><td>Integration</td><td>SnapshotJob end-to-end with mocked Alchemy + real Mongo</td></tr>
+          <tr><td>E2E</td><td>API range query + CSV export against staged snapshots</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="open-questions">
+      <h2>7. Open Questions</h2>
+      <ol>
+        <li>Retention: keep daily snapshots forever, or downsample to monthly after 1 year?</li>
+        <li>Backfill: generate historical snapshots, or start fresh from launch date?</li>
+        <li>Privacy: should snapshot endpoint require re-auth for &gt;90-day-old data?</li>
+      </ol>
+      <div class="callout">Decisions required before implementation start.</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#121212',
+      primaryColor: '#1a1a1a',
+      primaryTextColor: '#e8e8e8',
+      primaryBorderColor: '#3a3a3a',
+      lineColor: '#888',
+      secondaryColor: '#1f1f1f',
+      tertiaryColor: '#161616'
+    },
+    flowchart: { curve: 'basis' }
+  });
+</script>
+</body>
+</html>
