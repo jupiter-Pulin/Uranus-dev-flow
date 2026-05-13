@@ -150,16 +150,16 @@ function getDescription(skill, descriptions) {
   return descriptions[name] || skill.command;
 }
 
-function buildHeroCount(count) {
-  return `${count} skills · 15 agents — ~4% of Claude's context window`;
+function buildHeroCount({ publicCount, bundledCount }) {
+  return `${bundledCount} bundled · ${publicCount} public skills · 15 agents — ~4% of Claude's context window`;
 }
 
-function buildWhatsIncludedCount(count) {
+function buildWhatsIncludedCount({ publicCount, bundledCount }) {
   // Full table (header+separator+all rows) to avoid HTML comment breaking table
   return [
     '| Category | Count | Examples |',
     '|----------|-------|---------|',
-    `| Skills | ${count} | \`/project-setup\`, \`/codex-review-fast\`, \`/verify\`, \`/smart-commit\`, \`/deep-research\` |`,
+    `| Skills | ${publicCount} public (${bundledCount} bundled) | \`/project-setup\`, \`/codex-review-fast\`, \`/verify\`, \`/smart-commit\`, \`/deep-research\` |`,
     '| Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |',
     '| Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |',
     '| Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |',
@@ -168,13 +168,13 @@ function buildWhatsIncludedCount(count) {
   ].join('\n');
 }
 
-function buildInstallCoverage(count) {
+function buildInstallCoverage({ publicCount, bundledCount }) {
   // Full table (header+separator+all rows) to avoid HTML comment breaking table
   return [
     '| Method | Tools | Coverage |',
     '|--------|-------|----------|',
-    `| Plugin install | Claude Code | Full (${count} skills, hooks, rules, auto-loop) |`,
-    `| \`npx skills add\` | Codex CLI, Cursor, Windsurf, Aider | Skills only (${count} skills) |`,
+    `| Plugin install | Claude Code | Full (${bundledCount} bundled skills, hooks, rules, auto-loop) |`,
+    `| \`npx skills add\` | Codex CLI, Cursor, Windsurf, Aider | Skills only (${publicCount} public skills) |`,
     '| `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |',
   ].join('\n');
 }
@@ -196,7 +196,7 @@ function buildFullCatalog(catalog, descriptions) {
   const count = publicSkills.length;
   const sortedCategories = [...catalog.categories].sort((a, b) => a.order - b.order);
 
-  const lines = ['<details>', `<summary>All ${count} skills</summary>`, ''];
+  const lines = ['<details>', `<summary>All ${count} public skills</summary>`, ''];
 
   for (const cat of sortedCategories) {
     const skills = publicSkills
@@ -267,13 +267,23 @@ function main() {
   for (const w of warnings) process.stderr.write(w + '\n');
 
   const publicSkills = getPublicSkills(catalog);
-  const count = publicSkills.length;
+  const publicCount = publicSkills.length;
+  const bundledCount = fs
+    .readdirSync(SKILLS_DIR)
+    .filter(d => {
+      try {
+        return fs.statSync(path.join(SKILLS_DIR, d)).isDirectory();
+      } catch {
+        return false;
+      }
+    }).length;
+  const counts = { publicCount, bundledCount };
 
   // Build blocks
   const blocks = {
-    'HERO-COUNT': buildHeroCount(count),
-    'WHATS-INCLUDED-COUNT': buildWhatsIncludedCount(count),
-    'INSTALL-COVERAGE': buildInstallCoverage(count),
+    'HERO-COUNT': buildHeroCount(counts),
+    'WHATS-INCLUDED-COUNT': buildWhatsIncludedCount(counts),
+    'INSTALL-COVERAGE': buildInstallCoverage(counts),
     'ESSENTIAL-SKILLS': buildEssentialSkills(catalog),
     'FULL-CATALOG': buildFullCatalog(catalog, descriptions),
   };
@@ -319,7 +329,7 @@ function main() {
   if (dryRun) {
     if (changed) {
       process.stdout.write('--- DRY RUN: README.md would be updated ---\n');
-      process.stdout.write(`Skills: ${count} (public)\n`);
+      process.stdout.write(`Skills: ${publicCount} public / ${bundledCount} bundled\n`);
       process.stdout.write(`Featured: ${catalog.skills.filter(s => s.featured).length}\n`);
       process.stdout.write(`Categories: ${catalog.categories.length}\n`);
       process.stdout.write(`Warnings: ${warnings.length}\n`);
@@ -331,7 +341,7 @@ function main() {
 
   if (changed) {
     fs.writeFileSync(README_PATH, readme, 'utf8');
-    process.stdout.write(`✅ README.md updated: ${count} skills across ${catalog.categories.length} categories\n`);
+    process.stdout.write(`✅ README.md updated: ${publicCount} public / ${bundledCount} bundled across ${catalog.categories.length} categories\n`);
   } else {
     process.stdout.write('No changes needed.\n');
   }
