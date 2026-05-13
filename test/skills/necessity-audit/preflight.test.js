@@ -176,8 +176,11 @@ test('detectGreenfield — non-greenfield returns false when code references fea
 
 test('detectGreenfield — fictional slug with dotted regex metachar returns true (no over-match)', () => {
   // Slug contains "." — regex metachar. Without escapeRegex, would match "nA5B" etc.
-  // With escapeRegex, only literal "n.a" matches.
-  const result = detectGreenfield(repoRoot, 'n.a-fictional-greenfield-xyz-42');
+  // With escapeRegex, only the literal dotted token matches.
+  // Build the slug at runtime so the literal does NOT appear in any tracked source file
+  // (otherwise git grep would self-match this test file).
+  const slug = ['n', 'a-fictional-greenfield-xyz-42'].join('.');
+  const result = detectGreenfield(repoRoot, slug);
   assert.equal(result, true, 'dotted literal slug should not false-match arbitrary files');
 });
 
