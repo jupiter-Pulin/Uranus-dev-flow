@@ -80,6 +80,17 @@ function asBoolString(val) {
   return val === true || val === 'true' ? 'true' : 'false';
 }
 
+// Mirror jq's type builtin for diagnostic queries
+function jqType(val) {
+  if (val === null) return 'null';
+  if (Array.isArray(val)) return 'array';
+  if (typeof val === 'object') return 'object';
+  if (typeof val === 'string') return 'string';
+  if (typeof val === 'number') return 'number';
+  if (typeof val === 'boolean') return 'boolean';
+  return 'null';
+}
+
 function outputValue(val) {
   if (val === undefined || val === null) {
     process.stdout.write('');
@@ -158,32 +169,60 @@ if (query && query.includes('.tool_input')) {
   outputValue(data.tool_input ?? '');
   process.exit(0);
 }
-// Handle MCP content extraction (tool_output.content string or array, with type guard)
-if (query && query.includes('tool_output') && query.includes('type') && query.includes('content')) {
-  const to = data.tool_output;
-  if (to && typeof to === 'object' && !Array.isArray(to)) {
-    const content = to.content;
-    if (typeof content === 'string') {
-      process.stdout.write(content);
-    } else if (Array.isArray(content)) {
-      const text = content.filter(c => c.type === 'text').map(c => c.text).join('\\n');
+// (Removed v3.0.12) Stale MCP-only content branch — superseded by the unified
+// coalesce handler below, which handles Bash {stdout}, MCP {content} (string/array),
+// and plain strings via the same logic as production hook L83.
+// Diagnostic helpers: has(tool_response) / has(tool_output) -> emit type or absent
+if (query && query.includes('has("tool_response")')) {
+  if (data.tool_response === undefined) {
+    outputValue('absent');
+  } else {
+    outputValue(jqType(data.tool_response));
+  }
+  process.exit(0);
+}
+if (query && query.includes('has("tool_output")')) {
+  if (data.tool_output === undefined) {
+    outputValue('absent');
+  } else {
+    outputValue(jqType(data.tool_output));
+  }
+  process.exit(0);
+}
+// Coalesce read mirroring jq // operator: fall back only on null/false (not empty string).
+// Also handles the unified normalize at hook L83+: Bash {stdout,...} -> stdout,
+// MCP {content: string} -> content, MCP {content: [{type,text}]} -> joined text.
+if (query && (query.includes('.tool_response') || query.includes('.tool_output'))) {
+  const tr = data.tool_response;
+  const useTr = tr !== undefined && tr !== null && tr !== false;
+  const picked = useTr ? tr : (data.tool_output ?? '');
+  if (picked && typeof picked === 'object' && !Array.isArray(picked)) {
+    if (typeof picked.stdout === 'string') {
+      process.stdout.write(picked.stdout);
+    } else if (typeof picked.content === 'string') {
+      process.stdout.write(picked.content);
+    } else if (Array.isArray(picked.content)) {
+      const text = picked.content
+        .filter(c => c && c.type === 'text')
+        .map(c => c.text)
+        .join('\\n');
       process.stdout.write(text);
     } else {
-      process.stdout.write(JSON.stringify(to));
+      process.stdout.write(JSON.stringify(picked));
     }
-  } else if (typeof to === 'string') {
-    process.stdout.write(to);
+  } else if (typeof picked === 'string') {
+    process.stdout.write(picked);
   } else {
     process.stdout.write('');
   }
   process.exit(0);
 }
-if (query && query.includes('.tool_output')) {
-  outputValue(data.tool_output ?? '');
-  process.exit(0);
-}
 if (query && query.includes('.command')) {
   outputValue(data.command ?? '');
+  process.exit(0);
+}
+if (query && query.includes('.skill')) {
+  outputValue(data.skill ?? '');
   process.exit(0);
 }
 
@@ -1204,4 +1243,221 @@ test('R6: init rejects out-of-range override (100) and uses default', () => {
     state.iteration_history.max_rounds, 10,
     'out-of-range override must fall back to default'
   );
+});
+
+// =============================================================================
+// v3.0.12: PostToolUse field rename — tool_response (current) // tool_output (legacy)
+// =============================================================================
+
+test('v3.0.12: tool_response Bash shape drives review state', () => {
+  const workDir = makeTempDir('sd0x-post-tool-tr-bash-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_response: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'state file must be written');
+  assert.equal(state.code_review.executed, true);
+  assert.equal(state.code_review.passed, true);
+});
+
+test('v3.0.12: tool_response Skill shape captures gate', () => {
+  const workDir = makeTempDir('sd0x-post-tool-tr-skill-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Skill',
+      tool_input: { skill: 'codex-review-fast' },
+      tool_response: '## Gate: ✅ Ready',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.code_review.passed, true);
+});
+
+test('v3.0.12: tool_response MCP object .content string', () => {
+  const workDir = makeTempDir('sd0x-post-tool-tr-mcp-str-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'mcp__codex__codex',
+      tool_input: { prompt: 'review' },
+      tool_response: { content: '## Gate: ✅ Ready' },
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.code_review.passed, true);
+});
+
+test('v3.0.12: tool_response MCP content array joins text parts', () => {
+  const workDir = makeTempDir('sd0x-post-tool-tr-mcp-arr-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'mcp__codex__codex-reply',
+      tool_input: { threadId: 'abc' },
+      tool_response: {
+        content: [
+          { type: 'text', text: '✅ Ready' },
+          { type: 'text', text: 'all green' },
+        ],
+      },
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.code_review.passed, true);
+});
+
+test('v3.0.12: both tool_response and tool_output missing -> stderr diagnostic, exit 0', () => {
+  const workDir = makeTempDir('sd0x-post-tool-missing-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+    },
+  });
+  assert.equal(result.status, 0, 'hook must not crash on missing fields');
+  assert.match(
+    result.stderr,
+    /\[post-tool-review-state\] empty output: tool=Bash tool_response=absent tool_output=absent/,
+    'diagnostic must surface tool name and field absence'
+  );
+  assert.doesNotMatch(
+    result.stderr,
+    /codex-review-fast/,
+    'diagnostic must not leak tool_input.command'
+  );
+});
+
+test('v3.0.12: tool_response takes precedence over legacy tool_output', () => {
+  const workDir = makeTempDir('sd0x-post-tool-precedence-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_response: '## Gate: ✅',
+      tool_output: '## Gate: ⛔ Blocked (stale legacy field)',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state);
+  assert.equal(state.code_review.passed, true, 'tool_response (passed) must win over tool_output (blocked)');
+});
+
+test('v3.0.12: Bash structured tool_response normalizes stdout', () => {
+  const workDir = makeTempDir('sd0x-post-tool-bash-obj-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_response: {
+        stdout: '## Gate: ✅\n',
+        stderr: '',
+        interrupted: false,
+        isImage: false,
+      },
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'Bash structured object must be normalized to stdout');
+  assert.equal(state.code_review.passed, true);
+});
+
+test('v3.0.12: Bash structured tool_response routes /precommit pass marker', () => {
+  const workDir = makeTempDir('sd0x-post-tool-bash-pc-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/precommit' },
+      tool_response: {
+        stdout: '## Overall: ✅ PASS\n',
+        stderr: '',
+        interrupted: false,
+        isImage: false,
+      },
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'precommit state must be set from Bash structured stdout');
+  assert.equal(state.precommit.executed, true);
+  assert.equal(state.precommit.passed, true);
+});
+
+test('v3.0.12: Bash structured tool_response routes emit-review-gate sentinel', () => {
+  const workDir = makeTempDir('sd0x-post-tool-bash-gate-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: 'bash scripts/emit-review-gate.sh READY' },
+      tool_response: {
+        stdout: 'REVIEW_GATE=READY\n',
+        stderr: '',
+        interrupted: false,
+        isImage: false,
+      },
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  assert.ok(state, 'aggregate_gate must be set from structured stdout');
+  assert.equal(state.aggregate_gate?.gate, 'READY');
+});
+
+test('v3.0.12: empty-string tool_response does NOT fall back to tool_output (jq // semantics)', () => {
+  const workDir = makeTempDir('sd0x-post-tool-empty-str-');
+  const binDir = setupStubBin();
+  const result = runHook({
+    cwd: workDir,
+    binDir,
+    input: {
+      tool_name: 'Bash',
+      tool_input: { command: '/codex-review-fast' },
+      tool_response: '',
+      tool_output: '## Gate: ✅',
+    },
+  });
+  assert.equal(result.status, 0);
+  const state = readState(workDir);
+  // tool_response="" is not null/false → jq `//` does NOT fall back. State should
+  // remain unset because empty string yields no gate match.
+  if (state && state.code_review) {
+    assert.notEqual(state.code_review.passed, true, 'empty tool_response must not yield passed=true via legacy fallback');
+  }
 });
