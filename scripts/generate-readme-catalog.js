@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('node:child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const CATALOG_PATH = path.join(ROOT, 'docs', 'skill-catalog.yml');
@@ -268,15 +269,36 @@ function main() {
 
   const publicSkills = getPublicSkills(catalog);
   const publicCount = publicSkills.length;
-  const bundledCount = fs
-    .readdirSync(SKILLS_DIR)
-    .filter(d => {
-      try {
-        return fs.statSync(path.join(SKILLS_DIR, d)).isDirectory();
-      } catch {
-        return false;
-      }
-    }).length;
+  // Count tracked skill dirs (what actually ships to plugin users).
+  // Falls back to filesystem when git is unavailable (e.g. unpacked tarball)
+  // or when ls-files returns no entries (e.g. sparse checkout excluding skills/).
+  // `git ls-files` always emits POSIX path separators, so `split('/')` is safe
+  // even on Windows — do not "fix" this to use path.sep.
+  let bundledCount = 0;
+  try {
+    const out = execFileSync(
+      'git',
+      ['ls-files', '--cached', 'skills/'],
+      { encoding: 'utf8', cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }
+    );
+    const dirSet = new Set(
+      out.split('\n').map(p => p.split('/')[1]).filter(Boolean)
+    );
+    bundledCount = dirSet.size;
+  } catch {
+    // Fall through to filesystem fallback below.
+  }
+  if (bundledCount === 0) {
+    bundledCount = fs
+      .readdirSync(SKILLS_DIR)
+      .filter(d => {
+        try {
+          return fs.statSync(path.join(SKILLS_DIR, d)).isDirectory();
+        } catch {
+          return false;
+        }
+      }).length;
+  }
   const counts = { publicCount, bundledCount };
 
   // Build blocks

@@ -22,7 +22,7 @@
 - 對 Bash / Skill / mcp__codex__codex / mcp__codex__codex-reply 四種 tool 輸出 shape 提供 string / object / content-array 三種解析路徑
 - 當 normalized output 為空時 emit fail-loud 結構化診斷（**僅** 含 `TOOL_NAME`、`tool_response`/`tool_output` 是否存在與型別、normalized 長度、可選 hash；**禁止** 輸出原始 `tool_input` / `tool_response` 內容或完整 hook JSON，避免洩漏指令、secrets、檔案內容）
 - 移除 plugin.json / marketplace.json / package.json `description` 欄位中的硬編碼 skill / agent / hook 數字（per Count 政策決定：manifest 不寫具體數字）
-- README.md 與 5 個 locale README 內所有 count 出現處（hero line、INSTALL-COVERAGE 區塊、WHATS-INCLUDED-COUNT 區塊、FULL-CATALOG `<summary>`）更新為「98 bundled · 96 public」雙軌敘述
+- README.md 與 5 個 locale README 內所有 count 出現處（hero line、INSTALL-COVERAGE 區塊、WHATS-INCLUDED-COUNT 區塊、FULL-CATALOG `<summary>`）採用「bundled · public」雙軌敘述格式（具體數字由 generator 動態推導：CI hotfix 後 bundled = 96 public = 96，不再硬編碼）
 - 新增測試 fixture 覆蓋三種 tool 輸出 shape，避免回歸
 
 ## Scope
@@ -41,13 +41,13 @@
 | `.claude-plugin/plugin.json` | Modify | 移除 `description:3` 尾段「90 skills, 15 agents, 8 lifecycle hooks」 |
 | `.claude-plugin/marketplace.json` | Modify | 移除 `description:11` 尾段同上字串 |
 | `package.json` | Modify | `description:4` 同步移除 |
-| `README.md` | Modify | 各區塊依語意各自更新：hero line（12）用 `98 bundled · 96 public skills`；INSTALL-COVERAGE 表格 Plugin install 列用 `(98 bundled skills, ...)` 與 `npx skills add` 列用 `Skills only (96 public skills)`（165, 166）；WHATS-INCLUDED-COUNT 表格 Skills 列用 `96 public (98 bundled)`（250）；FULL-CATALOG `<summary>` 標籤用 `All 96 public skills`（294）。注意 README.md 由 `BEGIN:` / `END:` HTML 註解界定多個生成區塊（HERO-COUNT、INSTALL-COVERAGE、WHATS-INCLUDED-COUNT、FULL-CATALOG），由 `scripts/generate-readme-catalog.js` 統一產生 |
+| `README.md` | Modify | 各區塊依語意各自更新：hero line（12）用 `<bundledCount> bundled · <publicCount> public skills`；INSTALL-COVERAGE 表格 Plugin install 列用 `(<bundledCount> bundled skills, ...)` 與 `npx skills add` 列用 `Skills only (<publicCount> public skills)`（165, 166）；WHATS-INCLUDED-COUNT 表格 Skills 列用 `<publicCount> public (<bundledCount> bundled)`（250）；FULL-CATALOG `<summary>` 標籤用 `All <publicCount> public skills`（294）。實際數字由 `scripts/generate-readme-catalog.js` 動態推導（CI hotfix 後 bundled = public = 96）。注意 README.md 由 `BEGIN:` / `END:` HTML 註解界定多個生成區塊（HERO-COUNT、INSTALL-COVERAGE、WHATS-INCLUDED-COUNT、FULL-CATALOG）|
 | `README.zh-TW.md` | Modify | 同步 README.md 所有 count 變更位置（locale README 為 README.md 鏡像生成）|
 | `README.zh-CN.md` | Modify | 同上 |
 | `README.ja.md` | Modify | 同上 |
 | `README.ko.md` | Modify | 同上 |
 | `README.es.md` | Modify | 同上 |
-| `scripts/generate-readme-catalog.js` | Modify | `buildHeroCount` / `buildInstallCoverage` / `buildWhatsIncludedCount` 簽名改收 `{publicCount, bundledCount}`；`main()` 加 `bundledCount = fs.readdirSync(SKILLS_DIR).filter(isDir).length` 自動推導；`buildFullCatalog` summary 改「All N public skills」 |
+| `scripts/generate-readme-catalog.js` | Modify | `buildHeroCount` / `buildInstallCoverage` / `buildWhatsIncludedCount` 簽名改收 `{publicCount, bundledCount}`；`main()` 透過 `git ls-files --cached skills/` 推導 `bundledCount`（CI hotfix：原 `fs.readdirSync` 會把未追蹤的 project-internal skill 算進去，導致本地 vs CI 不一致；fs.readdirSync 仍作為 git 不可用或 sparse checkout 的 fallback）；`buildFullCatalog` summary 改「All N public skills」 |
 | `test/scripts/generate-readme-catalog.test.js` | Modify | `README hero count matches summary count` 測試改抓 `(\d+) bundled · (\d+) public skills` 與 `All (\d+) public skills` |
 | `test/skills/necessity-audit/preflight.test.js` | Modify | Pre-existing 失敗：`detectGreenfield` 測試 slug 字面值出現在自身 source，被 git grep 自我匹配；改用 runtime 組裝避免 self-match（與 v3.0.12 本身無關，為解除 precommit 阻塞而附帶修） |
 
@@ -58,7 +58,7 @@
 - [x] normalized output 為空時 emit 結構化 stderr 診斷（含 `TOOL_NAME`、欄位存在/型別；**不含** 原始 `tool_input`/`tool_response` 內容或完整 hook JSON）
 - [x] `test/hooks/post-tool-review-state.test.js` v3.0.12 新增 **10 個** 測試（tool_response Bash/Skill、MCP `.content` string/array、missing-fields diagnostic、precedence、Bash 結構化 stdout、`/precommit` 路由、`emit-review-gate` 路由、empty-string `//` semantics），檔案總計 54/54 在開發機通過（`node --test test/hooks/post-tool-review-state.test.js`）
 - [x] `plugin.json` / `marketplace.json` / `package.json` `description` 欄位不含具體 skill / agent / hook 數字
-- [x] 6 份 README（en + 5 locale）內所有 count 出現處同步：hero 用 `98 bundled · 96 public`、INSTALL-COVERAGE 拆兩列分別放 bundled 與 public、WHATS-INCLUDED-COUNT 用 `96 public (98 bundled)`、FULL-CATALOG summary 用 `All 96 public skills`（各區塊措辭最適語意而非統一字串）
+- [x] 6 份 README（en + 5 locale）內所有 count 出現處同步：hero 用 `<bundled> bundled · <public> public`、INSTALL-COVERAGE 拆兩列分別放 bundled 與 public、WHATS-INCLUDED-COUNT 用 `<public> public (<bundled> bundled)`、FULL-CATALOG summary 用 `All <public> public skills`（各區塊措辭最適語意而非統一字串；CI hotfix 後實際數字 bundled = public = 96）
 - [x] 既有測試（`test/hooks/hooks-json-registry.test.js`、`test/skills/plugin-manifest.test.js`）仍全部通過（開發機 full suite 1923/1923 pass，2 skipped）
 - [x] Pass `/codex-review-fast`（threadId `019e2069-70b2-7a12-9ba9-4e235108292d`；最終 ✅ Ready, 0 findings）
 - [x] Pass `/precommit`（`/precommit-fast` ✅ All Pass：lint + 669 tests via `.claude/scripts/precommit-runner.js --mode fast`）
@@ -69,7 +69,7 @@
 |-------|--------|------|
 | Analysis | Done | `/best-practices` audit 完成；Nash equilibrium R3 達成 |
 | Development | Done | 2026-05-13 — hook 解析統一改成 normalize Bash `{stdout}` / MCP `{content}` / string；manifest description 移除硬編碼數字；generator 加入 `bundledCount` 並更新 6 份 README；版號 `3.0.11 → 3.0.12` |
-| Testing | Done | 開發機本地執行結果：`test/hooks/post-tool-review-state.test.js` 54/54 pass；full suite 1923/1923 pass + 2 skipped；regression test 涵蓋三種 tool_response shape + 空欄位診斷 + precedence + Bash 結構化 stdout |
+| Testing | Done | 開發機本地執行結果：`test/hooks/post-tool-review-state.test.js` 54/54 pass；full suite 1923/1923 pass + 2 skipped；regression test 涵蓋三種 tool_response shape + 空欄位診斷 + precedence + Bash 結構化 stdout。**CI hotfix（push 後）**：`scripts/generate-readme-catalog.js` 原以 `fs.readdirSync(SKILLS_DIR)` 計算 `bundledCount`，包含本地未追蹤的 `readme-i18n-sync` / `update-readme` 兩個 project-internal skill，導致 CI clone（96 tracked）與本地（98 fs）`--check` 不一致；改用 `git ls-files --cached skills/` 後 bundled = public = 96，6 份 README 同步從 `98 bundled` 改為 `96 bundled` |
 | Acceptance | Candidate Complete | AC `[x]` 為**啟發式 + Codex review** 結果（thread `019e2069-70b2-7a12-9ba9-4e235108292d`，最終 0 findings）；test suite pass 為本地開發機執行結果，未經 `--verify-ac` 獨立 Codex evidence trace；建議後續 PR 上 CI 跑時再做 closure-grade 認定 |
 
 ## References

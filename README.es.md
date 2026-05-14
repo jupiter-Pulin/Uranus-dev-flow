@@ -9,7 +9,7 @@
 **Gates de calidad que la IA no puede saltarse.** Una reference implementation de AI Agent Harness Engineering para [Claude Code](https://claude.com/claude-code) — dual review forzado por hooks, gates de state-machine que sobreviven a la compactación del contexto y seguridad fail-closed donde importa.
 
 <!-- BEGIN:HERO-COUNT -->
-98 bundled · 96 public skills · 15 agents — ~4% de la ventana de context de Claude
+96 bundled · 96 public skills · 15 agents — ~4% de la ventana de context de Claude
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,7 +162,7 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Método | Herramientas | Cobertura |
 |--------|-------------|-----------|
-| Instalar plugin | Claude Code | Completa (98 bundled skills, hooks, rules, auto-loop) |
+| Instalar plugin | Claude Code | Completa (96 bundled skills, hooks, rules, auto-loop) |
 | `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Solo Skills (96 public skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
@@ -247,7 +247,7 @@ Escenarios reales que muestran qué habilidades combinar y en qué orden.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Categoría | Cantidad | Ejemplos |
 |-----------|----------|----------|
-| Skills | 96 public (98 bundled) | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 96 public (96 bundled) | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
