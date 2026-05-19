@@ -9,7 +9,7 @@
 **AI がスキップできない品質ゲート。** [Claude Code](https://claude.com/claude-code) のための AI Agent Harness Engineering の reference implementation — Hook 強制のデュアルレビュー、context compaction を乗り越える state machine ゲート、そして本当に必要な箇所での fail-closed な安全性。
 
 <!-- BEGIN:HERO-COUNT -->
-96 skills · 15 agents — Claude の context window のわずか ~4%
+96 bundled · 96 public skills · 15 agents — Claude の context window のわずか ~4%
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | 方法 | 対応ツール | カバー範囲 |
 |------|-----------|-----------|
-| プラグインインストール | Claude Code | フル（96 skills、フック、ルール、auto-loop） |
-| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（96 スキル） |
+| プラグインインストール | Claude Code | フル（96 bundled skills、フック、ルール、auto-loop） |
+| `npx skills add` | Codex CLI、Cursor、Windsurf、Aider | スキルのみ（96 public skills） |
 | `/codex-setup init` | Codex CLI | AGENTS.md カーネル + git フック |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ flowchart TD
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | カテゴリ | 数 | 例 |
 |----------|-----|-----|
-| スキル | 96 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| スキル | 96 public (96 bundled) | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | エージェント | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | フック | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | ルール | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Claude の 200k context window のわずか ~4% — 96% はコードに使えま
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>全 96 スキル</summary>
+<summary>全 96 public skills</summary>
 
 ### 開発 (33)
 

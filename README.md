@@ -9,7 +9,7 @@
 **Quality gates that AI can't skip.** A reference implementation of AI Agent Harness Engineering for [Claude Code](https://claude.com/claude-code) — hook-enforced dual review, state-machine gates that survive context compaction, and fail-closed safety where it counts.
 
 <!-- BEGIN:HERO-COUNT -->
-96 skills · 15 agents — ~4% of Claude's context window
+96 bundled · 96 public skills · 15 agents — ~4% of Claude's context window
 <!-- END:HERO-COUNT -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![npm](https://img.shields.io/badge/npx-skills%20add-blue)](https://www.npmjs.com/package/skills)
@@ -162,8 +162,8 @@ npx skills add sd0xdev/sd0x-dev-flow
 <!-- BEGIN:INSTALL-COVERAGE -->
 | Method | Tools | Coverage |
 |--------|-------|----------|
-| Plugin install | Claude Code | Full (96 skills, hooks, rules, auto-loop) |
-| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (96 skills) |
+| Plugin install | Claude Code | Full (96 bundled skills, hooks, rules, auto-loop) |
+| `npx skills add` | Codex CLI, Cursor, Windsurf, Aider | Skills only (96 public skills) |
 | `/codex-setup init` | Codex CLI | AGENTS.md kernel + git hooks |
 <!-- END:INSTALL-COVERAGE -->
 
@@ -247,7 +247,7 @@ Real-world scenarios showing which skills to combine and in what order.
 <!-- BEGIN:WHATS-INCLUDED-COUNT -->
 | Category | Count | Examples |
 |----------|-------|---------|
-| Skills | 96 | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
+| Skills | 96 public (96 bundled) | `/project-setup`, `/codex-review-fast`, `/verify`, `/smart-commit`, `/deep-research` |
 | Agents | 15 | strict-reviewer, verify-app, coverage-analyst, architecture-designer |
 | Hooks | 9 | pre-edit-guard, auto-format, review state tracking, stop guard, namespace hint, post-compact-auto-loop, post-skill-auto-loop, user-prompt-review-guard, session-init |
 | Rules | 14 | auto-loop, auto-loop-project, codex-invocation, security, testing, git-workflow, self-improvement, context-management |
@@ -291,7 +291,7 @@ Skills load on-demand. Idle skills cost zero tokens.
 
 <!-- BEGIN:FULL-CATALOG -->
 <details>
-<summary>All 96 skills</summary>
+<summary>All 96 public skills</summary>
 
 ### Development (33)
 

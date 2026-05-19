@@ -217,17 +217,18 @@ test('no table header between marker and its parent heading', () => {
   );
 });
 
-test('README hero count matches summary count', () => {
+test('README hero public count matches summary count', () => {
   const readme = readFileSync(README_PATH, 'utf8');
+  // Hero now emits "<bundled> bundled · <public> public skills · ..." (v3.0.12)
   const heroMatch = readme.match(
-    /<!-- BEGIN:HERO-COUNT -->\n(\d+) skills/
+    /<!-- BEGIN:HERO-COUNT -->\n(\d+) bundled · (\d+) public skills/
   );
-  assert.ok(heroMatch, 'hero count should exist');
-  const heroCount = parseInt(heroMatch[1], 10);
+  assert.ok(heroMatch, 'hero bundled/public counts should exist');
+  const heroPublic = parseInt(heroMatch[2], 10);
 
-  const summaryMatch = readme.match(/All (\d+) skills/);
-  assert.ok(summaryMatch, 'summary count should exist');
+  const summaryMatch = readme.match(/All (\d+) public skills/);
+  assert.ok(summaryMatch, 'catalog summary should reference public count');
   const summaryCount = parseInt(summaryMatch[1], 10);
 
-  assert.equal(heroCount, summaryCount, 'hero and summary counts should match');
+  assert.equal(heroPublic, summaryCount, 'hero public count and catalog summary should match');
 });

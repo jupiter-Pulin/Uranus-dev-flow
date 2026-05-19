@@ -80,7 +80,22 @@ fi
 # Extract tool info
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null)
 TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // empty' 2>/dev/null)
-TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // empty' 2>/dev/null)
+# PostToolUse input: official Claude Code v2.1.x spec uses `tool_response`;
+# `tool_output` is kept as fallback for backward-compat with older replays.
+# Bash returns structured `{stdout, stderr, interrupted, isImage}`; MCP returns
+# `{content: string | [{type:"text", text}]}`; legacy replays may be plain string.
+# Normalize all three shapes into a single text payload here.
+TOOL_OUTPUT=$(echo "$INPUT" | jq -r '
+  (.tool_response // .tool_output) as $r
+  | if ($r | type) == "object" then
+      if ($r.stdout | type) == "string" then $r.stdout
+      elif ($r.content | type) == "string" then $r.content
+      elif ($r.content | type) == "array" then [$r.content[] | select(.type == "text") | .text] | join("\n")
+      else ($r | tostring)
+      end
+    elif ($r | type) == "string" then $r
+    else empty
+    end // empty' 2>/dev/null)
 
 # Only process Bash, MCP Codex, and Skill tools
 if [[ "$TOOL_NAME" != "Bash" ]] && \
@@ -94,21 +109,19 @@ fi
 if [[ "$TOOL_NAME" == "Bash" ]]; then
   COMMAND=$(echo "$TOOL_INPUT" | jq -r '.command // empty' 2>/dev/null)
 elif [[ "$TOOL_NAME" == "Skill" ]]; then
-  # Skill tool — extract skill name as command, tool_output is the skill's text output
+  # Skill tool — extract skill name as command, tool_response/tool_output is the skill's text output
   COMMAND=$(echo "$TOOL_INPUT" | jq -r '.skill // empty' 2>/dev/null)
 else
-  # MCP tool — extract text from tool_output.content (string) or content[].text (array)
-  # Guard: tool_output must be an object to access .content; fall back to string if not
+  # MCP tool — TOOL_OUTPUT already normalized at the unified parse above.
   COMMAND=""
-  TOOL_OUTPUT=$(echo "$INPUT" | jq -r '
-    if (.tool_output | type) == "object" then
-      if (.tool_output.content | type) == "string" then .tool_output.content
-      elif (.tool_output.content | type) == "array" then [.tool_output.content[] | select(.type == "text") | .text] | join("\n")
-      else (.tool_output | tostring)
-      end
-    elif (.tool_output | type) == "string" then .tool_output
-    else empty
-    end // empty' 2>/dev/null)
+fi
+
+# Fail-loud diagnostic when normalized output is empty for a tool we care about.
+# Emits structural info only (TOOL_NAME, field presence/type) — NEVER raw payload.
+if [[ -z "$TOOL_OUTPUT" ]]; then
+  _HAS_RESP=$(echo "$INPUT" | jq -r 'if has("tool_response") then (.tool_response | type) else "absent" end' 2>/dev/null)
+  _HAS_OUT=$(echo "$INPUT" | jq -r 'if has("tool_output") then (.tool_output | type) else "absent" end' 2>/dev/null)
+  echo "[post-tool-review-state] empty output: tool=${TOOL_NAME} tool_response=${_HAS_RESP:-absent} tool_output=${_HAS_OUT:-absent}" >&2
 fi
 
 # Initialize state file (if not exists)
