@@ -1,6 +1,6 @@
 ---
 name: review-spec
-description: "Review technical spec documents from completeness, feasibility, risk, and code consistency perspectives."
+description: "Review technical spec documents across completeness, feasibility, concision, risk, code consistency, and test strategy."
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Agent
 ---
 
@@ -20,7 +20,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(node:*), Agent
 
 ```
 Agent({
-  description: "Review technical spec for completeness, feasibility, and risk",
+  description: "Review technical spec for completeness, feasibility, concision, risk, code consistency, and test strategy",
   subagent_type: "tech-spec-reviewer",
   prompt: `Review the following technical spec document.
 Follow the review dimensions and output format defined in this skill.`
@@ -43,9 +43,10 @@ $ARGUMENTS
 | 2 | Research related code |
 | 3 | Completeness check |
 | 4 | Feasibility assessment |
-| 5 | Risk review |
-| 6 | Code consistency |
-| 7 | Test strategy |
+| 5 | **Concision check** (see `@skills/tech-spec/references/template.md` Review Dimensions + Anti-Patterns table) |
+| 6 | Risk review |
+| 7 | Code consistency |
+| 8 | Test strategy |
 
 ## Output
 
@@ -59,6 +60,7 @@ $ARGUMENTS
 |-----------|--------|-------|
 | Completeness | ⭐⭐⭐⭐☆ | |
 | Feasibility | ⭐⭐⭐☆☆ | |
+| **Concision** | ⭐⭐⭐⭐☆ | line count, section count, anti-pattern hits |
 | Risk Assessment | ⭐⭐⭐⭐☆ | |
 | Code Consistency | ⭐⭐⭐⭐⭐ | |
 | Test Strategy | ⭐⭐⭐☆☆ | |

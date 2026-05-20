@@ -154,6 +154,31 @@
       border-radius: 0 4px 4px 0;
       font-size: 14px;
     }
+    /* Inline annotation: greppable in-place questions / review notes.
+       Convention: place a HTML comment <!- - ?Q[Qn]: ... @owner - -> right
+       before a <details class="inline-q"> block. Use this anchored lookup
+       so explanatory prose does not match:
+           grep -nE '^[[:space:]]*<!--[[:space:]]*\?Q\[' <spec>.html
+       Resolve → move into §7 Open Questions table or delete. */
+    details.inline-q {
+      border: 1px dashed #f0ad4e;
+      background: rgba(240, 173, 78, 0.06);
+      padding: 8px 12px;
+      margin: 12px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    details.inline-q summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #f0ad4e;
+      list-style: none;
+      user-select: none;
+    }
+    details.inline-q summary::before { content: "❓ "; }
+    details.inline-q[open] summary::after { content: " (click to collapse)"; color: var(--muted); font-weight: 400; font-size: 12px; }
+    details.inline-q p { margin: 8px 0 0; }
+    details.inline-q .owner { color: var(--muted); font-size: 12px; }
     @media (max-width: 880px) {
       .layout { grid-template-columns: 1fr; gap: 0; padding: 0 20px; }
       aside { position: static; max-height: none; padding: 24px 0 8px; border-bottom: 1px solid var(--border); }
@@ -262,6 +287,33 @@ flowchart LR
         <li>Aggregate via <code>PortfolioService</code>; persist with idempotent upsert keyed on <code>(userId, date)</code>.</li>
         <li>Emit metric <code>snapshot.user.success</code> / <code>snapshot.user.fail</code>.</li>
       </ol>
+
+      <h3>3.5 UI/UX Contract (omit if no user surface)</h3>
+      <p>Define the contract between backend response and frontend display. Use only the sub-tables relevant to this feature; mark the rest "N/A".</p>
+
+      <h4>Field naming &amp; units</h4>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Example</th><th>Frontend handling</th></tr></thead>
+        <tbody>
+          <tr><td><code>totalUsd</code></td><td>number</td><td><code>1234.56</code></td><td>Format with locale; show 2 decimals</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Status → user-visible mapping</h4>
+      <table>
+        <thead><tr><th>Backend status</th><th>User sees</th><th>Button</th></tr></thead>
+        <tbody>
+          <tr><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Empty / boundary states</h4>
+      <table>
+        <thead><tr><th>Scenario</th><th>Response</th><th>Frontend behavior</th></tr></thead>
+        <tbody>
+          <tr><td>No data for the date range</td><td><code>{ items: [] }</code></td><td>Show empty-state illustration</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section id="risks">
@@ -310,6 +362,20 @@ flowchart LR
         <li>Privacy: should snapshot endpoint require re-auth for &gt;90-day-old data?</li>
       </ol>
       <div class="callout">Decisions required before implementation start.</div>
+
+      <!--
+        In-place annotation example. Convention is documented in the CSS block.
+        Grep with the anchored pattern below to list real questions only:
+          grep -nE '^[[:space:]]*<!--[[:space:]]*\?Q\[' 2-tech-spec.html
+        When resolved, promote into the table above or delete.
+      -->
+      <!-- ?Q[Q4]: Should downsample threshold be configurable via env? @owner-name -->
+      <details class="inline-q">
+        <summary>Q4 — Downsample threshold configurability</summary>
+        <p><strong>Question</strong>: Should the 1-year downsample boundary be hard-coded or read from an env var?</p>
+        <p><strong>Current stance</strong>: Hard-coded for v1 (KISS); promote to config only when ops asks.</p>
+        <p class="owner">Waiting on: @owner-name</p>
+      </details>
     </section>
   </main>
 </div>

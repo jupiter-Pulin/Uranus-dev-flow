@@ -1,6 +1,6 @@
 ---
 name: doc-review
-description: "Document review via Codex MCP. Use when: reviewing .md docs, tech spec audit, document quality check. Not for: code review (use codex-code-review), test review (use test-review). Output: 5-dimension rating table + gate."
+description: "Document review via Codex MCP. Use when: reviewing .md docs, tech spec audit, document quality check. Not for: code review (use codex-code-review), test review (use test-review). Output: 6-dimension rating table + gate."
 allowed-tools: mcp__codex__codex, mcp__codex__codex-reply, Bash(git:*), Read, Grep, Glob
 context: fork
 agent: Explore
@@ -30,7 +30,7 @@ agent: Explore
 ## Workflow: `/codex-review-doc`
 
 ```
-Determine target → Read content → Codex review (5 dimensions) → Rating table + Gate → Loop if Needs revision
+Determine target → Read content → Codex review (6 dimensions, incl. Concision) → Rating table + Gate → Loop if Needs revision
 ```
 
 ### Step 1: Determine Target File
@@ -68,6 +68,7 @@ Organize results into rating table + severity-grouped findings + gate.
 | Security            | Data leakage, access control, input validation, error handling |
 | Documentation Quality | Structure, completeness, accuracy, examples, docs-writing standards |
 | Code Consistency    | Pseudocode matches codebase, referenced files exist, technical accuracy |
+| **Concision** ⚠️    | **Counter-bloat for lifecycle docs.** Content lines ≤ 600 (HTML total minus `<style>` and `<script>` blocks); top-level `<h2>` ≤ 7; `<h3>` inside `§3` ≤ 5; each `§3.x` Core Logic `<ol>` step ≤ 10 lines. No full function pseudocode (use `file:line` refs); no ops shell commands in body; no version churn (`v3 → v4 砍掉…`). Reviewer must NOT request additions that violate these caps. See `references/codex-prompt-doc.md` §6. |
 
 ## Review Loop
 
@@ -100,7 +101,7 @@ Max 3 rounds. Still failing → report blocker.
 ## Examples
 
 ```
-Input: /codex-review-doc docs/features/xxx/tech-spec.md
+Input: /codex-review-doc docs/features/xxx/2-tech-spec.html
 Action: Read file → Codex doc prompt → Rating table + Findings + Gate
 
 Input: /codex-review-doc
